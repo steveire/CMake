@@ -370,6 +370,13 @@ int cmCoreTryCompile::TryCompileCode(std::vector<std::string> const& argv)
       fprintf(fout, "add_definitions(%s)\n", cmJoin(compileDefs, " ").c_str());
       }
 
+    const char* sharedLinkerFlags = this->Makefile->GetDefinition("CMAKE_TRY_COMPILE_SHARED_LINKER_FLAGS");
+
+    if (sharedLinkerFlags)
+      {
+      fprintf(fout, "set(CMAKE_SHARED_LINKER_FLAGS \"%s\")\n", sharedLinkerFlags);
+      }
+
     /* Use a random file name to avoid rapid creation and deletion
        of the same executable name (some filesystems fail on that).  */
     sprintf(targetNameBuf, "cmTC_%05x",
@@ -396,7 +403,6 @@ int cmCoreTryCompile::TryCompileCode(std::vector<std::string> const& argv)
               "\ninclude(\"${CMAKE_CURRENT_LIST_DIR}/%s\")\n\n",
               fname.c_str());
       }
-
     /* for the TRY_COMPILEs we want to be able to specify the architecture.
       So the user can set CMAKE_OSX_ARCHITECTURES to i386;ppc and then set
       CMAKE_TRY_COMPILE_OSX_ARCHITECTURES first to i386 and then to ppc to
@@ -474,7 +480,17 @@ int cmCoreTryCompile::TryCompileCode(std::vector<std::string> const& argv)
     /* Put the executable at a known location (for COPY_FILE).  */
     fprintf(fout, "set(CMAKE_RUNTIME_OUTPUT_DIRECTORY \"%s\")\n",
             this->BinaryDirectory.c_str());
-    /* Create the actual executable.  */
+    const char* compileType = this->Makefile->GetDefinition("CMAKE_TRY_COMPILE_TYPE");
+
+    if (compileType && compileType == std::string("SHARED_LIBRARY"))
+      {
+      fprintf(fout, "add_library(cmTryCompileExec SHARED \"%s\")\n",source.c_str());
+      }
+    else
+      {
+        /* Create the actual executable.  */
+        fprintf(fout, "ADD_EXECUTABLE(%s \"%s\")\n",targetName,source.c_str());
+      }
     fprintf(fout, "add_executable(%s", targetName.c_str());
     for(std::vector<std::string>::iterator si = sources.begin();
         si != sources.end(); ++si)
