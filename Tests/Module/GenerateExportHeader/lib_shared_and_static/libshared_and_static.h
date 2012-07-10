@@ -4,6 +4,8 @@
 
 #include "libshared_and_static_export.h"
 
+#ifdef __cplusplus
+
 class MYPREFIX_LIBSHARED_AND_STATIC_EXPORT LibsharedAndStatic {
 public:
   int libshared_and_static() const;
@@ -42,6 +44,8 @@ public:
 
   int MYPREFIX_LIBSHARED_AND_STATIC_NO_EXPORT libshared_and_static_excluded() const;
 };
+
+#endif
 
 MYPREFIX_LIBSHARED_AND_STATIC_EXPORT int libshared_and_static_exported();
 
