@@ -47,12 +47,12 @@ public:
 
 #endif
 
-MYPREFIX_LIBSHARED_AND_STATIC_EXPORT int libshared_and_static_exported();
+MYPREFIX_LIBSHARED_AND_STATIC_EXPORT int libshared_and_static_exported(void);
 
-MYPREFIX_LIBSHARED_AND_STATIC_DEPRECATED_EXPORT int libshared_and_static_deprecated();
+MYPREFIX_LIBSHARED_AND_STATIC_DEPRECATED_EXPORT int libshared_and_static_deprecated(void);
 
-int libshared_and_static_not_exported();
+int libshared_and_static_not_exported(void);
 
-int MYPREFIX_LIBSHARED_AND_STATIC_NO_EXPORT libshared_and_static_excluded();
+int MYPREFIX_LIBSHARED_AND_STATIC_NO_EXPORT libshared_and_static_excluded(void);
 
 #endif
