@@ -2114,6 +2114,18 @@ cmGlobalGenerator::FindTarget(const std::string& name,
   return 0;
 }
 
+
+//----------------------------------------------------------------------------
+cmGeneratorTarget*
+cmGlobalGenerator::FindGeneratorTarget(const std::string& name)
+{
+  if (cmTarget *t = this->FindTarget(name))
+    {
+    return this->GetGeneratorTarget(t);
+    }
+  return 0;
+}
+
 //----------------------------------------------------------------------------
 bool
 cmGlobalGenerator::NameResolvesToFramework(const std::string& libname) const

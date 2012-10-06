@@ -233,6 +233,7 @@ public:
 
   void AddAlias(const std::string& name, cmTarget *tgt);
   bool IsAlias(const std::string& name) const;
+  cmGeneratorTarget* FindGeneratorTarget(const std::string& name);
 
   /** Determine if a name resolves to a framework on disk or a built target
       that is a framework. */
