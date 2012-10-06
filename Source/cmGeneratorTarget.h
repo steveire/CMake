@@ -69,6 +69,14 @@ public:
 
   void ComputeObjectMapping();
 
+  /** Get the full path to the target according to the settings in its
+      makefile and the configuration type.  */
+  std::string GetFullPath(const std::string& config="", bool implib = false,
+                          bool realname = false) const;
+  std::string NormalGetFullPath(const std::string& config, bool implib,
+                                bool realname) const;
+  std::string NormalGetRealName(const std::string& config) const;
+
   cmTarget* Target;
   cmMakefile* Makefile;
   cmLocalGenerator* LocalGenerator;

@@ -545,10 +545,13 @@ bool cmComputeLinkInformation::Compute()
         i != wrongItems.end(); ++i)
       {
       cmTarget const* tgt = *i;
+      cmGeneratorTarget *gtgt = tgt->GetMakefile()->GetLocalGenerator()
+                                   ->GetGlobalGenerator()
+                                   ->GetGeneratorTarget(tgt);
       bool implib =
         (this->UseImportLibrary &&
          (tgt->GetType() == cmTarget::SHARED_LIBRARY));
-      std::string lib = tgt->GetFullPath(this->Config , implib, true);
+      std::string lib = gtgt->GetFullPath(this->Config , implib, true);
       this->OldLinkDirItems.push_back(lib);
       }
     }
@@ -632,6 +635,9 @@ void cmComputeLinkInformation::AddItem(std::string const& item,
 
   if(tgt && tgt->IsLinkable())
     {
+    cmGeneratorTarget *gtgt = tgt->GetMakefile()->GetLocalGenerator()
+                                 ->GetGlobalGenerator()
+                                 ->GetGeneratorTarget(tgt);
     // This is a CMake target.  Ask the target for its real name.
     if(impexe && this->LoaderFlag)
       {
@@ -640,7 +646,8 @@ void cmComputeLinkInformation::AddItem(std::string const& item,
       // platform.  Add it now.
       std::string linkItem;
       linkItem = this->LoaderFlag;
-      std::string exe = tgt->GetFullPath(config, this->UseImportLibrary,
+
+      std::string exe = gtgt->GetFullPath(config, this->UseImportLibrary,
                                          true);
       linkItem += exe;
       this->Items.push_back(Item(linkItem, true, tgt));
@@ -659,7 +666,7 @@ void cmComputeLinkInformation::AddItem(std::string const& item,
         return;
         }
       // Pass the full path to the target file.
-      std::string lib = tgt->GetFullPath(config, implib, true);
+      std::string lib = gtgt->GetFullPath(config, implib, true);
       if(!this->LinkDependsNoShared ||
          tgt->GetType() != cmTarget::SHARED_LIBRARY)
         {
@@ -748,7 +755,10 @@ void cmComputeLinkInformation::AddSharedDepItem(std::string const& item,
   std::string lib;
   if(tgt)
     {
-    lib = tgt->GetFullPath(this->Config, this->UseImportLibrary);
+    cmGeneratorTarget *gtgt = tgt->GetMakefile()->GetLocalGenerator()
+                                 ->GetGlobalGenerator()
+                                 ->GetGeneratorTarget(tgt);
+    lib = gtgt->GetFullPath(this->Config, this->UseImportLibrary);
     this->AddLibraryRuntimeInfo(lib, tgt);
     }
   else

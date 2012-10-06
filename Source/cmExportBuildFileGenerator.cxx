@@ -178,6 +178,8 @@ cmExportBuildFileGenerator
   // Get the makefile in which to lookup target information.
   cmMakefile* mf = target->GetMakefile();
 
+  cmGeneratorTarget gtgt(target);
+
   // Add the main target file.
   {
   std::string prop = "IMPORTED_LOCATION";
@@ -185,11 +187,11 @@ cmExportBuildFileGenerator
   std::string value;
   if(target->IsAppBundleOnApple())
     {
-    value = target->GetFullPath(config, false);
+    value = gtgt.GetFullPath(config, false);
     }
   else
     {
-    value = target->GetFullPath(config, false, true);
+    value = gtgt.GetFullPath(config, false, true);
     }
   properties[prop] = value;
   }
@@ -206,7 +208,7 @@ cmExportBuildFileGenerator
     {
     std::string prop = "IMPORTED_IMPLIB";
     prop += suffix;
-    std::string value = target->GetFullPath(config, true);
+    std::string value = gtgt.GetFullPath(config, true);
     target->GetImplibGNUtoMS(value, value,
                              "${CMAKE_IMPORT_LIBRARY_SUFFIX}");
     properties[prop] = value;

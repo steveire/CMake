@@ -459,16 +459,16 @@ cmGeneratorTarget
 //----------------------------------------------------------------------------
 const char* cmGeneratorTarget::GetLocation(const std::string& config) const
 {
+  static std::string location;
   if (this->Target->IsImported())
     {
-    return this->Target->ImportedGetFullPath(config, false);
+    location = this->Target->ImportedGetFullPath(config, false);
     }
   else
     {
-    static std::string location;
-    location = this->Target->GetFullPath(config, false);
-    return location.c_str();
+    location = this->GetFullPath(config, false);
     }
+  return location.c_str();
 }
 
 bool cmGeneratorTarget::IsImported() const
@@ -487,7 +487,7 @@ const char* cmGeneratorTarget::GetLocationForBuild() const
     }
 
   // Now handle the deprecated build-time configuration location.
-  location = this->GetDirectory();
+  location = this->Target->GetDirectory();
   const char* cfgid = this->Makefile->GetDefinition("CMAKE_CFG_INTDIR");
   if(cfgid && strcmp(cfgid, ".") != 0)
     {
@@ -1116,6 +1116,86 @@ void cmGeneratorTarget::GenerateTargetManifest(
     f += "/";
     f += impName;
     gg->AddToManifest(config, f);
+    }
+}
+
+//----------------------------------------------------------------------------
+std::string cmGeneratorTarget::GetFullPath(const std::string& config,
+                                           bool implib, bool realname) const
+{
+  if(this->Target->IsImported())
+    {
+    return this->Target->ImportedGetFullPath(config, implib);
+    }
+  else
+    {
+    return this->NormalGetFullPath(config, implib, realname);
+    }
+}
+
+std::string cmGeneratorTarget::NormalGetFullPath(const std::string& config,
+                                                 bool implib,
+                                                 bool realname) const
+{
+  std::string fpath = this->Target->GetDirectory(config, implib);
+  fpath += "/";
+  if(this->Target->IsAppBundleOnApple())
+    {
+    fpath = this->Target->BuildMacContentDirectory(fpath, config, false);
+    fpath += "/";
+    }
+
+  // Add the full name of the target.
+  if(implib)
+    {
+    fpath += this->Target->GetFullName(config, true);
+    }
+  else if(realname)
+    {
+    fpath += this->NormalGetRealName(config);
+    }
+  else
+    {
+    fpath += this->Target->GetFullName(config, false);
+    }
+  return fpath;
+}
+
+//----------------------------------------------------------------------------
+std::string
+cmGeneratorTarget::NormalGetRealName(const std::string& config) const
+{
+  // This should not be called for imported targets.
+  // TODO: Split cmTarget into a class hierarchy to get compile-time
+  // enforcement of the limited imported target API.
+  if(this->Target->IsImported())
+    {
+    std::string msg =  "NormalGetRealName called on imported target: ";
+    msg += this->GetName();
+    this->Makefile->IssueMessage(cmake::INTERNAL_ERROR, msg);
+    }
+
+  if(this->GetType() == cmTarget::EXECUTABLE)
+    {
+    // Compute the real name that will be built.
+    std::string name;
+    std::string realName;
+    std::string impName;
+    std::string pdbName;
+    this->Target->GetExecutableNames(name, realName, impName, pdbName, config);
+    return realName;
+    }
+  else
+    {
+    // Compute the real name that will be built.
+    std::string name;
+    std::string soName;
+    std::string realName;
+    std::string impName;
+    std::string pdbName;
+    this->Target->GetLibraryNames(name, soName, realName,
+                                  impName, pdbName, config);
+    return realName;
     }
 }
 
