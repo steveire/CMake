@@ -382,9 +382,6 @@ public:
   /** Whether this library has soname enabled and platform supports it.  */
   bool HasSOName(const std::string& config) const;
 
-  /** Get the soname of the target.  Allowed only for a shared library.  */
-  std::string GetSOName(const std::string& config) const;
-
   /** Whether this library has \@rpath and platform supports it.  */
   bool HasMacOSXRpathInstallNameDir(const std::string& config) const;
 
@@ -739,7 +736,20 @@ private:
                            std::string& out) const;
 
   // Cache import information from properties for each configuration.
-  struct ImportInfo;
+  struct ImportInfo
+  {
+    ImportInfo(): NoSOName(false), Multiplicity(0) {}
+    bool NoSOName;
+    int Multiplicity;
+    std::string Location;
+    std::string SOName;
+    std::string ImportLibrary;
+    std::string Languages;
+    std::string Libraries;
+    std::string LibrariesProp;
+    std::string SharedDeps;
+  };
+
   ImportInfo const* GetImportInfo(const std::string& config) const;
   void ComputeImportInfo(std::string const& desired_config,
                          ImportInfo& info) const;
