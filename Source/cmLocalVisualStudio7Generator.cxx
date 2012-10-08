@@ -1065,6 +1065,9 @@ void cmLocalVisualStudio7Generator::OutputBuildTool(std::ostream& fout,
       this->ConvertToOptionallyRelativeOutputPath(this->ModuleDefinitionFile);
     linkOptions.AddFlag("ModuleDefinitionFile", defFile.c_str());
     }
+  cmGeneratorTarget* gt =
+    this->GlobalGenerator->GetGeneratorTarget(&target);
+
   switch(target.GetType())
     {
     case cmTarget::UNKNOWN_LIBRARY:
@@ -1087,7 +1090,7 @@ void cmLocalVisualStudio7Generator::OutputBuildTool(std::ostream& fout,
       }
     case cmTarget::STATIC_LIBRARY:
     {
-    std::string targetNameFull = target.GetFullName(configName);
+    std::string targetNameFull = gt->GetFullName(configName);
     std::string libpath = target.GetDirectory(configName);
     libpath += "/";
     libpath += targetNameFull;
@@ -1130,8 +1133,6 @@ void cmLocalVisualStudio7Generator::OutputBuildTool(std::ostream& fout,
                            targetNameImport, targetNamePDB, configName);
 
     // Compute the link library and directory information.
-    cmGeneratorTarget* gt =
-      this->GlobalGenerator->GetGeneratorTarget(&target);
     cmComputeLinkInformation* pcli = gt->GetLinkInformation(configName);
     if(!pcli)
       {

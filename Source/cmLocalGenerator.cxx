@@ -699,7 +699,7 @@ void cmLocalGenerator::AddBuildTargetRule(const std::string& llang,
     }
   std::string createRule = target.GetCreateRuleVariable(llang, config);
   bool useWatcomQuote = this->Makefile->IsOn(createRule+"_USE_WATCOM_QUOTE");
-  std::string targetName = target.Target->GetFullName();
+  std::string targetName = target.GetFullName();
   // Executable :
   // Shared Library:
   // Static Library:
