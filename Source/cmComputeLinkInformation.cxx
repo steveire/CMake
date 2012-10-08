@@ -1907,8 +1907,10 @@ void cmComputeLinkInformation::GetRPath(std::vector<std::string>& runtimeDirs,
   bool use_install_rpath =
     (outputRuntime && this->Target->HaveInstallTreeRPATH() &&
      linking_for_install);
+  cmGeneratorTarget *gtgt = this->GlobalGenerator
+                                ->GetGeneratorTarget(this->Target);
   bool use_build_rpath =
-    (outputRuntime && this->Target->HaveBuildTreeRPATH(this->Config) &&
+    (outputRuntime && gtgt->HaveBuildTreeRPATH(this->Config) &&
      !linking_for_install);
   bool use_link_rpath =
     outputRuntime && linking_for_install &&
@@ -1991,10 +1993,6 @@ void cmComputeLinkInformation::GetRPath(std::vector<std::string>& runtimeDirs,
   // Add runtime paths required by the languages to always be
   // present.  This is done even when skipping rpath support.
   {
-  cmGeneratorTarget *gtgt = this->Makefile->GetLocalGenerator()
-                                ->GetGlobalGenerator()
-                                ->GetGeneratorTarget(this->Target);
-
   cmGeneratorTarget::LinkClosure const* lc =
     gtgt->GetLinkClosure(this->Config);
   for(std::vector<std::string>::const_iterator li = lc->Languages.begin();

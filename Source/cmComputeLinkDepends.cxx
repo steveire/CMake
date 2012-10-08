@@ -185,7 +185,10 @@ cmComputeLinkDepends
   // The configuration being linked.
   this->HasConfig = !config.empty();
   this->Config = (this->HasConfig)? config : std::string();
-  this->LinkType = this->Target->ComputeLinkType(this->Config);
+
+  cmGeneratorTarget* gt = this->GlobalGenerator
+                                  ->GetGeneratorTarget(target);
+  this->LinkType = static_cast<cmTarget::LinkLibraryType>(gt->ComputeLinkType(this->Config));
 
   // Enable debug mode if requested.
   this->DebugMode = this->Makefile->IsOn("CMAKE_LINK_DEPENDS_DEBUG_MODE");
@@ -565,9 +568,12 @@ void cmComputeLinkDepends::AddVarLinkEntries(int depender_index,
 //----------------------------------------------------------------------------
 void cmComputeLinkDepends::AddDirectLinkEntries()
 {
+  cmGeneratorTarget *gtgt = this->Target->GetMakefile()->GetLocalGenerator()
+                                ->GetGlobalGenerator()
+                                ->GetGeneratorTarget(this->Target);
   // Add direct link dependencies in this configuration.
-  cmTarget::LinkImplementation const* impl =
-    this->Target->GetLinkImplementation(this->Config);
+  cmGeneratorTarget::LinkImplementation const* impl =
+    gtgt->GetLinkImplementation(this->Config);
   this->AddLinkEntries(-1, impl->Libraries);
   for(std::vector<cmLinkItem>::const_iterator
         wi = impl->WrongConfigLibraries.begin();
@@ -657,7 +663,12 @@ cmTarget const* cmComputeLinkDepends::FindTargetToLink(int depender_index,
       from = depender;
       }
     }
-  return from->FindTargetToLink(name);
+
+  cmGeneratorTarget* gt = from->GetMakefile()->GetLocalGenerator()
+                                  ->GetGlobalGenerator()
+                                  ->GetGeneratorTarget(from);
+
+  return gt->FindTargetToLink(name);
 }
 
 //----------------------------------------------------------------------------

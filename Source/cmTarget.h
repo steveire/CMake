@@ -142,15 +142,14 @@ public:
 
   enum LinkLibraryType {GENERAL, DEBUG, OPTIMIZED};
 
+  const std::vector<cmValueWithOrigin>& GetLinkImplementationPropertyEntries();
+
   //* how we identify a library, by name and type
   typedef std::pair<std::string, LinkLibraryType> LibraryID;
 
   typedef std::vector<LibraryID > LinkLibraryVectorType;
   const LinkLibraryVectorType &GetOriginalLinkLibraries() const
     {return this->OriginalLinkLibraries;}
-
-  /** Compute the link type to use for the given configuration.  */
-  LinkLibraryType ComputeLinkType(const std::string& config) const;
 
   /**
    * Clear the dependency information recorded for this target, if any.
@@ -226,30 +225,6 @@ public:
 
   bool IsImported() const {return this->IsImportedTarget;}
 
-  /** The link implementation specifies the direct library
-      dependencies needed by the object files of the target.  */
-  struct LinkImplementationLibraries
-  {
-    // Libraries linked directly in this configuration.
-    std::vector<cmLinkImplItem> Libraries;
-
-    // Libraries linked directly in other configurations.
-    // Needed only for OLD behavior of CMP0003.
-    std::vector<cmLinkItem> WrongConfigLibraries;
-  };
-  struct LinkImplementation: public LinkImplementationLibraries
-  {
-    // Languages whose runtime libraries must be linked.
-    std::vector<std::string> Languages;
-  };
-  LinkImplementation const*
-    GetLinkImplementation(const std::string& config) const;
-
-  LinkImplementationLibraries const*
-    GetLinkImplementationLibraries(const std::string& config) const;
-
-  cmTarget const* FindTargetToLink(std::string const& name) const;
-
   /** Strip off leading and trailing whitespace from an item named in
       the link dependencies of this target.  */
   std::string CheckCMP0004(std::string const& item) const;
@@ -304,7 +279,6 @@ public:
   bool GetImplibGNUtoMS(std::string const& gnuName, std::string& out,
                         const char* newExt = 0) const;
 
-  bool HaveBuildTreeRPATH(const std::string& config) const;
   bool HaveInstallTreeRPATH() const;
 
   // Get the properties
@@ -390,8 +364,6 @@ public:
                          const std::string& config) const;
   void GetCompileFeatures(std::vector<std::string> &features,
                           const std::string& config) const;
-
-  bool IsNullImpliedByLinkLibraries(const std::string &p) const;
 
   std::string GetDebugGeneratorExpressions(const std::string &value,
                                   cmTarget::LinkLibraryType llt) const;
@@ -539,7 +511,6 @@ private:
   mutable bool DebugCompileDefinitionsDone;
   mutable bool DebugSourcesDone;
   mutable bool DebugCompileFeaturesDone;
-  mutable std::set<std::string> LinkImplicitNullProperties;
   mutable std::map<std::string, std::string> MaxLanguageStandards;
   bool BuildInterfaceIncludesAppended;
 
@@ -574,10 +545,6 @@ private:
   // Cache target compile paths for each configuration.
   struct CompileInfo;
   CompileInfo const* GetCompileInfo(const std::string& config) const;
-
-  LinkImplementationLibraries const*
-    GetLinkImplementationLibrariesInternal(const std::string& config,
-                                           cmTarget const* head) const;
 
   std::string ProcessSourceItemCMP0049(const std::string& s);
 

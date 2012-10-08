@@ -406,13 +406,45 @@ public:
   ///! Return the preferred linker language for this target
   std::string GetLinkerLanguage(const std::string& config = "") const;
 
+  /** The link implementation specifies the direct library
+      dependencies needed by the object files of the target.  */
+  struct LinkImplementationLibraries
+  {
+    // Libraries linked directly in this configuration.
+    std::vector<cmLinkImplItem> Libraries;
+
+    // Libraries linked directly in other configurations.
+    // Needed only for OLD behavior of CMP0003.
+    std::vector<cmLinkItem> WrongConfigLibraries;
+  };
+  struct LinkImplementation: public LinkImplementationLibraries
+  {
+    // Languages whose runtime libraries must be linked.
+    std::vector<std::string> Languages;
+  };
+  LinkImplementation const*
+    GetLinkImplementation(const std::string& config) const;
+
+  LinkImplementationLibraries const*
+    GetLinkImplementationLibraries(const std::string& config) const;
+
+  LinkImplementationLibraries const*
+  GetLinkImplementationLibrariesInternal(const std::string& config,
+                                                 cmTarget const* head) const;
+
+  int ComputeLinkType(const std::string& config) const;
+
+  cmTarget const* FindTargetToLink(std::string const& name) const;
+
   struct SourceFileFlags
   GetTargetSourceFileFlags(const cmSourceFile* sf) const;
 
+  bool IsNullImpliedByLinkLibraries(const std::string &p) const;
   struct ResxData {
     mutable std::set<std::string> ExpectedResxHeaders;
     mutable std::vector<cmSourceFile const*> ResxSources;
   };
+  bool HaveBuildTreeRPATH(const std::string& config) const;
 private:
   friend class cmTargetTraceDependencies;
   struct SourceEntry { std::vector<cmSourceFile*> Depends; };
@@ -431,11 +463,40 @@ private:
                                 CachedLinkInterfaceIncludeDirectoriesEntries;
   mutable std::map<std::string, bool> CacheLinkInterfaceIncludeDirectoriesDone;
   mutable std::map<std::string, bool> DebugCompatiblePropertiesDone;
+  mutable std::set<std::string> LinkImplicitNullProperties;
+
+  std::map<std::string, std::string> const&
+  GetMaxLanguageStandards() const
+  {
+    return this->MaxLanguageStandards;
+  }
+  mutable std::map<std::string, std::string> MaxLanguageStandards;
 
   std::string GetFullNameInternal(const std::string& config, bool implib) const;
   void GetFullNameInternal(const std::string& config, bool implib,
                            std::string& outPrefix, std::string& outBase,
                            std::string& outSuffix) const;
+  // Cache link implementation computation from each configuration.
+  struct OptionalLinkImplementation: public LinkImplementation
+  {
+    OptionalLinkImplementation():
+      LibrariesDone(false), LanguagesDone(false),
+      HadHeadSensitiveCondition(false) {}
+    bool LibrariesDone;
+    bool LanguagesDone;
+    bool HadHeadSensitiveCondition;
+  };
+  void ComputeLinkImplementationLibraries(const std::string& config,
+                                          OptionalLinkImplementation& impl,
+                                          cmTarget const* head) const;
+  void ComputeLinkImplementationLanguages(const std::string& config,
+                                          OptionalLinkImplementation& impl
+                                          ) const;
+  struct HeadToLinkImplementationMap:
+    public std::map<cmTarget const*, OptionalLinkImplementation> {};
+  typedef std::map<std::string,
+                   HeadToLinkImplementationMap> LinkImplMapType;
+  mutable LinkImplMapType LinkImplMap;
 
   typedef std::map<std::string, LinkClosure> LinkClosureMapType;
   mutable LinkClosureMapType LinkClosureMap;

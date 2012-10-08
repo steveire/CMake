@@ -250,8 +250,8 @@ void cmComputeTargetDepends::CollectTargetDepends(int depender_index)
         }
       }
 
-    cmTarget::LinkImplementation const* impl =
-      depender->GetLinkImplementation(*it);
+    cmGeneratorTarget::LinkImplementation const* impl =
+      gt->GetLinkImplementation(*it);
 
     // A target should not depend on itself.
     emitted.insert(depender->GetName());

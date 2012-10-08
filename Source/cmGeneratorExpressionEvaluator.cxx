@@ -1109,8 +1109,8 @@ static const struct TargetPropertyNode : public cmGeneratorExpressionNode
       }
     else if(!interfacePropertyName.empty())
       {
-      if(cmTarget::LinkImplementationLibraries const* impl =
-         target->GetLinkImplementationLibraries(context->Config))
+      if(cmGeneratorTarget::LinkImplementationLibraries const* impl =
+         gtgt->GetLinkImplementationLibraries(context->Config))
         {
         linkedTargetsContent =
           getLinkedTargetsContent(impl->Libraries, target,
