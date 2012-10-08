@@ -4986,51 +4986,6 @@ std::string cmTarget::CheckCMP0004(std::string const& item) const
 }
 
 //----------------------------------------------------------------------------
-std::string cmTarget::GetFrameworkDirectory(const std::string& config,
-                                            bool rootDir) const
-{
-  std::string fpath;
-  fpath += this->GetOutputName(config, false);
-  fpath += ".framework";
-  if(!rootDir)
-    {
-    fpath += "/Versions/";
-    fpath += this->GetFrameworkVersion();
-    }
-  return fpath;
-}
-
-//----------------------------------------------------------------------------
-std::string cmTarget::GetCFBundleDirectory(const std::string& config,
-                                           bool contentOnly) const
-{
-  std::string fpath;
-  fpath += this->GetOutputName(config, false);
-  fpath += ".";
-  const char *ext = this->GetProperty("BUNDLE_EXTENSION");
-  if (!ext)
-    {
-    ext = "bundle";
-    }
-  fpath += ext;
-  fpath += "/Contents";
-  if(!contentOnly)
-    fpath += "/MacOS";
-  return fpath;
-}
-
-//----------------------------------------------------------------------------
-std::string cmTarget::GetAppBundleDirectory(const std::string& config,
-                                            bool contentOnly) const
-{
-  std::string fpath = this->GetFullName(config, false);
-  fpath += ".app/Contents";
-  if(!contentOnly)
-    fpath += "/MacOS";
-  return fpath;
-}
-
-//----------------------------------------------------------------------------
 cmTargetInternalPointer::cmTargetInternalPointer()
 {
   this->Pointer = new cmTargetInternals;

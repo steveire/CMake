@@ -48,7 +48,7 @@ void cmOSXBundleGenerator::CreateAppBundle(const std::string& targetName,
   // Compute bundle directory names.
   std::string out = outpath;
   out += "/";
-  out += this->GT->Target->GetAppBundleDirectory(this->ConfigName, false);
+  out += this->GT->GetAppBundleDirectory(this->ConfigName, false);
   cmSystemTools::MakeDirectory(out.c_str());
   this->Makefile->AddCMakeOutputFile(out);
 
@@ -58,7 +58,7 @@ void cmOSXBundleGenerator::CreateAppBundle(const std::string& targetName,
   // to be set.
   std::string plist = outpath;
   plist += "/";
-  plist += this->GT->Target->GetAppBundleDirectory(this->ConfigName, true);
+  plist += this->GT->GetAppBundleDirectory(this->ConfigName, true);
   plist += "/Info.plist";
   this->LocalGenerator->GenerateAppleInfoPList(this->GT->Target,
                                                targetName,
@@ -78,11 +78,11 @@ void cmOSXBundleGenerator::CreateFramework(
 
   // Compute the location of the top-level foo.framework directory.
   std::string contentdir = outpath + "/" +
-    this->GT->Target->GetFrameworkDirectory(this->ConfigName, true);
+    this->GT->GetFrameworkDirectory(this->ConfigName, true);
   contentdir += "/";
 
   std::string newoutpath = outpath + "/" +
-    this->GT->Target->GetFrameworkDirectory(this->ConfigName, false);
+    this->GT->GetFrameworkDirectory(this->ConfigName, false);
 
   std::string frameworkVersion = this->GT->Target->GetFrameworkVersion();
 
@@ -173,14 +173,14 @@ void cmOSXBundleGenerator::CreateCFBundle(const std::string& targetName,
   // Compute bundle directory names.
   std::string out = root;
   out += "/";
-  out += this->GT->Target->GetCFBundleDirectory(this->ConfigName, false);
+  out += this->GT->GetCFBundleDirectory(this->ConfigName, false);
   cmSystemTools::MakeDirectory(out.c_str());
   this->Makefile->AddCMakeOutputFile(out);
 
   // Configure the Info.plist file.  Note that it needs the executable name
   // to be set.
   std::string plist = root + "/" +
-    this->GT->Target->GetCFBundleDirectory(this->ConfigName, true);
+    this->GT->GetCFBundleDirectory(this->ConfigName, true);
   plist += "/Info.plist";
   this->LocalGenerator->GenerateAppleInfoPList(this->GT->Target,
                                                targetName,

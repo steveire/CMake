@@ -892,6 +892,53 @@ std::string cmGeneratorTarget::GetSOName(const std::string& config) const
 }
 
 //----------------------------------------------------------------------------
+std::string cmGeneratorTarget::GetCFBundleDirectory(const std::string& config,
+                                                    bool contentOnly) const
+{
+  std::string fpath;
+  fpath += this->Target->GetOutputName(config, false);
+  fpath += ".";
+  const char *ext = this->GetProperty("BUNDLE_EXTENSION");
+  if (!ext)
+    {
+    ext = "bundle";
+    }
+  fpath += ext;
+  fpath += "/Contents";
+  if(!contentOnly)
+    fpath += "/MacOS";
+  return fpath;
+}
+
+//----------------------------------------------------------------------------
+std::string
+cmGeneratorTarget::GetAppBundleDirectory(const std::string& config,
+                                         bool contentOnly) const
+{
+  std::string fpath = this->Target->GetFullName(config, false);
+  fpath += ".app/Contents";
+  if(!contentOnly)
+    fpath += "/MacOS";
+  return fpath;
+}
+
+//----------------------------------------------------------------------------
+std::string
+cmGeneratorTarget::GetFrameworkDirectory(const std::string& config,
+                                         bool rootDir) const
+{
+  std::string fpath;
+  fpath += this->Target->GetOutputName(config, false);
+  fpath += ".framework";
+  if(!rootDir)
+    {
+    fpath += "/Versions/";
+    fpath += this->Target->GetFrameworkVersion();
+    }
+  return fpath;
+}
+
+//----------------------------------------------------------------------------
 std::string
 cmGeneratorTarget::GetInstallNameDirForBuildTree(
                                             const std::string& config) const
@@ -966,6 +1013,47 @@ void cmGeneratorTarget::GetFullNameComponents(std::string& prefix,
                                               bool implib) const
 {
   this->Target->GetFullNameInternal(config, implib, prefix, base, suffix);
+}
+
+//----------------------------------------------------------------------------
+std::string
+cmGeneratorTarget::BuildMacContentDirectory(const std::string& base,
+                                            const std::string& config,
+                                            bool contentOnly) const
+{
+  std::string fpath = base;
+  if(this->Target->IsAppBundleOnApple())
+    {
+    fpath += this->GetAppBundleDirectory(config, contentOnly);
+    }
+  if(this->Target->IsFrameworkOnApple())
+    {
+    fpath += this->GetFrameworkDirectory(config, contentOnly);
+    }
+  if(this->Target->IsCFBundleOnApple())
+    {
+    fpath += this->GetCFBundleDirectory(config, contentOnly);
+    }
+  return fpath;
+}
+
+//----------------------------------------------------------------------------
+std::string
+cmGeneratorTarget::GetMacContentDirectory(const std::string& config,
+                                          bool implib) const
+{
+  // Start with the output directory for the target.
+  std::string fpath = this->Target->GetDirectory(config, implib);
+  fpath += "/";
+  bool contentOnly = true;
+  if(this->Target->IsFrameworkOnApple())
+    {
+    // additional files with a framework go into the version specific
+    // directory
+    contentOnly = false;
+    }
+  fpath = this->BuildMacContentDirectory(fpath, config, contentOnly);
+  return fpath;
 }
 
 //----------------------------------------------------------------------------
