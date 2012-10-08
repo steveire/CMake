@@ -226,43 +226,6 @@ public:
 
   bool IsImported() const {return this->IsImportedTarget;}
 
-  /** The link interface specifies transitive library dependencies and
-      other information needed by targets that link to this target.  */
-  struct LinkInterfaceLibraries
-  {
-    // Libraries listed in the interface.
-    std::vector<cmLinkItem> Libraries;
-  };
-  struct LinkInterface: public LinkInterfaceLibraries
-  {
-    // Languages whose runtime libraries must be linked.
-    std::vector<std::string> Languages;
-
-    // Shared library dependencies needed for linking on some platforms.
-    std::vector<cmLinkItem> SharedDeps;
-
-    // Number of repetitions of a strongly connected component of two
-    // or more static libraries.
-    int Multiplicity;
-
-    // Libraries listed for other configurations.
-    // Needed only for OLD behavior of CMP0003.
-    std::vector<cmLinkItem> WrongConfigLibraries;
-
-    bool ImplementationIsInterface;
-
-    LinkInterface(): Multiplicity(0), ImplementationIsInterface(false) {}
-  };
-
-  /** Get the link interface for the given configuration.  Returns 0
-      if the target cannot be linked.  */
-  LinkInterface const* GetLinkInterface(const std::string& config,
-                                        cmTarget const* headTarget) const;
-  LinkInterfaceLibraries const*
-    GetLinkInterfaceLibraries(const std::string& config,
-                              cmTarget const* headTarget,
-                              bool usage_requirements_only) const;
-
   /** The link implementation specifies the direct library
       dependencies needed by the object files of the target.  */
   struct LinkImplementationLibraries
@@ -612,25 +575,9 @@ private:
   struct CompileInfo;
   CompileInfo const* GetCompileInfo(const std::string& config) const;
 
-
-  bool ComputeLinkInterface(const char* config, LinkInterface& iface,
-                                        cmTarget const* head) const;
-
-  LinkInterface const*
-    GetImportLinkInterface(const std::string& config, cmTarget const* head,
-                           bool usage_requirements_only) const;
-
   LinkImplementationLibraries const*
     GetLinkImplementationLibrariesInternal(const std::string& config,
                                            cmTarget const* head) const;
-
-  void ExpandLinkItems(std::string const& prop, std::string const& value,
-                       std::string const& config, cmTarget const* headTarget,
-                       bool usage_requirements_only,
-                       std::vector<cmLinkItem>& items,
-                       bool& hadHeadSensitiveCondition) const;
-  void LookupLinkItems(std::vector<std::string> const& names,
-                       std::vector<cmLinkItem>& items) const;
 
   std::string ProcessSourceItemCMP0049(const std::string& s);
 

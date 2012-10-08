@@ -737,7 +737,7 @@ cmExportFileGenerator
                     std::vector<std::string>& missingTargets)
 {
   // Add the transitive link dependencies for this configuration.
-  cmTarget::LinkInterface const* iface = target->Target->GetLinkInterface(
+  cmGeneratorTarget::LinkInterface const* iface = target->GetLinkInterface(
                                                               config,
                                                               target->Target);
   if (!iface)
@@ -850,9 +850,8 @@ cmExportFileGenerator
     }
 
   // Add the transitive link dependencies for this configuration.
-  if(cmTarget::LinkInterface const* iface =
-                            target->Target
-                                  ->GetLinkInterface(config, target->Target))
+  if(cmGeneratorTarget::LinkInterface const* iface =
+                            target->GetLinkInterface(config, target->Target))
     {
     this->SetImportLinkProperty(suffix, target,
                                 "IMPORTED_LINK_INTERFACE_LANGUAGES",

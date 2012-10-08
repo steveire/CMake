@@ -249,6 +249,81 @@ public:
    */
   void TraceDependencies();
 
+  /** The link interface specifies transitive library dependencies and
+      other information needed by targets that link to this target.  */
+  struct LinkInterfaceLibraries
+  {
+    // Libraries listed in the interface.
+    std::vector<cmLinkItem> Libraries;
+  };
+  struct LinkInterface: public LinkInterfaceLibraries
+  {
+    // Languages whose runtime libraries must be linked.
+    std::vector<std::string> Languages;
+
+    // Shared library dependencies needed for linking on some platforms.
+    std::vector<cmLinkItem> SharedDeps;
+
+    // Number of repetitions of a strongly connected component of two
+    // or more static libraries.
+    int Multiplicity;
+
+    // Libraries listed for other configurations.
+    // Needed only for OLD behavior of CMP0003.
+    std::vector<cmLinkItem> WrongConfigLibraries;
+
+    bool ImplementationIsInterface;
+
+    LinkInterface(): Multiplicity(0), ImplementationIsInterface(false) {}
+  };
+  // Cache link interface computation from each configuration.
+  struct OptionalLinkInterface: public LinkInterface
+  {
+    OptionalLinkInterface():
+      LibrariesDone(false), AllDone(false),
+      Exists(false), HadHeadSensitiveCondition(false),
+      ExplicitLibraries(0) {}
+    bool LibrariesDone;
+    bool AllDone;
+    bool Exists;
+    bool HadHeadSensitiveCondition;
+    const char* ExplicitLibraries;
+  };
+  struct HeadToLinkInterfaceMap:
+    public std::map<cmTarget const*, OptionalLinkInterface> {};
+  typedef std::map<std::string, HeadToLinkInterfaceMap>
+                                                          LinkInterfaceMapType;
+  mutable LinkInterfaceMapType LinkInterfaceMap;
+  mutable LinkInterfaceMapType LinkInterfaceUsageRequirementsOnlyMap;
+  mutable bool PolicyWarnedCMP0022;
+
+  /** Get the link interface for the given configuration.  Returns 0
+      if the target cannot be linked.  */
+  LinkInterface const* GetLinkInterface(const std::string& config,
+                                        cmTarget const*) const;
+  LinkInterfaceLibraries const* GetLinkInterfaceLibraries(const std::string& config,
+                                        cmTarget const* headTarget,
+                                    bool usage_requirements_only) const;
+  void ComputeLinkInterfaceLibraries(const std::string& config,
+                                            OptionalLinkInterface& iface,
+                                            cmTarget const* head,
+                                            bool usage_requirements_only) const;
+  LinkInterface const*
+    GetImportLinkInterface(const std::string& config, cmTarget const* head,
+                           bool usage_requirements_only) const;
+
+  void ComputeLinkInterface(const std::string& config,
+                            OptionalLinkInterface& iface,
+                            cmTarget const* head) const;
+
+  void ExpandLinkItems(std::string const& prop, std::string const& value,
+                       std::string const& config, cmTarget const* headTarget,
+                       bool usage_requirements_only,
+                       std::vector<cmLinkItem>& items,
+                       bool& hadHeadSensitiveCondition) const;
+  void LookupLinkItems(std::vector<std::string> const& names,
+                       std::vector<cmLinkItem>& items) const;
+
   /** Get sources that must be built before the given source.  */
   std::vector<cmSourceFile*> const*
   GetSourceDepends(cmSourceFile const* sf) const;
