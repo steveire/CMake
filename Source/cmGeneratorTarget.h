@@ -226,6 +226,12 @@ public:
 
   cmMakefile* GetMakefile() const;
 
+  /** Whether this library has \@rpath and platform supports it.  */
+  bool HasMacOSXRpathInstallNameDir(const std::string& config) const;
+
+  /** Whether this library defaults to \@rpath.  */
+  bool MacOSXRpathInstallNameDirDefault() const;
+
   void GetAppleArchs(const std::string& config,
                      std::vector<std::string>& archVec) const;
 
