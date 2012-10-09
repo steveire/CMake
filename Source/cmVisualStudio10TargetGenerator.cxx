@@ -2252,7 +2252,8 @@ cmVisualStudio10TargetGenerator::ComputeLinkOptions(std::string const& config)
     }
   else
     {
-    this->Target->GetLibraryNames(targetName, targetNameSO, targetNameFull,
+    this->GeneratorTarget->GetLibraryNames(targetName, targetNameSO,
+                                  targetNameFull,
                                   targetNameImport, targetNamePDB,
                                   config.c_str());
     }

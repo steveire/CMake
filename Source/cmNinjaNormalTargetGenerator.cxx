@@ -47,7 +47,7 @@ cmNinjaNormalTargetGenerator(cmGeneratorTarget* target)
                                this->TargetNamePDB,
                                GetLocalGenerator()->GetConfigName());
   else
-    target->Target->GetLibraryNames(this->TargetNameOut,
+    this->GetGeneratorTarget()->GetLibraryNames(this->TargetNameOut,
                             this->TargetNameSO,
                             this->TargetNameReal,
                             this->TargetNameImport,
