@@ -2246,7 +2246,7 @@ cmVisualStudio10TargetGenerator::ComputeLinkOptions(std::string const& config)
   std::string targetNamePDB;
   if(this->Target->GetType() == cmTarget::EXECUTABLE)
     {
-    this->Target->GetExecutableNames(targetName, targetNameFull,
+    this->GeneratorTarget->GetExecutableNames(targetName, targetNameFull,
                                      targetNameImport, targetNamePDB,
                                      config.c_str());
     }
