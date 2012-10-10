@@ -21,6 +21,7 @@ class cmGlobalGenerator;
 class cmLocalGenerator;
 class cmMakefile;
 class cmTarget;
+class cmGeneratorTarget;
 class cmOrderDirectories;
 
 /** \class cmComputeLinkInformation
