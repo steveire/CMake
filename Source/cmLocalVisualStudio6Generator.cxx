@@ -742,7 +742,7 @@ void cmLocalVisualStudio6Generator::SetBuildType(BuildType b,
       this->DSPFooterTemplate += "/DLLFooter.dsptemplate";
       break;
     case EXECUTABLE:
-      if ( target.GetPropertyAsBool("WIN32_EXECUTABLE") )
+      if ( target.GetLinkInterfaceDependentBoolProperty("WIN32_EXECUTABLE", 0) ) // ### config ?
         {
         this->DSPHeaderTemplate = root;
         this->DSPHeaderTemplate += "/EXEWinHeader.dsptemplate";

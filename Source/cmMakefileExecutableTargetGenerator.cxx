@@ -195,8 +195,8 @@ void cmMakefileExecutableTargetGenerator::WriteExecutableRule(bool relink)
     AddConfigVariableFlags(linkFlags, "CMAKE_EXE_LINKER_FLAGS",
                            this->ConfigName);
 
-
-  if(this->Target->GetPropertyAsBool("WIN32_EXECUTABLE"))
+  if(this->Target->GetLinkInterfaceDependentBoolProperty("WIN32_EXECUTABLE",
+                                                         this->ConfigName))
     {
     this->LocalGenerator->AppendFlags
       (linkFlags, this->Makefile->GetDefinition("CMAKE_CREATE_WIN32_EXE"));

@@ -2486,6 +2486,9 @@ cmVisualStudio10TargetGenerator::ComputeLinkOptions(std::string const& config)
     {
     linkOptions.AddFlag("Version", "");
 
+  if (this->Target->GetLinkInterfaceDependentBoolProperty("WIN32_EXECUTABLE",
+                                                           config) )
+    {
     if ( this->Target->GetPropertyAsBool("WIN32_EXECUTABLE") )
       {
       if (this->GlobalGenerator->TargetsWindowsCE())
