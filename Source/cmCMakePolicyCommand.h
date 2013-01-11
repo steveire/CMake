@@ -52,6 +52,7 @@ public:
 private:
   bool HandleSetMode(std::vector<std::string> const& args);
   bool HandleGetMode(std::vector<std::string> const& args);
+  bool HandleWarningMode(std::vector<std::string> const& args);
   bool HandleVersionMode(std::vector<std::string> const& args);
 };
 
