@@ -33,4 +33,12 @@
   #endif
 #endif
 
+#ifndef LIST1
+#error Expected LIST1
+#endif
+
+#ifndef LIST2
+#error Expected LIST2
+#endif
+
 int main() { return 0; }

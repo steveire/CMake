@@ -4,6 +4,10 @@
 #include "interfaceinclude.h"
 #include "relative_dir.h"
 #include "consumer.h"
+#include "list1.h"
+#include "list2.h"
+#include "list3.h"
+#include "list4.h"
 #ifdef TEST_LANG_DEFINES
   #include "cxx_only.h"
 #endif
@@ -37,5 +41,22 @@
   #error Expected CXX_ONLY_DEFINE
   #endif
 #endif
+
+#ifndef LIST1_DEFINE
+#error Expected LIST1_DEFINE
+#endif
+
+#ifndef LIST2_DEFINE
+#error Expected LIST2_DEFINE
+#endif
+
+#ifndef LIST3_DEFINE
+#error Expected LIST3_DEFINE
+#endif
+
+#ifndef LIST4_DEFINE
+#error Expected LIST4_DEFINE
+#endif
+
 
 int main() { return 0; }

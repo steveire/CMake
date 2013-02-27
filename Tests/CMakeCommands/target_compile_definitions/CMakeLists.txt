@@ -18,6 +18,7 @@ add_executable(consumer
 
 target_compile_definitions(consumer
   PRIVATE $<TARGET_PROPERTY:target_compile_definitions,INTERFACE_COMPILE_DEFINITIONS>
+  $<1:LIST1;LIST2>
   -DDASH_D_DEFINE
 )
 

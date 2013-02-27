@@ -3501,7 +3501,7 @@ bool cmMakefile::ExpandArguments(
       }
     else
       {
-      cmSystemTools::ExpandListArgument(value, outArgs);
+      cmGeneratorExpression::Split(value, outArgs);
       }
     }
   return !cmSystemTools::GetFatalErrorOccured();

@@ -17,6 +17,18 @@ file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/poison/common.h" "#error Should not be i
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/cure")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/cure/common.h" "#define CURE_DEFINE\n")
 
+file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/list1")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/list1/list1.h" "#define LIST1_DEFINE\n")
+
+file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/list2")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/list2/list2.h" "#define LIST2_DEFINE\n")
+
+file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/list3")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/list3/list3.h" "#define LIST3_DEFINE\n")
+
+file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/list4")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/list4/list4.h" "#define LIST4_DEFINE\n")
+
 add_executable(target_include_directories
   "${CMAKE_CURRENT_SOURCE_DIR}/main.cpp"
 )
@@ -41,6 +53,7 @@ target_include_directories(target_include_directories
 add_executable(consumer
   "${CMAKE_CURRENT_SOURCE_DIR}/consumer.cpp"
 )
+set_property(TARGET consumer PROPERTY INCLUDES_PROPERTY_HACK "${CMAKE_CURRENT_BINARY_DIR}/list1;${CMAKE_CURRENT_BINARY_DIR}/list2")
 
 if (CMAKE_GENERATOR MATCHES "Makefiles" OR CMAKE_GENERATOR MATCHES "Ninja")
   target_sources(consumer PRIVATE
@@ -59,6 +72,8 @@ endif()
 target_include_directories(consumer
   PRIVATE
     $<TARGET_PROPERTY:target_include_directories,INTERFACE_INCLUDE_DIRECTORIES>
+    $<1:$<TARGET_PROPERTY:consumer,INCLUDES_PROPERTY_HACK>>
+    $<1:${CMAKE_CURRENT_BINARY_DIR}/list3;${CMAKE_CURRENT_BINARY_DIR}/list4>
     relative_dir
     relative_dir/$<TARGET_PROPERTY:NAME>
 )
