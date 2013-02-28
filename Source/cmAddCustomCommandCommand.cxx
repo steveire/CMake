@@ -12,13 +12,54 @@
 #include "cmAddCustomCommandCommand.h"
 
 #include "cmTarget.h"
+#include "cmGeneratorExpression.h"
 
 #include "cmSourceFile.h"
 
+bool cmAddCustomCommandCommand::ExpandArgs(std::vector<cmListFileArgument> const& inArgs,
+                std::vector<cmCustomCommandLineArgument> &outArgs)
+{
+  std::vector<cmListFileArgument>::const_iterator i;
+  cmCustomCommandLineArgument value;
+  outArgs.reserve(inArgs.size());
+  for(i = inArgs.begin(); i != inArgs.end(); ++i)
+    {
+    // Expand the variables in the argument.
+    value = cmCustomCommandLineArgument(i->Value, i->Quoted);
+    this->Makefile->ExpandVariablesInString(value.Value, false, false, false,
+                                  i->FilePath, i->Line,
+                                  false, true);
+
+    // If the argument is quoted, it should be one argument.
+    // Otherwise, it may be a list of arguments.
+    if(i->Quoted)
+      {
+      outArgs.push_back(value);
+      }
+    else
+      {
+      std::vector<std::string> splitted;
+      cmGeneratorExpression::Split(value.Value, splitted);
+      for(std::vector<std::string>::iterator li = splitted.begin();
+          li != splitted.end(); ++li)
+        {
+        outArgs.push_back(*li);
+        }
+      }
+    }
+  return !cmSystemTools::GetFatalErrorOccured();
+}
+
 // cmAddCustomCommandCommand
 bool cmAddCustomCommandCommand
-::InitialPass(std::vector<std::string> const& args, cmExecutionStatus &)
+::InvokeInitialPass(std::vector<cmListFileArgument> const& args_,
+                    cmExecutionStatus &)
 {
+  std::vector<cmCustomCommandLineArgument> args;
+  if (!this->ExpandArgs(args_, args))
+    {
+    return false;
+    }
   /* Let's complain at the end of this function about the lack of a particular
      arg. For the moment, let's say that COMMAND, and either TARGET or SOURCE
      are required.
@@ -67,7 +108,7 @@ bool cmAddCustomCommandCommand
 
   for (unsigned int j = 0; j < args.size(); ++j)
     {
-    std::string const& copy = args[j];
+    std::string const& copy = args[j].Value;
 
     if(copy == "SOURCE")
       {
@@ -224,7 +265,7 @@ bool cmAddCustomCommandCommand
            }
            break;
          case doing_command:
-           currentLine.push_back(copy);
+           currentLine.push_back(args[j]);
            break;
          case doing_target:
            target = copy;

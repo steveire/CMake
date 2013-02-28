@@ -11,14 +11,18 @@
 ============================================================================*/
 #include "cmAddCustomTargetCommand.h"
 
-#include "cmGeneratorExpression.h"
-#include "cmGlobalGenerator.h"
+(??)
 
 // cmAddCustomTargetCommand
 bool cmAddCustomTargetCommand
-::InitialPass(std::vector<std::string> const& args,
+::InvokeInitialPass(std::vector<cmListFileArgument> const& args_,
               cmExecutionStatus&)
 {
+  std::vector<cmCustomCommandLineArgument> args;
+  if (!this->ExpandArgs(args_, args))
+    {
+    return false;
+    }
   if(args.size() < 1 )
     {
     this->SetError("called with incorrect number of arguments");
@@ -70,7 +74,7 @@ bool cmAddCustomTargetCommand
   unsigned int start = 1;
   if(args.size() > 1)
     {
-    if(args[1] == "ALL")
+    if(args[1].Value == "ALL")
       {
       excludeFromAll = false;
       start = 2;
@@ -80,7 +84,7 @@ bool cmAddCustomTargetCommand
   // Parse the rest of the arguments.
   for(unsigned int j = start; j < args.size(); ++j)
     {
-    std::string const& copy = args[j];
+    std::string const& copy = args[j].Value;
 
     if(copy == "DEPENDS")
       {
@@ -131,7 +135,7 @@ bool cmAddCustomTargetCommand
           working_directory = copy;
           break;
         case doing_command:
-          currentLine.push_back(copy);
+          currentLine.push_back(args[j]);
           break;
         case doing_byproducts:
           {

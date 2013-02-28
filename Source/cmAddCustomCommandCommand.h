@@ -35,8 +35,13 @@ public:
    * This is called when the command is first encountered in
    * the CMakeLists.txt file.
    */
-  virtual bool InitialPass(std::vector<std::string> const& args,
+  virtual bool InvokeInitialPass(std::vector<cmListFileArgument> const& args,
                            cmExecutionStatus &status);
+  virtual bool InitialPass(std::vector<std::string> const&,
+                           cmExecutionStatus &) { return false; }
+
+  bool ExpandArgs(std::vector<cmListFileArgument> const& inArgs,
+                  std::vector<cmCustomCommandLineArgument> &outArgs);
 
   /**
    * The name of the command as specified in CMakeList.txt.
