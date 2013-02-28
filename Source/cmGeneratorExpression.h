@@ -124,6 +124,11 @@ public:
     return this->SourceSensitiveTargets;
   }
 
+  bool GetNeedsEvaluation() const
+  {
+    return this->NeedsEvaluation;
+  }
+
   void SetEvaluateForBuildsystem(bool eval)
   {
     this->EvaluateForBuildsystem = eval;
