@@ -91,18 +91,32 @@ cmCustomCommandGenerator
   cmCustomCommandLine const& commandLine = this->CC.GetCommandLines()[c];
   for(unsigned int j=1;j < commandLine.size(); ++j)
     {
-    std::string arg =
-        this->GE->Parse(commandLine[j].Value)->Evaluate(this->LG->GetMakefile(),
-                                                  this->Config);
-    cmd += " ";
-    if(this->OldStyle)
+    cmCustomCommandLineArgument clarg = commandLine[j];
+    const cmsys::auto_ptr<cmCompiledGeneratorExpression>
+                                  cge = this->GE->Parse(clarg.Value);
+    std::string arg = cge->Evaluate(this->Makefile, this->Config);
+    std::vector<std::string> args;
+    if (!clarg.Quoted && !arg.empty())
       {
-      cmd += escapeForShellOldStyle(arg);
+      cmSystemTools::ExpandListArgument(arg, args);
       }
     else
       {
-      cmOutputConverter converter(this->LG->GetMakefile()->GetStateSnapshot());
-      cmd += converter.EscapeForShell(arg, this->MakeVars);
+      args.push_back(arg);
+      }
+    for(std::vector<std::string>::const_iterator
+          li = args.begin(); li != args.end(); ++li)
+      {
+      cmd += " ";
+      if(this->OldStyle)
+        {
+        cmd += this->LG->EscapeForShellOldStyle(li->c_str());
+        }
+      else
+        {
+        cmOutputConverter converter(this->LG->GetMakefile()->GetStateSnapshot());
+        cmd += converter.EscapeForShell(arg, this->MakeVars);
+        }
       }
     }
 }

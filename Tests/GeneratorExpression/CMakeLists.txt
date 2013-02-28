@@ -65,6 +65,8 @@ add_custom_target(check-part1 ALL
     -Dtest_colons_3=$<1:Qt5::Core>
     -Dtest_colons_4=$<1:C:\\CMake>
     -Dtest_colons_5=$<1:C:/CMake>
+    # The contents are expanded to be a standalone argument:
+    -Dtest_list_1=$<1:ONE;-Dtest_list_1_nested=TWO>
     -P ${CMAKE_CURRENT_SOURCE_DIR}/check-part1.cmake
   COMMAND ${CMAKE_COMMAND} -E echo "check done (part 1 of 3)"
   VERBATIM
