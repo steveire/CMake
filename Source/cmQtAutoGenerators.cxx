@@ -321,11 +321,11 @@ bool cmQtAutoGenerators::InitializeAutogenTarget(cmLocalGenerator* lg,
   std::string targetDir = getAutogenTargetDir(target);
 
   cmCustomCommandLine currentLine;
-  currentLine.push_back(cmSystemTools::GetCMakeCommand());
-  currentLine.push_back("-E");
-  currentLine.push_back("cmake_autogen");
-  currentLine.push_back(targetDir);
-  currentLine.push_back("$<CONFIGURATION>");
+  currentLine.push_back(cmCustomCommandLineArgument(cmSystemTools::GetCMakeCommand());
+  currentLine.push_back(cmCustomCommandLineArgument("-E"));
+  currentLine.push_back(cmCustomCommandLineArgument("cmake_autogen"));
+  currentLine.push_back(cmCustomCommandLineArgument(targetDir));
+  currentLine.push_back(cmCustomCommandLineArgument("$<CONFIGURATION>"));
 
   cmCustomCommandLines commandLines;
   commandLines.push_back(currentLine);

@@ -2215,13 +2215,13 @@ void cmGlobalGenerator::CreateDefaultGlobalTargets(cmTargets* targets)
   cmCustomCommandLines cpackCommandLines;
   std::vector<std::string> depends;
   cmCustomCommandLine singleLine;
-  singleLine.push_back(cmSystemTools::GetCPackCommand());
+  singleLine.push_back(cmCustomCommandLineArgument(cmSystemTools::GetCPackCommand()));
   if ( cmakeCfgIntDir && *cmakeCfgIntDir && cmakeCfgIntDir[0] != '.' )
     {
-    singleLine.push_back("-C");
-    singleLine.push_back(cmakeCfgIntDir);
+    singleLine.push_back(cmCustomCommandLineArgument("-C"));
+    singleLine.push_back(cmCustomCommandLineArgument(cmakeCfgIntDir));
     }
-  singleLine.push_back("--config");
+  singleLine.push_back(cmCustomCommandLineArgument("--config"));
   std::string configFile = mf->GetCurrentBinaryDirectory();;
   configFile += "/CPackConfig.cmake";
   std::string relConfigFile = "./CPackConfig.cmake";
@@ -2256,8 +2256,8 @@ void cmGlobalGenerator::CreateDefaultGlobalTargets(cmTargets* targets)
                             cpackCommandLines.end());
     singleLine.erase(singleLine.begin(), singleLine.end());
     depends.erase(depends.begin(), depends.end());
-    singleLine.push_back(cmSystemTools::GetCPackCommand());
-    singleLine.push_back("--config");
+    singleLine.push_back(cmCustomCommandLineArgument(cmSystemTools::GetCPackCommand()));
+    singleLine.push_back(cmCustomCommandLineArgument("--config"));
     configFile = mf->GetCurrentBinaryDirectory();;
     configFile += "/CPackSourceConfig.cmake";
     relConfigFile = "./CPackSourceConfig.cmake";
@@ -2281,16 +2281,16 @@ void cmGlobalGenerator::CreateDefaultGlobalTargets(cmTargets* targets)
                             cpackCommandLines.end());
     singleLine.erase(singleLine.begin(), singleLine.end());
     depends.erase(depends.begin(), depends.end());
-    singleLine.push_back(cmSystemTools::GetCTestCommand());
-    singleLine.push_back("--force-new-ctest-process");
+    singleLine.push_back(cmCustomCommandLineArgument(cmSystemTools::GetCTestCommand()));
+    singleLine.push_back(cmCustomCommandLineArgument("--force-new-ctest-process"));
     if(cmakeCfgIntDir && *cmakeCfgIntDir && cmakeCfgIntDir[0] != '.')
       {
-      singleLine.push_back("-C");
-      singleLine.push_back(cmakeCfgIntDir);
+      singleLine.push_back(cmCustomCommandLineArgument("-C"));
+      singleLine.push_back(cmCustomCommandLineArgument(cmakeCfgIntDir));
       }
     else // TODO: This is a hack. Should be something to do with the generator
       {
-      singleLine.push_back("$(ARGS)");
+      singleLine.push_back(cmCustomCommandLineArgument("$(ARGS)"));
       }
     cpackCommandLines.push_back(singleLine);
     (*targets)[this->GetTestTargetName()]
@@ -2312,9 +2312,9 @@ void cmGlobalGenerator::CreateDefaultGlobalTargets(cmTargets* targets)
     std::string edit_cmd = this->GetEditCacheCommand();
     if (!edit_cmd.empty())
       {
-      singleLine.push_back(edit_cmd);
-      singleLine.push_back("-H$(CMAKE_SOURCE_DIR)");
-      singleLine.push_back("-B$(CMAKE_BINARY_DIR)");
+      singleLine.push_back(cmCustomCommandLineArgument(edit_cmd));
+      singleLine.push_back(cmCustomCommandLineArgument("-H$(CMAKE_SOURCE_DIR)"));
+      singleLine.push_back(cmCustomCommandLineArgument("-B$(CMAKE_BINARY_DIR)"));
       cpackCommandLines.push_back(singleLine);
       (*targets)[editCacheTargetName] =
         this->CreateGlobalTarget(
@@ -2323,10 +2323,10 @@ void cmGlobalGenerator::CreateDefaultGlobalTargets(cmTargets* targets)
       }
     else
       {
-      singleLine.push_back(cmSystemTools::GetCMakeCommand());
-      singleLine.push_back("-E");
-      singleLine.push_back("echo");
-      singleLine.push_back("No interactive CMake dialog available.");
+      singleLine.push_back(cmCustomCommandLineArgument(cmSystemTools::GetCMakeCommand()));
+      singleLine.push_back(cmCustomCommandLineArgument("-E"));
+      singleLine.push_back(cmCustomCommandLineArgument("echo"));
+      singleLine.push_back(cmCustomCommandLineArgument("No interactive CMake dialog available."));
       cpackCommandLines.push_back(singleLine);
       (*targets)[editCacheTargetName] =
         this->CreateGlobalTarget(
@@ -2344,9 +2344,9 @@ void cmGlobalGenerator::CreateDefaultGlobalTargets(cmTargets* targets)
                             cpackCommandLines.end());
     singleLine.erase(singleLine.begin(), singleLine.end());
     depends.erase(depends.begin(), depends.end());
-    singleLine.push_back(cmSystemTools::GetCMakeCommand());
-    singleLine.push_back("-H$(CMAKE_SOURCE_DIR)");
-    singleLine.push_back("-B$(CMAKE_BINARY_DIR)");
+    singleLine.push_back(cmCustomCommandLineArgument(cmSystemTools::GetCMakeCommand()));
+    singleLine.push_back(cmCustomCommandLineArgument("-H$(CMAKE_SOURCE_DIR)"));
+    singleLine.push_back(cmCustomCommandLineArgument("-B$(CMAKE_BINARY_DIR)"));
     cpackCommandLines.push_back(singleLine);
     (*targets)[rebuildCacheTargetName] =
       this->CreateGlobalTarget(
@@ -2380,7 +2380,7 @@ void cmGlobalGenerator::CreateDefaultGlobalTargets(cmTargets* targets)
         {
         ostr << "Only default component available";
         }
-      singleLine.push_back(ostr.str());
+      singleLine.push_back(cmCustomCommandLineArgument(ostr.str()));
       (*targets)["list_install_components"]
         = this->CreateGlobalTarget("list_install_components",
           ostr.str().c_str(),
@@ -2419,8 +2419,8 @@ void cmGlobalGenerator::CreateDefaultGlobalTargets(cmTargets* targets)
       cfgArg += mf->GetDefinition("CMAKE_CFG_INTDIR");
       singleLine.push_back(cfgArg);
       }
-    singleLine.push_back("-P");
-    singleLine.push_back("cmake_install.cmake");
+    singleLine.push_back(cmCustomCommandLineArgument("-P"));
+    singleLine.push_back(cmCustomCommandLineArgument("cmake_install.cmake"));
     cpackCommandLines.push_back(singleLine);
     (*targets)[this->GetInstallTargetName()] =
       this->CreateGlobalTarget(
@@ -2433,7 +2433,7 @@ void cmGlobalGenerator::CreateDefaultGlobalTargets(cmTargets* targets)
       cmCustomCommandLine localCmdLine = singleLine;
 
       localCmdLine.insert(localCmdLine.begin()+1,
-                                               "-DCMAKE_INSTALL_LOCAL_ONLY=1");
+                cmCustomCommandLineArgument("-DCMAKE_INSTALL_LOCAL_ONLY=1"));
       cpackCommandLines.erase(cpackCommandLines.begin(),
                                                       cpackCommandLines.end());
       cpackCommandLines.push_back(localCmdLine);
@@ -2450,7 +2450,8 @@ void cmGlobalGenerator::CreateDefaultGlobalTargets(cmTargets* targets)
       {
       cmCustomCommandLine stripCmdLine = singleLine;
 
-      stripCmdLine.insert(stripCmdLine.begin()+1,"-DCMAKE_INSTALL_DO_STRIP=1");
+      stripCmdLine.insert(stripCmdLine.begin()+1,
+                  cmCustomCommandLineArgument("-DCMAKE_INSTALL_DO_STRIP=1"));
       cpackCommandLines.erase(cpackCommandLines.begin(),
         cpackCommandLines.end());
       cpackCommandLines.push_back(stripCmdLine);

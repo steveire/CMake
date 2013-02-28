@@ -97,26 +97,26 @@ bool cmQTWrapUICommand::InitialPass(std::vector<std::string> const& args,
 
       // set up .ui to .h and .cxx command
       cmCustomCommandLine hCommand;
-      hCommand.push_back(uic_exe);
-      hCommand.push_back("-o");
-      hCommand.push_back(hName);
-      hCommand.push_back(uiName);
+      hCommand.push_back(cmCustomCommandLineArgument(uic_exe));
+      hCommand.push_back(cmCustomCommandLineArgument("-o"));
+      hCommand.push_back(cmCustomCommandLineArgument(hName));
+      hCommand.push_back(cmCustomCommandLineArgument(uiName));
       cmCustomCommandLines hCommandLines;
       hCommandLines.push_back(hCommand);
 
       cmCustomCommandLine cxxCommand;
-      cxxCommand.push_back(uic_exe);
-      cxxCommand.push_back("-impl");
+      cxxCommand.push_back(cmCustomCommandLineArgument(uic_exe));
+      cxxCommand.push_back(cmCustomCommandLineArgument("-impl"));
       cxxCommand.push_back(hName);
-      cxxCommand.push_back("-o");
+      cxxCommand.push_back(cmCustomCommandLineArgument("-o"));
       cxxCommand.push_back(cxxName);
       cxxCommand.push_back(uiName);
       cmCustomCommandLines cxxCommandLines;
       cxxCommandLines.push_back(cxxCommand);
 
       cmCustomCommandLine mocCommand;
-      mocCommand.push_back(moc_exe);
-      mocCommand.push_back("-o");
+      mocCommand.push_back(cmCustomCommandLineArgument(moc_exe));
+      mocCommand.push_back(cmCustomCommandLineArgument("-o"));
       mocCommand.push_back(mocName);
       mocCommand.push_back(hName);
       cmCustomCommandLines mocCommandLines;

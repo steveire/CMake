@@ -214,12 +214,13 @@ void CCONV cmAddUtilityCommand(void *arg, const char* utilityName,
   // Construct the command line for the command.
   cmCustomCommandLine commandLine;
   std::string expand = command;
-  commandLine.push_back(mf->ExpandVariablesInString(expand));
+  commandLine.push_back(cmCustomCommandLineArgument(mf->ExpandVariablesInString(expand)));
   if(arguments && arguments[0])
     {
     // TODO: Parse arguments!
     expand = arguments;
-    commandLine.push_back(mf->ExpandVariablesInString(expand));
+    commandLine.push_back(
+            cmCustomCommandLineArgument(mf->ExpandVariablesInString(expand)));
     }
   cmCustomCommandLines commandLines;
   commandLines.push_back(commandLine);
@@ -250,11 +251,13 @@ void CCONV cmAddCustomCommand(void *arg, const char* source,
   // Construct the command line for the command.
   cmCustomCommandLine commandLine;
   std::string expand = command;
-  commandLine.push_back(mf->ExpandVariablesInString(expand));
+  commandLine.push_back(
+            cmCustomCommandLineArgument(mf->ExpandVariablesInString(expand)));
   for(int i=0; i < numArgs; ++i)
     {
     expand = args[i];
-    commandLine.push_back(mf->ExpandVariablesInString(expand));
+    commandLine.push_back(
+            cmCustomCommandLineArgument(mf->ExpandVariablesInString(expand)));
     }
   cmCustomCommandLines commandLines;
   commandLines.push_back(commandLine);
@@ -294,11 +297,13 @@ void CCONV cmAddCustomCommandToOutput(void *arg, const char* output,
   // Construct the command line for the command.
   cmCustomCommandLine commandLine;
   std::string expand = command;
-  commandLine.push_back(mf->ExpandVariablesInString(expand));
+  commandLine.push_back(
+            cmCustomCommandLineArgument(mf->ExpandVariablesInString(expand)));
   for(int i=0; i < numArgs; ++i)
     {
     expand = args[i];
-    commandLine.push_back(mf->ExpandVariablesInString(expand));
+    commandLine.push_back(
+            cmCustomCommandLineArgument(mf->ExpandVariablesInString(expand)));
     }
   cmCustomCommandLines commandLines;
   commandLines.push_back(commandLine);
@@ -330,11 +335,13 @@ void CCONV cmAddCustomCommandToTarget(void *arg, const char* target,
   // variable expansion now because the API caller expects it.
   cmCustomCommandLine commandLine;
   std::string expand = command;
-  commandLine.push_back(mf->ExpandVariablesInString(expand));
+  commandLine.push_back(
+            cmCustomCommandLineArgument(mf->ExpandVariablesInString(expand)));
   for(int i=0; i < numArgs; ++i)
     {
     expand = args[i];
-    commandLine.push_back(mf->ExpandVariablesInString(expand));
+    commandLine.push_back(
+            cmCustomCommandLineArgument(mf->ExpandVariablesInString(expand)));
     }
   cmCustomCommandLines commandLines;
   commandLines.push_back(commandLine);

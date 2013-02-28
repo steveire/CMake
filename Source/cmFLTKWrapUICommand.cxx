@@ -64,11 +64,11 @@ bool cmFLTKWrapUICommand
       cxxres += ".cxx";
 
       cmCustomCommandLine commandLine;
-      commandLine.push_back(fluid_exe);
-      commandLine.push_back("-c"); // instructs Fluid to run in command line
-      commandLine.push_back("-h"); // optionally rename .h files
+      commandLine.push_back(cmCustomCommandLineArgument(fluid_exe));
+      commandLine.push_back(cmCustomCommandLineArgument("-c")); // instructs Fluid to run in command line
+      commandLine.push_back(cmCustomCommandLineArgument("-h")); // optionally rename .h files
       commandLine.push_back(hname);
-      commandLine.push_back("-o"); // optionally rename .cxx files
+      commandLine.push_back(cmCustomCommandLineArgument("-o")); // optionally rename .cxx files
       commandLine.push_back(cxxres);
       commandLine.push_back(origname);// name of the GUI fluid file
       cmCustomCommandLines commandLines;

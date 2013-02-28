@@ -970,10 +970,11 @@ cmMakefile::AddCustomCommandToOutput(const std::vector<std::string>& outputs,
       i != commandLines.end(); ++i)
     {
     cmCustomCommandLine const& cl = *i;
-    if(!cl.empty() && !cl[0].empty() && cl[0][0] == '"')
+    if(!cl.empty() && !cl[0].Value.empty() && cl[0].Value[0] == '"')
       {
       std::ostringstream e;
-      e << "COMMAND may not contain literal quotes:\n  " << cl[0] << "\n";
+        e << "COMMAND may not contain literal quotes:\n  "
+          << cl[0].Value << "\n";
       this->IssueMessage(cmake::FATAL_ERROR, e.str());
       return 0;
       }
@@ -1218,22 +1219,22 @@ cmMakefile::AddUtilityCommand(const std::string& utilityName,
 {
   // Construct the command line for the custom command.
   cmCustomCommandLine commandLine;
-  commandLine.push_back(command);
+  commandLine.push_back(cmCustomCommandLineArgument(command));
   if(arg1)
     {
-    commandLine.push_back(arg1);
+    commandLine.push_back(cmCustomCommandLineArgument(arg1));
     }
   if(arg2)
     {
-    commandLine.push_back(arg2);
+    commandLine.push_back(cmCustomCommandLineArgument(arg2));
     }
   if(arg3)
     {
-    commandLine.push_back(arg3);
+    commandLine.push_back(cmCustomCommandLineArgument(arg3));
     }
   if(arg4)
     {
-    commandLine.push_back(arg4);
+    commandLine.push_back(cmCustomCommandLineArgument(arg4));
     }
   cmCustomCommandLines commandLines;
   commandLines.push_back(commandLine);

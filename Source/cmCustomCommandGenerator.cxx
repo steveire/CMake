@@ -43,14 +43,14 @@ std::string cmCustomCommandGenerator::GetCommand(unsigned int c) const
 {
   std::string const& argv0 = this->CC.GetCommandLines()[c][0];
   cmGeneratorTarget* target =
-      this->LG->GetMakefile()->FindGeneratorTargetToUse(argv0);
+      this->LG->GetMakefile()->FindGeneratorTargetToUse(argv0.Value);
   if(target && target->GetType() == cmTarget::EXECUTABLE &&
      (target->Target->IsImported()
       || !this->LG->GetMakefile()->IsOn("CMAKE_CROSSCOMPILING")))
     {
     return target->GetLocation(this->Config);
     }
-  return this->GE->Parse(argv0)->Evaluate(this->LG->GetMakefile(),
+  return this->GE->Parse(argv0.Value)->Evaluate(this->LG->GetMakefile(),
                                           this->Config);
 }
 
@@ -92,7 +92,7 @@ cmCustomCommandGenerator
   for(unsigned int j=1;j < commandLine.size(); ++j)
     {
     std::string arg =
-        this->GE->Parse(commandLine[j])->Evaluate(this->LG->GetMakefile(),
+        this->GE->Parse(commandLine[j].Value)->Evaluate(this->LG->GetMakefile(),
                                                   this->Config);
     cmd += " ";
     if(this->OldStyle)

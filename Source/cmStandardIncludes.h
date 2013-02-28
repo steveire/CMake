@@ -86,11 +86,28 @@ struct cmDocumentationEntry
   { if (n) this->Name = n; if (b) this->Brief = b; }
 };
 
-/** Data structure to represent a single command line.  */
-class cmCustomCommandLine: public std::vector<std::string>
+class cmCustomCommandLineArgument
 {
 public:
-  typedef std::vector<std::string> Superclass;
+  cmCustomCommandLineArgument() : Quoted(false) { }
+  /* implicit */ cmCustomCommandLineArgument(const std::string &value,
+                                             bool quoted = false)
+    : Value(value), Quoted(quoted) { }
+
+  bool operator==(const cmCustomCommandLineArgument &other) const
+  {
+    return this->Value == other.Value;
+  }
+
+  std::string Value;
+  bool Quoted;
+};
+
+/** Data structure to represent a single command line.  */
+class cmCustomCommandLine: public std::vector<cmCustomCommandLineArgument>
+{
+public:
+  typedef std::vector<cmCustomCommandLineArgument> Superclass;
   typedef Superclass::iterator iterator;
   typedef Superclass::const_iterator const_iterator;
 };

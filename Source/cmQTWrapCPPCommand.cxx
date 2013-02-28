@@ -81,8 +81,8 @@ bool cmQTWrapCPPCommand::InitialPass(std::vector<std::string> const& args,
 
       // Create the custom command to generate the file.
       cmCustomCommandLine commandLine;
-      commandLine.push_back(moc_exe);
-      commandLine.push_back("-o");
+      commandLine.push_back(cmCustomCommandLineArgument(moc_exe));
+      commandLine.push_back(cmCustomCommandLineArgument("-o"));
       commandLine.push_back(newName);
       commandLine.push_back(hname);
 
