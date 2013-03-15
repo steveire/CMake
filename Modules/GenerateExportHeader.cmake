@@ -3,6 +3,7 @@
 # --------------------
 #
 # Function for generation of export macros for libraries
+See 707f3187876b1d26b99417b638640fbc1883cd24 in libcxx for clang type visibility.
 #
 # This module provides the function GENERATE_EXPORT_HEADER().
 #
