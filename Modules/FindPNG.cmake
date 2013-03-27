@@ -123,3 +123,14 @@ find_package_handle_standard_args(PNG
                                   VERSION_VAR PNG_VERSION_STRING)
 
 mark_as_advanced(PNG_PNG_INCLUDE_DIR PNG_LIBRARY )
+
+if(PNG_FOUND)
+  if (NOT TARGET CMake::PNG)
+    add_library(CMake::PNG SHARED IMPORTED)
+    set_target_properties(CMake::PNG PROPERTIES
+      IMPORTED_LOCATION ${PNG_LIBRARY}
+      INTERFACE_INCLUDE_DIRECTORIES ${PNG_PNG_INCLUDE_DIR}
+      IMPORTED_LINK_INTERFACE_LIBRARIES CMake::ZLib
+    )
+  endif()
+endif()
