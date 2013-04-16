@@ -596,6 +596,7 @@ public:
    * cache is then queried.
    */
   const char* GetDefinition(const char*) const;
+  const char* GetDefinitionImpl(const char*) const;
   const char* GetSafeDefinition(const char*) const;
   const char* GetRequiredDefinition(const char* name) const;
   bool IsDefinitionSet(const char*) const;

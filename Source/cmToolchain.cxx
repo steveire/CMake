@@ -10,7 +10,7 @@ cmToolchain::cmToolchain(cmMakefile const *mf)
 
 const char *cmToolchain::GetDefinition(const char *input) const
 {
-  return this->Makefile->GetDefinition(input);
+  return this->Makefile->GetDefinitionImpl(input);
 }
 
 const char *cmToolchain::GetSafeDefinition(const char *input) const

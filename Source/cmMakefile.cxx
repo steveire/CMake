@@ -25,6 +25,7 @@
 #include "cmCommandArgumentParserHelper.h"
 #include "cmDocumentCompileDefinitions.h"
 #include "cmGeneratorExpression.h"
+#include "cmToolchain.h"
 #include "cmTest.h"
 #ifdef CMAKE_BUILD_WITH_CMAKE
 #  include "cmVariableWatch.h"
@@ -2347,6 +2348,12 @@ bool cmMakefile::IsDefinitionSet(const char* name) const
 }
 
 const char* cmMakefile::GetDefinition(const char* name) const
+{
+  return this->LocalGenerator->GetGlobalGenerator()
+                             ->GetToolchain(this)->GetDefinition(name);
+}
+
+const char* cmMakefile::GetDefinitionImpl(const char* name) const
 {
 #ifdef CMAKE_STRICT
   if (this->GetCMakeInstance())
