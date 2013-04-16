@@ -81,6 +81,8 @@ public:
    */
   virtual void EnableLanguage(std::vector<std::string>const& languages,
                               cmMakefile *, bool optional);
+  void DetermineToolchain(std::vector<std::string>const& languages,
+                              cmMakefile *, const std::string &rootBin);
 
   /**
    * Resolve the CMAKE_<lang>_COMPILER setting for the given language.

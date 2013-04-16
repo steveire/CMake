@@ -382,6 +382,28 @@ cmGlobalGenerator::EnableLanguage(std::vector<std::string>const& languages,
     fpath += "/CMakeSystem.cmake";
     mf->ReadListFile(0,fpath.c_str());
     }
+
+  this->DetermineToolchain(languages, mf, rootBin);
+
+  // Now load files that can override any settings on the platform or for
+  // the project First load the project compatibility file if it is in
+  // cmake
+  std::string projectCompatibility = mf->GetDefinition("CMAKE_ROOT");
+  projectCompatibility += "/Modules/";
+  projectCompatibility += mf->GetSafeDefinition("PROJECT_NAME");
+  projectCompatibility += "Compatibility.cmake";
+  if(cmSystemTools::FileExists(projectCompatibility.c_str()))
+    {
+    mf->ReadListFile(0,projectCompatibility.c_str());
+    }
+}
+
+
+void
+cmGlobalGenerator::DetermineToolchain(std::vector<std::string>const& languages,
+                                  cmMakefile *mf, const std::string &rootBin)
+{
+  std::string fpath = rootBin;
   std::map<cmStdString, bool> needTestLanguage;
   std::map<cmStdString, bool> needSetLanguageEnabledMaps;
   // foreach language
@@ -617,18 +639,6 @@ cmGlobalGenerator::EnableLanguage(std::vector<std::string>const& languages,
       this->LanguageToOriginalSharedLibFlags[lang] = sharedLibFlags;
       }
     } // end for each language
-
-  // Now load files that can override any settings on the platform or for
-  // the project First load the project compatibility file if it is in
-  // cmake
-  std::string projectCompatibility = mf->GetDefinition("CMAKE_ROOT");
-  projectCompatibility += "/Modules/";
-  projectCompatibility += mf->GetSafeDefinition("PROJECT_NAME");
-  projectCompatibility += "Compatibility.cmake";
-  if(cmSystemTools::FileExists(projectCompatibility.c_str()))
-    {
-    mf->ReadListFile(0,projectCompatibility.c_str());
-    }
 }
 
 //----------------------------------------------------------------------------
