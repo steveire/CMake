@@ -18,6 +18,7 @@
 #include "cmSourceFile.h"
 #include "cmGeneratedFileStream.h"
 #include "cmSystemTools.h"
+#include "cmToolchain.h"
 
 #include <cmsys/SystemTools.hxx>
 #include <cmsys/Directory.hxx>
@@ -407,9 +408,13 @@ void cmGlobalKdevelopGenerator
   bool hasSvn = cmSystemTools::FileExists((projectDir + "/.svn").c_str());
   bool hasCvs = cmSystemTools::FileExists((projectDir + "/CVS").c_str());
 
-  bool enableCxx = (this->GlobalGenerator->GetLanguageEnabled("C")
-                          || this->GlobalGenerator->GetLanguageEnabled("CXX"));
-  bool enableFortran = this->GlobalGenerator->GetLanguageEnabled("Fortran");
+  cmMakefile *mf; // TODO
+  cmToolchain* tc = const_cast<cmGlobalGenerator*>(this->GlobalGenerator)
+                                                          ->GetToolchain(mf);
+
+  bool enableCxx = (tc->GetLanguageEnabled("C")
+                          || tc->GetLanguageEnabled("CXX"));
+  bool enableFortran = tc->GetLanguageEnabled("Fortran");
   std::string primaryLanguage = "C++";
   if (enableFortran && !enableCxx)
     {

@@ -13,6 +13,7 @@
 #include "cmake.h"
 #include "cmCacheManager.h"
 #include "cmGlobalGenerator.h"
+#include "cmToolchain.h"
 #include "cmExportTryCompileFileGenerator.h"
 #include <cmsys/Directory.hxx>
 
@@ -221,7 +222,8 @@ int cmCoreTryCompile::TryCompileCode(std::vector<std::string> const& argv)
         si != sources.end(); ++si)
       {
       std::string ext = cmSystemTools::GetFilenameLastExtension(*si);
-      if(const char* lang = gg->GetLanguageFromExtension(ext.c_str()))
+      if(const char* lang = gg->GetToolchain(this->Makefile)
+                             ->GetLanguageFromExtension(ext.c_str()))
         {
         testLangs.insert(lang);
         }
@@ -233,7 +235,7 @@ int cmCoreTryCompile::TryCompileCode(std::vector<std::string> const& argv)
             << "try_compile() works only for enabled languages.  "
             << "Currently these are:\n ";
         std::vector<std::string> langs;
-        gg->GetEnabledLanguages(langs);
+        gg->GetToolchain(this->Makefile)->GetEnabledLanguages(langs);
         for(std::vector<std::string>::iterator l = langs.begin();
             l != langs.end(); ++l)
           {

@@ -15,6 +15,7 @@
 #include "cmLocalGenerator.h"
 #include "cmMakefile.h"
 #include "cmSystemTools.h"
+#include "cmToolchain.h"
 #include "cmake.h"
 #include "cmDocumentCompileDefinitions.h"
 
@@ -267,7 +268,8 @@ void cmSourceFile::CheckLanguage(std::string const& ext)
   // Try to identify the source file language from the extension.
   cmMakefile* mf = this->Location.GetMakefile();
   cmGlobalGenerator* gg = mf->GetLocalGenerator()->GetGlobalGenerator();
-  if(const char* l = gg->GetLanguageFromExtension(ext.c_str()))
+  cmToolchain* tc = gg->GetToolchain(mf);
+  if(const char* l = tc->GetLanguageFromExtension(ext.c_str()))
     {
     this->Language = l;
     }

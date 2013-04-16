@@ -21,6 +21,7 @@
 #include "cmDocumentLocationUndefined.h"
 #include "cmListFileCache.h"
 #include "cmGeneratorExpression.h"
+#include "cmToolchain.h"
 #include "cmGeneratorExpressionDAGChecker.h"
 #include <cmsys/RegularExpression.hxx>
 #include <map>
@@ -3976,7 +3977,8 @@ public:
     }
   void Consider(const char* lang)
     {
-    int preference = this->GG->GetLinkerPreference(lang);
+    cmToolchain* tc = this->GG->GetToolchain(this->Makefile);
+    int preference = tc->GetLinkerPreference(lang);
     if(preference > this->Preference)
       {
       this->Preference = preference;

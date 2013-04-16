@@ -303,18 +303,19 @@ cmGlobalGenerator::EnableLanguage(std::vector<std::string>const& languages,
 
   if(this->TryCompileOuterMakefile)
     {
+    cmToolchain *mytc = this->GetToolchain(mf);
     // In a try-compile we can only enable languages provided by caller.
     for(std::vector<std::string>::const_iterator li = languages.begin();
         li != languages.end(); ++li)
       {
       if(*li == "NONE")
         {
-        this->SetLanguageEnabled("NONE", mf);
+        mytc->SetLanguageEnabled("NONE", mf);
         }
       else
         {
         const char* lang = li->c_str();
-        if(this->LanguagesReady.find(lang) == this->LanguagesReady.end())
+        if(mytc->LanguagesReady.find(lang) == mytc->LanguagesReady.end())
           {
           cmOStringStream e;
           e << "The test project needs language "
@@ -399,7 +400,7 @@ cmGlobalGenerator::EnableLanguage(std::vector<std::string>const& languages,
     }
 }
 
-cmToolchain *cmGlobalGenerator::GetToolchain(cmMakefile const * _mf)
+cmToolchain *cmGlobalGenerator::GetToolchain(cmMakefile const * _mf) const
 {
   cmMakefile const * mf = _mf;
   cmToolchain *tc = 0;
@@ -446,7 +447,7 @@ cmGlobalGenerator::DetermineToolchain(std::vector<std::string>const& languages,
     needSetLanguageEnabledMaps[lang] = false;
     if(*l == "NONE")
       {
-      this->SetLanguageEnabled("NONE", mf);
+      toolchain->SetLanguageEnabled("NONE", mf);
       continue;
       }
     std::string loadedLang = "CMAKE_";
@@ -472,13 +473,13 @@ cmGlobalGenerator::DetermineToolchain(std::vector<std::string>const& languages,
         // if this file was found then the language was already determined
         // to be working
         needTestLanguage[lang] = false;
-        this->SetLanguageEnabledFlag(lang, mf);
+        toolchain->SetLanguageEnabledFlag(lang, mf);
         needSetLanguageEnabledMaps[lang] = true;
         // this can only be called after loading CMake(LANG)Compiler.cmake
         }
       }
 
-    if(!this->GetLanguageEnabled(lang) )
+    if(!toolchain->GetLanguageEnabled(lang))
       {
       if (this->CMakeInstance->GetIsInTryCompile())
         {
@@ -534,7 +535,7 @@ cmGlobalGenerator::DetermineToolchain(std::vector<std::string>const& languages,
         cmSystemTools::Error("Could not find cmake module file: ",
                              fpath.c_str());
         }
-      this->SetLanguageEnabledFlag(lang, mf);
+      toolchain->SetLanguageEnabledFlag(lang, mf);
       needSetLanguageEnabledMaps[lang] = true;
       // this can only be called after loading CMake(LANG)Compiler.cmake
       // the language must be enabled for try compile to work, but we do
@@ -562,7 +563,7 @@ cmGlobalGenerator::DetermineToolchain(std::vector<std::string>const& languages,
     const char* lang = l->c_str();
     if(*l == "NONE")
       {
-      this->SetLanguageEnabled("NONE", mf);
+      toolchain->SetLanguageEnabled("NONE", mf);
       continue;
       }
     std::string langLoadedVar = "CMAKE_";
@@ -587,9 +588,9 @@ cmGlobalGenerator::DetermineToolchain(std::vector<std::string>const& languages,
       }
     if (needSetLanguageEnabledMaps[lang])
       {
-      this->SetLanguageEnabledMaps(lang, mf);
+      toolchain->SetLanguageEnabledMaps(lang, mf);
       }
-    this->LanguagesReady.insert(lang);
+    toolchain->LanguagesReady.insert(lang);
 
     std::string compilerName = "CMAKE_";
     compilerName += lang;
@@ -666,191 +667,19 @@ cmGlobalGenerator::DetermineToolchain(std::vector<std::string>const& languages,
       toolchain->GetSafeDefinition(sharedLibFlagsVar.c_str());
     if (sharedLibFlags)
       {
-      this->LanguageToOriginalSharedLibFlags[lang] = sharedLibFlags;
+      toolchain->LanguageToOriginalSharedLibFlags[lang] = sharedLibFlags;
       }
     } // end for each language
 }
 
-//----------------------------------------------------------------------------
-const char*
-cmGlobalGenerator::GetLanguageOutputExtension(cmSourceFile const& source)
-{
-  if(const char* lang = source.GetLanguage())
-    {
-    if(this->LanguageToOutputExtension.count(lang) > 0)
-      {
-      return this->LanguageToOutputExtension[lang].c_str();
-      }
-    }
-  else
-    {
-    // if no language is found then check to see if it is already an
-    // ouput extension for some language.  In that case it should be ignored
-    // and in this map, so it will not be compiled but will just be used.
-    std::string const& ext = source.GetExtension();
-    if(!ext.empty())
-      {
-      if(this->OutputExtensions.count(ext))
-        {
-        return ext.c_str();
-        }
-      }
-    }
-  return "";
-}
-
-
-const char* cmGlobalGenerator::GetLanguageFromExtension(const char* ext)
-{
-  // if there is an extension and it starts with . then move past the
-  // . because the extensions are not stored with a .  in the map
-  if(ext && *ext == '.')
-    {
-    ++ext;
-    }
-  if(this->ExtensionToLanguage.count(ext) > 0)
-    {
-    return this->ExtensionToLanguage[ext].c_str();
-    }
-  return 0;
-}
-
-/* SetLanguageEnabled() is now split in two parts:
-at first the enabled-flag is set. This can then be used in EnabledLanguage()
-for checking whether the language is already enabled. After setting this
-flag still the values from the cmake variables have to be copied into the
-internal maps, this is done in SetLanguageEnabledMaps() which is called
-after the system- and compiler specific files have been loaded.
-
-This split was done originally so that compiler-specific configuration
-files could change the object file extension
-(CMAKE_<LANG>_OUTPUT_EXTENSION) before the CMake variables were copied
-to the C++ maps.
-*/
-void cmGlobalGenerator::SetLanguageEnabled(const char* l, cmMakefile* mf)
-{
-  this->SetLanguageEnabledFlag(l, mf);
-  this->SetLanguageEnabledMaps(l, mf);
-}
-
-void cmGlobalGenerator::SetLanguageEnabledFlag(const char* l, cmMakefile* mf)
-{
-  this->LanguageEnabled[l] = true;
-
-  // Fill the language-to-extension map with the current variable
-  // settings to make sure it is available for the try_compile()
-  // command source file signature.  In SetLanguageEnabledMaps this
-  // will be done again to account for any compiler- or
-  // platform-specific entries.
-  this->FillExtensionToLanguageMap(l, mf);
-}
-
-void cmGlobalGenerator::SetLanguageEnabledMaps(const char* l, cmMakefile* mf)
-{
-  // use LanguageToLinkerPreference to detect whether this functions has
-  // run before
-  if (this->LanguageToLinkerPreference.find(l) !=
-                                        this->LanguageToLinkerPreference.end())
-    {
-    return;
-    }
-
-  std::string linkerPrefVar = std::string("CMAKE_") +
-    std::string(l) + std::string("_LINKER_PREFERENCE");
-  const char* linkerPref = mf->GetDefinition(linkerPrefVar.c_str());
-  int preference = 0;
-  if(linkerPref)
-    {
-    if (sscanf(linkerPref, "%d", &preference)!=1)
-      {
-      // backward compatibility: before 2.6 LINKER_PREFERENCE
-      // was either "None" or "Prefered", and only the first character was
-      // tested. So if there is a custom language out there and it is
-      // "Prefered", set its preference high
-      if (linkerPref[0]=='P')
-        {
-        preference = 100;
-        }
-      else
-        {
-        preference = 0;
-        }
-      }
-    }
-
-  if (preference < 0)
-    {
-    std::string msg = linkerPrefVar;
-    msg += " is negative, adjusting it to 0";
-    cmSystemTools::Message(msg.c_str(), "Warning");
-    preference = 0;
-    }
-
-  this->LanguageToLinkerPreference[l] = preference;
-
-  std::string outputExtensionVar = std::string("CMAKE_") +
-    std::string(l) + std::string("_OUTPUT_EXTENSION");
-  const char* outputExtension = mf->GetDefinition(outputExtensionVar.c_str());
-  if(outputExtension)
-    {
-    this->LanguageToOutputExtension[l] = outputExtension;
-    this->OutputExtensions[outputExtension] = outputExtension;
-    if(outputExtension[0] == '.')
-      {
-      this->OutputExtensions[outputExtension+1] = outputExtension+1;
-      }
-    }
-
-  // The map was originally filled by SetLanguageEnabledFlag, but
-  // since then the compiler- and platform-specific files have been
-  // loaded which might have added more entries.
-  this->FillExtensionToLanguageMap(l, mf);
-
-  std::string ignoreExtensionsVar = std::string("CMAKE_") +
-    std::string(l) + std::string("_IGNORE_EXTENSIONS");
-  std::string ignoreExts = mf->GetSafeDefinition(ignoreExtensionsVar.c_str());
-  std::vector<std::string> extensionList;
-  cmSystemTools::ExpandListArgument(ignoreExts, extensionList);
-  for(std::vector<std::string>::iterator i = extensionList.begin();
-      i != extensionList.end(); ++i)
-    {
-    this->IgnoreExtensions[*i] = true;
-    }
-
-}
-
-void cmGlobalGenerator::FillExtensionToLanguageMap(const char* l,
-                                                   cmMakefile* mf)
-{
-  std::string extensionsVar = std::string("CMAKE_") +
-    std::string(l) + std::string("_SOURCE_FILE_EXTENSIONS");
-  std::string exts = mf->GetSafeDefinition(extensionsVar.c_str());
-  std::vector<std::string> extensionList;
-  cmSystemTools::ExpandListArgument(exts, extensionList);
-  for(std::vector<std::string>::iterator i = extensionList.begin();
-      i != extensionList.end(); ++i)
-    {
-    this->ExtensionToLanguage[*i] = l;
-    }
-}
-
-bool cmGlobalGenerator::IgnoreFile(const char* l)
-{
-  if(this->GetLanguageFromExtension(l))
-    {
-    return false;
-    }
-  return (this->IgnoreExtensions.count(l) > 0);
-}
-
-bool cmGlobalGenerator::GetLanguageEnabled(const char* l) const
-{
-  return (this->LanguageEnabled.find(l)!= this->LanguageEnabled.end());
-}
-
 void cmGlobalGenerator::ClearEnabledLanguages()
 {
-  this->LanguageEnabled.clear();
+  for (std::map<const cmMakefile*, cmToolchain*>::iterator it
+                                                    = this->Toolchains.begin();
+        it != this->Toolchains.end(); ++it)
+    {
+    it->second->ClearEnabledLanguages();
+    }
 }
 
 bool cmGlobalGenerator::IsDependedOn(const char* project,
@@ -1611,7 +1440,7 @@ cmGlobalGenerator::CreateLocalGenerator(cmLocalGenerator* parent)
 }
 
 void cmGlobalGenerator::EnableLanguagesFromGenerator(cmGlobalGenerator *gen,
-                                                     cmMakefile* mf)
+                                              cmMakefile* mf, cmMakefile* mf2)
 {
   this->SetConfiguredFilesPath(gen);
   this->TryCompileOuterMakefile = mf;
@@ -1620,14 +1449,10 @@ void cmGlobalGenerator::EnableLanguagesFromGenerator(cmGlobalGenerator *gen,
   this->GetCMakeInstance()->AddCacheEntry("CMAKE_MAKE_PROGRAM", make,
                                           "make program",
                                           cmCacheManager::FILEPATH);
-  // copy the enabled languages
-  this->LanguageEnabled = gen->LanguageEnabled;
-  this->LanguagesReady = gen->LanguagesReady;
-  this->ExtensionToLanguage = gen->ExtensionToLanguage;
-  this->IgnoreExtensions = gen->IgnoreExtensions;
-  this->LanguageToOutputExtension = gen->LanguageToOutputExtension;
-  this->LanguageToLinkerPreference = gen->LanguageToLinkerPreference;
-  this->OutputExtensions = gen->OutputExtensions;
+
+  cmToolchain *tc = gen->GetToolchain(mf);
+
+  this->GetToolchain(mf2)->EnableLanguagesFromToolchain(tc);
 }
 
 //----------------------------------------------------------------------------
@@ -1678,26 +1503,6 @@ bool cmGlobalGenerator::IsExcluded(cmLocalGenerator* root,
     // directory is excluded.
     return this->IsExcluded(root, target.GetMakefile()->GetLocalGenerator());
     }
-}
-
-void cmGlobalGenerator::GetEnabledLanguages(std::vector<std::string>& lang)
-{
-  for(std::map<cmStdString, bool>::iterator i =
-        this->LanguageEnabled.begin(); i != this->LanguageEnabled.end(); ++i)
-    {
-    lang.push_back(i->first);
-    }
-}
-
-int cmGlobalGenerator::GetLinkerPreference(const char* lang)
-{
-  std::map<cmStdString, int>::const_iterator it =
-                                   this->LanguageToLinkerPreference.find(lang);
-  if (it != this->LanguageToLinkerPreference.end())
-    {
-    return it->second;
-    }
-  return 0;
 }
 
 void cmGlobalGenerator::FillProjectMap()
@@ -2221,17 +2026,6 @@ cmGlobalGenerator::GenerateRuleFile(std::string const& output) const
                                  cmake::GetCMakeFilesDirectory());
     }
   return ruleFile;
-}
-
-//----------------------------------------------------------------------------
-std::string cmGlobalGenerator::GetSharedLibFlagsForLanguage(
-                                                        std::string const& l)
-{
-  if(this->LanguageToOriginalSharedLibFlags.count(l) > 0)
-    {
-    return this->LanguageToOriginalSharedLibFlags[l];
-    }
-  return "";
 }
 
 //----------------------------------------------------------------------------

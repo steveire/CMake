@@ -19,6 +19,7 @@
 #include "cmGeneratedFileStream.h"
 #include "cmTarget.h"
 #include "cmSystemTools.h"
+#include "cmToolchain.h"
 #include "cmXMLSafe.h"
 
 #include <cmsys/SystemTools.hxx>
@@ -718,7 +719,8 @@ std::string cmExtraCodeBlocksGenerator::GetCBCompilerId(const cmMakefile* mf)
   // figure out which language to use
   // for now care only for C and C++
   std::string compilerIdVar = "CMAKE_CXX_COMPILER_ID";
-  if (this->GlobalGenerator->GetLanguageEnabled("CXX") == false)
+  if (this->GlobalGenerator->
+                          GetToolchain(mf)->GetLanguageEnabled("CXX") == false)
     {
     compilerIdVar = "CMAKE_C_COMPILER_ID";
     }

@@ -17,6 +17,7 @@
 #include "cmGeneratedFileStream.h"
 #include "cmMakefile.h"
 #include "cmSourceFile.h"
+#include "cmToolchain.h"
 #include "cmVisualStudioGeneratorOptions.h"
 #include "cmLocalVisualStudio7Generator.h"
 #include "cmVS10CLFlagTable.h"
@@ -1061,7 +1062,7 @@ bool cmVisualStudio10TargetGenerator::OutputSourceSpecificFlags(
     defines += cdefs;
     }
   const char* lang =
-    this->GlobalGenerator->GetLanguageFromExtension
+    this->GlobalGenerator->GetToolchain()->GetLanguageFromExtension
     (sf.GetExtension().c_str());
   const char* sourceLang = this->LocalGenerator->GetSourceFileLanguage(sf);
   const char* linkLanguage = this->Target->GetLinkerLanguage();

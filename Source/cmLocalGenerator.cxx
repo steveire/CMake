@@ -24,6 +24,7 @@
 #include "cmTestGenerator.h"
 #include "cmVersion.h"
 #include "cmake.h"
+#include "cmToolchain.h"
 
 #if defined(CMAKE_BUILD_WITH_CMAKE)
 # define CM_LG_ENCODE_OBJECT_NAMES
@@ -1031,7 +1032,8 @@ cmLocalGenerator::ExpandRuleVariable(std::string const& variable,
     return this->Convert(cmcommand, FULL, SHELL);
     }
   std::vector<std::string> enabledLanguages;
-  this->GlobalGenerator->GetEnabledLanguages(enabledLanguages);
+  cmToolchain* tc = this->GlobalGenerator->GetToolchain(this->GetMakefile());
+  tc->GetEnabledLanguages(enabledLanguages);
   // loop over language specific replace variables
   int pos = 0;
   while(ruleReplaceVars[pos])
@@ -2175,8 +2177,8 @@ void cmLocalGenerator::AddCMP0018Flags(std::string &flags, cmTarget* target,
 bool cmLocalGenerator::GetShouldUseOldFlags(bool shared,
                                             const std::string &lang) const
 {
-  std::string originalFlags =
-    this->GlobalGenerator->GetSharedLibFlagsForLanguage(lang);
+  cmToolchain* tc = this->GlobalGenerator->GetToolchain(this->GetMakefile());
+  std::string originalFlags = tc->GetSharedLibFlagsForLanguage(lang);
   if (shared)
     {
     std::string flagsVar = "CMAKE_SHARED_LIBRARY_";
@@ -3077,8 +3079,8 @@ cmLocalGenerator
       }
 
     // Store the new extension.
-    objectName +=
-      this->GlobalGenerator->GetLanguageOutputExtension(source);
+    cmToolchain* tc = this->GlobalGenerator->GetToolchain(this->GetMakefile());
+    objectName += tc->GetLanguageOutputExtension(source);
     }
   if(hasSourceExtension)
     {

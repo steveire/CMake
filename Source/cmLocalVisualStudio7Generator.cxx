@@ -18,6 +18,7 @@
 #include "cmSourceFile.h"
 #include "cmCacheManager.h"
 #include "cmGeneratorTarget.h"
+#include "cmToolchain.h"
 #include "cmake.h"
 
 #include "cmComputeLinkInformation.h"
@@ -1532,7 +1533,7 @@ cmLocalVisualStudio7GeneratorFCInfo
       }
 
     const char* lang =
-      lg->GlobalGenerator->GetLanguageFromExtension
+      lg->GlobalGenerator->GetToolchain()->GetLanguageFromExtension
       (sf.GetExtension().c_str());
     const char* sourceLang = lg->GetSourceFileLanguage(sf);
     const char* linkLanguage = target.GetLinkerLanguage(i->c_str());

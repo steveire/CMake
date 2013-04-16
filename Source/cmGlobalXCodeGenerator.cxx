@@ -1020,7 +1020,7 @@ cmGlobalXCodeGenerator::CreateXCodeTargets(cmLocalGenerator* gen,
         // and has not been listed as an ignored extension for this
         // generator.
         if(this->CurrentLocalGenerator->GetSourceFileLanguage(**i) &&
-           !this->IgnoreFile((*i)->GetExtension().c_str()))
+           !this->GetToolchain()->IgnoreFile((*i)->GetExtension().c_str()))
           {
           sourceFiles.push_back(xsf);
           }

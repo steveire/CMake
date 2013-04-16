@@ -14,6 +14,7 @@
 #include "cmMakefile.h"
 #include "cmLocalGenerator.h"
 #include "cmGlobalGenerator.h"
+#include "cmToolchain.h"
 #include "cmSystemTools.h"
 
 //----------------------------------------------------------------------------
@@ -92,7 +93,7 @@ void cmSourceFileLocation::UpdateExtension(const char* name)
   cmMakefile* mf = this->Makefile;
   const std::vector<std::string>& srcExts = mf->GetSourceExtensions();
   const std::vector<std::string>& hdrExts = mf->GetHeaderExtensions();
-  if(gg->GetLanguageFromExtension(ext.c_str()) ||
+  if(gg->GetToolchain(mf)->GetLanguageFromExtension(ext.c_str()) ||
      std::find(srcExts.begin(), srcExts.end(), ext) != srcExts.end() ||
      std::find(hdrExts.begin(), hdrExts.end(), ext) != hdrExts.end())
     {

@@ -16,6 +16,7 @@
 #include "cmLocalGenerator.h"
 #include "cmGlobalGenerator.h"
 #include "cmSourceFile.h"
+#include "cmToolchain.h"
 #include "cmGeneratorExpression.h"
 #include "cmGeneratorExpressionDAGChecker.h"
 
@@ -114,7 +115,8 @@ void cmGeneratorTarget::ClassifySources()
       {
       this->HeaderSources.push_back(sf);
       }
-    else if(this->GlobalGenerator->IgnoreFile(sf->GetExtension().c_str()))
+    else if(this->GlobalGenerator->GetToolchain(this->Makefile)
+                                      ->IgnoreFile(sf->GetExtension().c_str()))
       {
       // We only get here if a source file is not an external object
       // and has an extension that is listed as an ignored file type.

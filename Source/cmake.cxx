@@ -24,6 +24,7 @@
 #include "cmSourceFile.h"
 #include "cmVersion.h"
 #include "cmTest.h"
+#include "cmToolchain.h"
 #include "cmDocumentationFormatterText.h"
 
 #if defined(CMAKE_BUILD_WITH_CMAKE)
@@ -2358,7 +2359,9 @@ int cmake::ActualConfigure()
   // info to save time
   if (!this->InTryCompile)
     {
+    // ### For all toolchains?
     this->GlobalGenerator->ClearEnabledLanguages();
+//     this->GlobalGenerator->GetToolchain()->ClearEnabledLanguages();
     }
 
   // Truncate log files
@@ -3675,7 +3678,8 @@ void cmake::ReportUndefinedPropertyAccesses(const char *filename)
 
   // what are the enabled languages?
   std::vector<std::string> enLangs;
-  this->GlobalGenerator->GetEnabledLanguages(enLangs);
+  // For each toolchain?
+//   this->GlobalGenerator->GetEnabledLanguages(enLangs);
 
   // Common configuration names.
   // TODO: Compute current configuration(s).
@@ -3862,7 +3866,7 @@ const char *cmake::GetProperty(const char* prop, cmProperty::ScopeType scope)
     if(this->GlobalGenerator)
       {
       std::vector<std::string> enLangs;
-      this->GlobalGenerator->GetEnabledLanguages(enLangs);
+//       this->GlobalGenerator->GetToolchain()->GetEnabledLanguages(enLangs);
       const char* sep = "";
       for(std::vector<std::string>::iterator i = enLangs.begin();
           i != enLangs.end(); ++i)

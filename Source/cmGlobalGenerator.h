@@ -69,13 +69,7 @@ public:
    */
   virtual void Generate();
 
-  /**
-   * Set/Get and Clear the enabled languages.
-   */
-  void SetLanguageEnabled(const char*, cmMakefile* mf);
-  bool GetLanguageEnabled(const char*) const;
   void ClearEnabledLanguages();
-  void GetEnabledLanguages(std::vector<std::string>& lang);
   /**
    * Try to determine system infomation such as shared library
    * extension, pthreads, byte order etc.
@@ -96,7 +90,8 @@ public:
    * Try to determine system infomation, get it from another generator
    */
   virtual void EnableLanguagesFromGenerator(cmGlobalGenerator *gen,
-                                            cmMakefile* mf);
+                                            cmMakefile* mf,
+                                            cmMakefile* mf2);
 
   /**
    * Try running cmake and building a file. This is used for dynamically
@@ -173,15 +168,6 @@ public:
 
   bool GetForceUnixPaths() const { return this->ForceUnixPaths; }
   bool GetToolSupportsColor() const { return this->ToolSupportsColor; }
-
-  ///! return the language for the given extension
-  const char* GetLanguageFromExtension(const char* ext);
-  ///! is an extension to be ignored
-  bool IgnoreFile(const char* ext);
-  ///! What is the preference for linkers and this language (None or Prefered)
-  int GetLinkerPreference(const char* lang);
-  ///! What is the object file extension for a given source file?
-  const char* GetLanguageOutputExtension(cmSourceFile const&);
 
   ///! What is the configurations directory variable called?
   virtual const char* GetCMakeCFGIntDir() const { return "."; }
@@ -277,8 +263,6 @@ public:
       i.e. "Can I build Debug and Release in the same tree?" */
   virtual bool IsMultiConfig() { return false; }
 
-  std::string GetSharedLibFlagsForLanguage(std::string const& lang);
-
   /** Generate an <output>.rule file path for a given command output.  */
   virtual std::string GenerateRuleFile(std::string const& output) const;
 
@@ -292,7 +276,7 @@ public:
 
   void ProcessEvaluationFiles();
 
-  cmToolchain *GetToolchain(cmMakefile const * mf);
+  cmToolchain *GetToolchain(cmMakefile const * mf) const;
 
 protected:
   typedef std::vector<cmLocalGenerator*> GeneratorVector;
@@ -303,9 +287,6 @@ protected:
                              cmLocalGenerator* root, GeneratorVector const&);
   virtual bool IsRootOnlyTarget(cmTarget* target);
   void AddTargetDepends(cmTarget* target, TargetDependSet& projectTargets);
-  void SetLanguageEnabledFlag(const char* l, cmMakefile* mf);
-  void SetLanguageEnabledMaps(const char* l, cmMakefile* mf);
-  void FillExtensionToLanguageMap(const char* l, cmMakefile* mf);
 
   virtual bool ComputeTargetDepends();
 
@@ -362,16 +343,6 @@ protected:
 private:
   cmMakefile* TryCompileOuterMakefile;
   float FirstTimeProgress;
-  // If you add a new map here, make sure it is copied
-  // in EnableLanguagesFromGenerator
-  std::map<cmStdString, bool> IgnoreExtensions;
-  std::map<cmStdString, bool> LanguageEnabled;
-  std::set<cmStdString> LanguagesReady; // Ready for try_compile
-  std::map<cmStdString, cmStdString> OutputExtensions;
-  std::map<cmStdString, cmStdString> LanguageToOutputExtension;
-  std::map<cmStdString, cmStdString> ExtensionToLanguage;
-  std::map<cmStdString, int> LanguageToLinkerPreference;
-  std::map<cmStdString, cmStdString> LanguageToOriginalSharedLibFlags;
 
   // Record hashes for rules and outputs.
   struct RuleHash { char Data[32]; };
@@ -412,7 +383,7 @@ private:
   // Set of binary directories on disk.
   std::set<cmStdString> BinaryDirectories;
 
-  std::map<cmMakefile const*, cmToolchain*> Toolchains;
+  mutable std::map<cmMakefile const*, cmToolchain*> Toolchains;
 };
 
 #endif
