@@ -31,6 +31,7 @@ class cmExternalMakefileProjectGenerator;
 class cmTarget;
 class cmInstallTargetGenerator;
 class cmInstallFilesGenerator;
+class cmToolchain;
 
 /** \class cmGlobalGenerator
  * \brief Responable for overseeing the generation process for the entire tree
@@ -291,6 +292,8 @@ public:
 
   void ProcessEvaluationFiles();
 
+  cmToolchain *GetToolchain(cmMakefile const * mf);
+
 protected:
   typedef std::vector<cmLocalGenerator*> GeneratorVector;
   // for a project collect all its targets by following depend
@@ -408,6 +411,8 @@ private:
 
   // Set of binary directories on disk.
   std::set<cmStdString> BinaryDirectories;
+
+  std::map<cmMakefile const*, cmToolchain*> Toolchains;
 };
 
 #endif

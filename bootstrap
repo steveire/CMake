@@ -252,6 +252,7 @@ CMAKE_CXX_SOURCES="\
   cmCommands \
   cmTarget \
   cmTest \
+  cmToolchain \
   cmCustomCommand \
   cmCustomCommandGenerator \
   cmDocumentVariables \

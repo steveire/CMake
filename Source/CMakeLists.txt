@@ -278,6 +278,8 @@ set(SRCS
   cmTest.h
   cmTestGenerator.cxx
   cmTestGenerator.h
+  cmToolchain.cxx
+  cmToolchain.h
   cmVariableWatch.cxx
   cmVariableWatch.h
   cmVersion.cxx

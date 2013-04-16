@@ -27,6 +27,7 @@
 #include "cmGeneratorTarget.h"
 #include "cmGeneratorExpression.h"
 #include "cmGeneratorExpressionEvaluationFile.h"
+#include "cmToolchain.h"
 
 #include <cmsys/Directory.hxx>
 
@@ -398,6 +399,32 @@ cmGlobalGenerator::EnableLanguage(std::vector<std::string>const& languages,
     }
 }
 
+cmToolchain *cmGlobalGenerator::GetToolchain(cmMakefile const * _mf)
+{
+  cmMakefile const * mf = _mf;
+  cmToolchain *tc = 0;
+  while (mf)
+    {
+    std::map<cmMakefile const*, cmToolchain*>::const_iterator it
+                                                  = this->Toolchains.find(mf);
+    if (it != this->Toolchains.end())
+      {
+      tc = it->second;
+      tc->SetMakefile(_mf);
+      break;
+      }
+    cmLocalGenerator *lgParent = const_cast<cmMakefile*>(mf)
+                                          ->GetLocalGenerator()->GetParent();
+    mf = lgParent ? lgParent->GetMakefile() : 0;
+    }
+
+  if (!tc)
+    {
+    tc = new cmToolchain(_mf);
+    this->Toolchains[_mf] = tc;
+    }
+  return tc;
+}
 
 void
 cmGlobalGenerator::DetermineToolchain(std::vector<std::string>const& languages,
@@ -409,6 +436,8 @@ cmGlobalGenerator::DetermineToolchain(std::vector<std::string>const& languages,
   // foreach language
   // load the CMakeDetermine(LANG)Compiler.cmake file to find
   // the compiler
+
+  cmToolchain *toolchain = GetToolchain(mf);
 
   for(std::vector<std::string>::const_iterator l = languages.begin();
       l != languages.end(); ++l)
@@ -423,7 +452,7 @@ cmGlobalGenerator::DetermineToolchain(std::vector<std::string>const& languages,
     std::string loadedLang = "CMAKE_";
     loadedLang +=  lang;
     loadedLang += "_COMPILER_LOADED";
-    if(!mf->GetDefinition(loadedLang.c_str()))
+    if(!toolchain->GetDefinition(loadedLang.c_str()))
       {
       fpath = rootBin;
       fpath += "/CMake";
@@ -435,7 +464,7 @@ cmGlobalGenerator::DetermineToolchain(std::vector<std::string>const& languages,
       // to avoid duplicate compiler tests.
       if(cmSystemTools::FileExists(fpath.c_str()))
         {
-        if(!mf->ReadListFile(0,fpath.c_str()))
+        if(!toolchain->ReadListFile(0,fpath.c_str()))
           {
           cmSystemTools::Error("Could not find cmake module file: ",
                                fpath.c_str());
@@ -465,7 +494,7 @@ cmGlobalGenerator::DetermineToolchain(std::vector<std::string>const& languages,
       determineCompiler += "Compiler.cmake";
       std::string determineFile =
         mf->GetModulesFile(determineCompiler.c_str());
-      if(!mf->ReadListFile(0,determineFile.c_str()))
+      if(!toolchain->ReadListFile(0,determineFile.c_str()))
         {
         cmSystemTools::Error("Could not find cmake module file: ",
                              determineFile.c_str());
@@ -473,7 +502,7 @@ cmGlobalGenerator::DetermineToolchain(std::vector<std::string>const& languages,
       needTestLanguage[lang] = true;
       // Some generators like visual studio should not use the env variables
       // So the global generator can specify that in this variable
-      if(!mf->GetDefinition("CMAKE_GENERATOR_NO_COMPILER_ENV"))
+      if(!toolchain->GetDefinition("CMAKE_GENERATOR_NO_COMPILER_ENV"))
         {
         // put ${CMake_(LANG)_COMPILER_ENV_VAR}=${CMAKE_(LANG)_COMPILER
         // into the environment, in case user scripts want to run
@@ -484,9 +513,10 @@ cmGlobalGenerator::DetermineToolchain(std::vector<std::string>const& languages,
         std::string compilerEnv = "CMAKE_";
         compilerEnv += lang;
         compilerEnv += "_COMPILER_ENV_VAR";
-        std::string envVar = mf->GetRequiredDefinition(compilerEnv.c_str());
+        std::string envVar = toolchain->GetRequiredDefinition(
+                                                        compilerEnv.c_str());
         std::string envVarValue =
-          mf->GetRequiredDefinition(compilerName.c_str());
+          toolchain->GetRequiredDefinition(compilerName.c_str());
         std::string env = envVar;
         env += "=";
         env += envVarValue;
@@ -499,7 +529,7 @@ cmGlobalGenerator::DetermineToolchain(std::vector<std::string>const& languages,
       fpath += "/CMake";
       fpath += lang;
       fpath += "Compiler.cmake";
-      if(!mf->ReadListFile(0,fpath.c_str()))
+      if(!toolchain->ReadListFile(0,fpath.c_str()))
         {
         cmSystemTools::Error("Could not find cmake module file: ",
                              fpath.c_str());
@@ -515,10 +545,10 @@ cmGlobalGenerator::DetermineToolchain(std::vector<std::string>const& languages,
     }  // end loop over languages
 
   // **** Load the system specific information if not yet loaded
-  if (!mf->GetDefinition("CMAKE_SYSTEM_SPECIFIC_INFORMATION_LOADED"))
+  if (!toolchain->GetDefinition("CMAKE_SYSTEM_SPECIFIC_INFORMATION_LOADED"))
     {
     fpath = mf->GetModulesFile("CMakeSystemSpecificInformation.cmake");
-    if(!mf->ReadListFile(0,fpath.c_str()))
+    if(!toolchain->ReadListFile(0,fpath.c_str()))
       {
       cmSystemTools::Error("Could not find cmake module file: ",
                            fpath.c_str());
@@ -538,7 +568,7 @@ cmGlobalGenerator::DetermineToolchain(std::vector<std::string>const& languages,
     std::string langLoadedVar = "CMAKE_";
     langLoadedVar += lang;
     langLoadedVar += "_INFORMATION_LOADED";
-    if (!mf->GetDefinition(langLoadedVar.c_str()))
+    if (!toolchain->GetDefinition(langLoadedVar.c_str()))
       {
       fpath = "CMake";
       fpath +=  lang;
@@ -549,7 +579,7 @@ cmGlobalGenerator::DetermineToolchain(std::vector<std::string>const& languages,
         cmSystemTools::Error("Could not find cmake module file: ",
                              fpath.c_str());
         }
-      else if(!mf->ReadListFile(0, informationFile.c_str()))
+      else if(!toolchain->ReadListFile(0, informationFile.c_str()))
         {
         cmSystemTools::Error("Could not process cmake module file: ",
                              informationFile.c_str());
@@ -573,7 +603,7 @@ cmGlobalGenerator::DetermineToolchain(std::vector<std::string>const& languages,
     // At this point we should have enough info for a try compile
     // which is used in the backward stuff
     // If the language is untested then test it now with a try compile.
-    if (!mf->IsSet(compilerName.c_str()))
+    if (!toolchain->IsSet(compilerName.c_str()))
       {
       // if the compiler did not work, then remove the
       // CMake(LANG)Compiler.cmake file so that it will get tested the
@@ -588,7 +618,7 @@ cmGlobalGenerator::DetermineToolchain(std::vector<std::string>const& languages,
         testLang += lang;
         testLang += "Compiler.cmake";
         std::string ifpath = mf->GetModulesFile(testLang.c_str());
-        if(!mf->ReadListFile(0,ifpath.c_str()))
+        if(!toolchain->ReadListFile(0,ifpath.c_str()))
           {
           cmSystemTools::Error("Could not find cmake module file: ",
                                ifpath.c_str());
@@ -599,7 +629,7 @@ cmGlobalGenerator::DetermineToolchain(std::vector<std::string>const& languages,
         // if the compiler did not work, then remove the
         // CMake(LANG)Compiler.cmake file so that it will get tested the
         // next time cmake is run
-        if(!mf->IsOn(compilerWorks.c_str()))
+        if(!toolchain->IsOn(compilerWorks.c_str()))
           {
           cmSystemTools::RemoveFile(compilerLangFile.c_str());
           }
@@ -633,7 +663,7 @@ cmGlobalGenerator::DetermineToolchain(std::vector<std::string>const& languages,
     sharedLibFlagsVar += lang;
     sharedLibFlagsVar += "_FLAGS";
     const char* sharedLibFlags =
-      mf->GetSafeDefinition(sharedLibFlagsVar.c_str());
+      toolchain->GetSafeDefinition(sharedLibFlagsVar.c_str());
     if (sharedLibFlags)
       {
       this->LanguageToOriginalSharedLibFlags[lang] = sharedLibFlags;
