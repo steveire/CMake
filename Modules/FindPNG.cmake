@@ -126,7 +126,10 @@ mark_as_advanced(PNG_PNG_INCLUDE_DIR PNG_LIBRARY )
 
 if(PNG_FOUND)
   if (NOT TARGET CMake::PNG)
-    add_library(CMake::PNG SHARED IMPORTED)
+    add_library(CMake::PNG UNKNOWN IMPORTED)
+  # Cache issue?
+  # Configuration?
+  message("PNG ${PNG_LIBRARY}")
     set_target_properties(CMake::PNG PROPERTIES
       IMPORTED_LOCATION ${PNG_LIBRARY}
       INTERFACE_INCLUDE_DIRECTORIES ${PNG_PNG_INCLUDE_DIR}
