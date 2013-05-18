@@ -1888,15 +1888,22 @@ std::string cmTarget::GetExportName() const
 
   if (exportName && *exportName)
     {
-    if (!cmGeneratorExpression::IsValidTargetName(exportName))
+    cmListFileBacktrace lfbt;
+    cmGeneratorExpression ge(lfbt);
+    cmsys::auto_ptr<cmCompiledGeneratorExpression> cge = ge.Parse(exportName);
+    static std::string evaluatedName = cge->Evaluate(this->Makefile,
+                                                     0,
+                                                     false,
+                                                     this);
+    if (!cmGeneratorExpression::IsValidTargetName(evaluatedName))
       {
       std::ostringstream e;
-      e << "EXPORT_NAME property \"" << exportName << "\" for \""
+      e << "EXPORT_NAME property \"" << evaluatedName << "\" for \""
         << this->GetName() << "\": is not valid.";
       cmSystemTools::Error(e.str().c_str());
       return "";
       }
-    return exportName;
+    return evaluatedName.c_str();
     }
   return this->GetName();
 }
