@@ -460,6 +460,10 @@ void cmTarget::SetMakefile(cmMakefile* mf)
     {
     this->SetPropertyDefault("POSITION_INDEPENDENT_CODE", 0);
     }
+  if (!this->IsImported())
+    {
+    this->SetPropertyDefault("EXPORT_NAME", 0);
+    }
 
   // Record current policies for later use.
   this->Makefile->RecordPolicies(this->PolicyMap);
