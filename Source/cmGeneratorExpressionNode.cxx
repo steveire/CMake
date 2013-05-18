@@ -331,6 +331,31 @@ static const struct MakeCIdentifierNode : public cmGeneratorExpressionNode
 } makeCIdentifierNode;
 
 //----------------------------------------------------------------------------
+static const struct ReplaceNode : public cmGeneratorExpressionNode
+{
+  ReplaceNode() {}
+
+  virtual int NumExpectedParameters() const { return 3; }
+
+  std::string Evaluate(const std::vector<std::string> &parameters,
+                       cmGeneratorExpressionContext *,
+                       const GeneratorExpressionContent *,
+                       cmGeneratorExpressionDAGChecker *) const
+  {
+    size_t pos = 0;
+    std::string result = parameters.front();
+    const std::string &needle = parameters[1];
+    const std::string &replace = parameters[2];
+    while((pos = result.find(needle, pos)) != std::string::npos)
+      {
+      result.replace(pos, needle.length(), replace);
+      pos += replace.length();
+      }
+    return result;
+  }
+} replaceNode;
+
+//----------------------------------------------------------------------------
 static const struct Angle_RNode : public cmGeneratorExpressionNode
 {
   Angle_RNode() {}
