@@ -139,6 +139,32 @@ static const struct NotNode : public cmGeneratorExpressionNode
 } notNode;
 
 //----------------------------------------------------------------------------
+static const struct EachNode : public cmGeneratorExpressionNode
+{
+  EachNode() {}
+
+  int NumExpectedParameters() const { return TwoOrMoreParameters; }
+
+  std::string Evaluate(const std::vector<std::string> &parameters,
+                       cmGeneratorExpressionContext *context,
+                       const GeneratorExpressionContent *content,
+                       cmGeneratorExpressionDAGChecker *) const;
+} eachNode;
+
+//----------------------------------------------------------------------------
+static const struct AllNode : public cmGeneratorExpressionNode
+{
+  AllNode() {}
+
+  int NumExpectedParameters() const { return 2; }
+
+  std::string Evaluate(const std::vector<std::string> &parameters,
+                       cmGeneratorExpressionContext *context,
+                       const GeneratorExpressionContent *content,
+                       cmGeneratorExpressionDAGChecker *) const;
+} allNode;
+
+//----------------------------------------------------------------------------
 static const struct BoolNode : public cmGeneratorExpressionNode
 {
   BoolNode() {}
@@ -1843,6 +1869,63 @@ cmGeneratorExpressionNode::GetNode(const std::string &identifier)
     return 0;
     }
   return i->second;
+}
+
+//----------------------------------------------------------------------------
+std::string EachNode::Evaluate(const std::vector<std::string> &parameters,
+                      cmGeneratorExpressionContext *context,
+                      const GeneratorExpressionContent *content,
+                      cmGeneratorExpressionDAGChecker *dagChecker) const
+{
+  const cmGeneratorExpressionNode *node = GetNode(parameters.front());
+  const unsigned int numExpected = node->NumExpectedParameters();
+  if (numExpected > cmGeneratorExpressionNode::DynamicParameters
+      && numExpected != parameters.size() - 2 + 1)
+    {
+      reportError(context, content->GetOriginalExpression(),
+                  "$<EACH> expression uses identifier \"" + parameters[1] + "\" , but "
+                                                                            "supplies wrong number of parameters.");
+      return std::string();
+    }
+
+  std::vector<std::string> eachArgs;
+  for(std::vector<std::string>::const_iterator i = parameters.begin() + 2;
+      i != parameters.end(); ++i)
+    {
+      eachArgs.push_back(*i);
+    }
+
+  std::string sep;
+  std::string result;
+  for(std::vector<std::string>::const_iterator i = listElements.begin();
+      i != listElements.end(); ++i)
+    {
+      std::vector<std::string> listArgs = eachArgs;
+      listArgs.push_back(*i);
+      result += sep + node->Evaluate(listArgs, context, content, dagChecker);
+      sep = ";";
+    }
+  return result;
+}
+
+//----------------------------------------------------------------------------
+std::string AllNode::Evaluate(const std::vector<std::string> &parameters,
+                      cmGeneratorExpressionContext *context,
+                      const GeneratorExpressionContent *content,
+                      cmGeneratorExpressionDAGChecker *dagChecker) const
+{
+  const cmGeneratorExpressionNode *node = GetNode(parameters.front());
+  if (!node)
+    {
+    reportError(context, content->GetOriginalExpression(),
+        "$<ALL> id parameter must be a valid generator expression "
+        "identifier.");
+    return std::string();
+    }
+  std::vector<std::string> listElements;
+  cmSystemTools::ExpandListArgument(parameters[1], listElements);
+
+  return node->Evaluate(listElements, context, content, dagChecker);
 }
 
 //----------------------------------------------------------------------------
