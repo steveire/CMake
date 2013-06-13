@@ -41,20 +41,10 @@ class cmake;
 class cmMakefile;
 class cmSourceFile;
 class cmGlobalGenerator;
-class cmComputeLinkInformation;
 class cmListFileBacktrace;
 class cmTarget;
 class cmGeneratorTarget;
 class cmTargetTraceDependencies;
-
-struct cmTargetLinkInformationMap:
-  public std::map<std::string, cmComputeLinkInformation*>
-{
-  typedef std::map<std::string, cmComputeLinkInformation*> derived;
-  cmTargetLinkInformationMap() {}
-  cmTargetLinkInformationMap(cmTargetLinkInformationMap const& r);
-  ~cmTargetLinkInformationMap();
-};
 
 class cmTargetInternals;
 class cmTargetInternalPointer
@@ -68,6 +58,11 @@ public:
   cmTargetInternals* Get() const { return this->Pointer; }
 private:
   cmTargetInternals* Pointer;
+};
+
+struct TargetConfigPair : public std::pair<cmTarget const*, std::string> {
+  TargetConfigPair(cmTarget const* tgt, const std::string &config)
+    : std::pair<cmTarget const*, std::string>(tgt, config) {}
 };
 
 /** \class cmTarget
@@ -435,9 +430,6 @@ public:
     * install tree.  For example: "\@rpath/" or "\@loader_path/". */
   std::string GetInstallNameDirForInstallTree() const;
 
-  cmComputeLinkInformation*
-    GetLinkInformation(const std::string& config) const;
-
   // Get the properties
   cmPropertyMap &GetProperties() const { return this->Properties; }
 
@@ -540,24 +532,6 @@ public:
                           const std::string& config) const;
 
   bool IsNullImpliedByLinkLibraries(const std::string &p) const;
-  bool IsLinkInterfaceDependentBoolProperty(const std::string &p,
-                         const std::string& config) const;
-  bool IsLinkInterfaceDependentStringProperty(const std::string &p,
-                         const std::string& config) const;
-  bool IsLinkInterfaceDependentNumberMinProperty(const std::string &p,
-                         const std::string& config) const;
-  bool IsLinkInterfaceDependentNumberMaxProperty(const std::string &p,
-                         const std::string& config) const;
-
-  bool GetLinkInterfaceDependentBoolProperty(const std::string &p,
-                                             const std::string& config) const;
-
-  const char *GetLinkInterfaceDependentStringProperty(const std::string &p,
-                         const std::string& config) const;
-  const char *GetLinkInterfaceDependentNumberMinProperty(const std::string &p,
-                         const std::string& config) const;
-  const char *GetLinkInterfaceDependentNumberMaxProperty(const std::string &p,
-                         const std::string& config) const;
 
   std::string GetDebugGeneratorExpressions(const std::string &value,
                                   cmTarget::LinkLibraryType llt) const;
@@ -569,11 +543,6 @@ public:
 
   bool LinkLanguagePropagatesToDependents() const
   { return this->TargetTypeValue == STATIC_LIBRARY; }
-
-  void ReportPropertyOrigin(const std::string &p,
-                            const std::string &result,
-                            const std::string &report,
-                            const std::string &compatibilityType) const;
 
   std::map<std::string, std::string> const&
   GetMaxLanguageStandards() const
@@ -715,7 +684,6 @@ private:
   bool IsAndroid;
   bool IsApple;
   bool IsImportedTarget;
-  mutable std::map<std::string, bool> DebugCompatiblePropertiesDone;
   mutable bool DebugCompileOptionsDone;
   mutable bool DebugCompileDefinitionsDone;
   mutable bool DebugSourcesDone;
@@ -756,9 +724,9 @@ private:
   struct CompileInfo;
   CompileInfo const* GetCompileInfo(const std::string& config) const;
 
-  mutable cmTargetLinkInformationMap LinkInformation;
-  void CheckPropertyCompatibility(cmComputeLinkInformation *info,
-                                  const std::string& config) const;
+
+  bool ComputeLinkInterface(const char* config, LinkInterface& iface,
+                                        cmTarget const* head) const;
 
   LinkInterface const*
     GetImportLinkInterface(const std::string& config, cmTarget const* head,

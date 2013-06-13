@@ -557,8 +557,11 @@ void cmQtAutoGenerators::SetupAutoGenerateTarget(cmTarget const* target)
     {
     qtVersion = makefile->GetDefinition("QT_VERSION_MAJOR");
     }
+  cmGeneratorTarget *gtgt = target->GetMakefile()->GetLocalGenerator()
+                                  ->GetGlobalGenerator()
+                                  ->GetGeneratorTarget(target);
   if (const char *targetQtVersion =
-      target->GetLinkInterfaceDependentStringProperty("QT_MAJOR_VERSION", ""))
+      gtgt->GetLinkInterfaceDependentStringProperty("QT_MAJOR_VERSION", ""))
     {
     qtVersion = targetQtVersion;
     }

@@ -464,7 +464,7 @@ void getPropertyContents(cmTarget const* tgt, const std::string& prop,
 }
 
 //----------------------------------------------------------------------------
-void getCompatibleInterfaceProperties(cmTarget *target,
+void getCompatibleInterfaceProperties(cmGeneratorTarget *target,
                                       std::set<std::string> &ifaceProperties,
                                       const std::string& config)
 {
@@ -472,11 +472,14 @@ void getCompatibleInterfaceProperties(cmTarget *target,
 
   if (!info)
     {
-    cmMakefile* mf = target->GetMakefile();
-    cmOStringStream e;
-    e << "Exporting the target \"" << target->GetName() << "\" is not "
-        "allowed since its linker language cannot be determined";
-    mf->IssueMessage(cmake::FATAL_ERROR, e.str());
+    if (target->GetType() != cmTarget::INTERFACE_LIBRARY)
+      {
+      cmMakefile* mf = target->Target->GetMakefile();
+      cmOStringStream e;
+      e << "Exporting the target \"" << target->GetName() << "\" is not "
+          "allowed since its linker language cannot be determined";
+      mf->IssueMessage(cmake::FATAL_ERROR, e.str());
+      }
     return;
     }
 
@@ -507,9 +510,10 @@ void getCompatibleInterfaceProperties(cmTarget *target,
 
 //----------------------------------------------------------------------------
 void cmExportFileGenerator::PopulateCompatibleInterfaceProperties(
-                                cmTarget *target,
+                                cmGeneratorTarget *gtarget,
                                 ImportPropertyMap &properties)
 {
+  cmTarget *target = gtarget->Target;
   this->PopulateInterfaceProperty("COMPATIBLE_INTERFACE_BOOL",
                                 target, properties);
   this->PopulateInterfaceProperty("COMPATIBLE_INTERFACE_STRING",
@@ -530,7 +534,7 @@ void cmExportFileGenerator::PopulateCompatibleInterfaceProperties(
 
   if (target->GetType() != cmTarget::INTERFACE_LIBRARY)
     {
-    getCompatibleInterfaceProperties(target, ifaceProperties, "");
+    getCompatibleInterfaceProperties(gtarget, ifaceProperties, "");
 
     std::vector<std::string> configNames;
     target->GetMakefile()->GetConfigurations(configNames);
@@ -538,7 +542,7 @@ void cmExportFileGenerator::PopulateCompatibleInterfaceProperties(
     for (std::vector<std::string>::const_iterator ci = configNames.begin();
       ci != configNames.end(); ++ci)
       {
-      getCompatibleInterfaceProperties(target, ifaceProperties, *ci);
+      getCompatibleInterfaceProperties(gtarget, ifaceProperties, *ci);
       }
     }
 

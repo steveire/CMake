@@ -15,6 +15,7 @@
 #include "cmStandardIncludes.h"
 #include "cmGeneratorExpression.h"
 
+class cmComputeLinkInformation;
 class cmCustomCommand;
 class cmGlobalGenerator;
 class cmLocalGenerator;
@@ -48,11 +49,21 @@ public:
   bool FromGenex;
 };
 
+struct cmTargetLinkInformationMap:
+  public std::map<std::pair<cmTarget const*, std::string>,
+                           cmComputeLinkInformation*>
+{
+  typedef std::map<std::pair<cmTarget const*, std::string>,
+                   cmComputeLinkInformation*> derived;
+  cmTargetLinkInformationMap() {}
+  cmTargetLinkInformationMap(cmTargetLinkInformationMap const& r);
+  ~cmTargetLinkInformationMap();
+};
+
 class cmGeneratorTarget
 {
 public:
   cmGeneratorTarget(cmTarget*);
-
   ~cmGeneratorTarget();
 
   bool IsImported() const;
@@ -124,6 +135,34 @@ public:
   void UseObjectLibraries(std::vector<std::string>& objs,
                           const std::string& config) const;
 
+  mutable cmTargetLinkInformationMap LinkInformation;
+
+  cmComputeLinkInformation* GetLinkInformation(const std::string& config,
+                                               cmTarget const* head = 0) const;
+
+  bool IsLinkInterfaceDependentBoolProperty(const std::string& p,
+                                            const std::string& config) const;
+  bool IsLinkInterfaceDependentStringProperty(const std::string& p,
+                                            const std::string& config) const;
+  bool IsLinkInterfaceDependentNumberMinProperty(const std::string& p,
+                                            const std::string& config) const;
+  bool IsLinkInterfaceDependentNumberMaxProperty(const std::string& p,
+                                            const std::string& config) const;
+
+  bool GetLinkInterfaceDependentBoolProperty(const std::string& p,
+                                            const std::string& config) const;
+  const char *GetLinkInterfaceDependentStringProperty(const std::string& p,
+                                            const std::string& config) const;
+  const char *GetLinkInterfaceDependentNumberMinProperty(const std::string& p,
+                                            const std::string& config) const;
+  const char *GetLinkInterfaceDependentNumberMaxProperty(const std::string& p,
+                                            const std::string& config) const;
+
+  void CheckPropertyCompatibility(cmComputeLinkInformation *info,
+                                  const std::string& config) const;
+
+  cmMakefile* GetMakefile() const;
+
   void GetAppleArchs(const std::string& config,
                      std::vector<std::string>& archVec) const;
 
@@ -186,6 +225,12 @@ public:
   void GetAutoUicOptions(std::vector<std::string> &result,
                          const std::string& config) const;
 
+  void ReportPropertyOrigin(const std::string &p,
+                            const std::string &result,
+                            const std::string &report,
+                            const std::string &compatibilityType) const;
+
+
 
   struct SourceFileFlags
   GetTargetSourceFileFlags(const cmSourceFile* sf) const;
@@ -211,6 +256,7 @@ private:
   mutable std::map<std::string, std::vector<TargetPropertyEntry*> >
                                 CachedLinkInterfaceIncludeDirectoriesEntries;
   mutable std::map<std::string, bool> CacheLinkInterfaceIncludeDirectoriesDone;
+  mutable std::map<std::string, bool> DebugCompatiblePropertiesDone;
 
   cmGeneratorTarget(cmGeneratorTarget const&);
   void operator=(cmGeneratorTarget const&);
