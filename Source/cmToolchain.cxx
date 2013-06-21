@@ -1,13 +1,18 @@
 
 #include "cmToolchain.h"
 #include "cmMakefile.h"
+#include "cmLocalGenerator.h"
+#include "cmGlobalGenerator.h"
 
 #include "cmSourceFile.h"
 
-cmToolchain::cmToolchain(cmMakefile const *mf)
-  : Makefile(mf)
+cmToolchain::cmToolchain(cmMakefile const *mf_)
+  : Makefile(mf_)
 {
-
+  cmMakefile *mf = const_cast<cmMakefile*>(mf_);
+  cmake *cm =
+            mf->GetLocalGenerator()->GetGlobalGenerator()->GetCMakeInstance();
+  this->CacheManager = new cmCacheManager(cm);
 }
 
 const char *cmToolchain::GetDefinition(const char *input) const
@@ -38,8 +43,32 @@ bool cmToolchain::IsSet(const char* name) const
 bool cmToolchain::ReadListFile(const char* listfile,
                   const char* external)
 {
-  return const_cast<cmMakefile*>(this->Makefile)
-                                          ->ReadListFile(listfile, external);
+  cmMakefile *mf = const_cast<cmMakefile*>(this->Makefile);
+  cmGlobalGenerator* gg = mf->GetLocalGenerator()->GetGlobalGenerator();
+  cmake *cm = gg->GetCMakeInstance();
+  if (cmSystemTools::FileExists((cm->GetHomeOutputDirectory()
+                        + std::string("/toolchain/CMakeCache.txt")).c_str()))
+    {
+    this->CacheManager->LoadCache((cm->GetHomeOutputDirectory()
+                                      + std::string("/toolchain/")).c_str());
+    }
+  else
+    {
+    cmCacheManager::CacheIterator it =
+                                    cm->GetCacheManager()->GetCacheIterator();
+    for ( it.Begin(); !it.IsAtEnd(); it.Next() )
+      {
+      this->CacheManager->AddCacheEntry(it.GetName(),
+                                        it.GetValue(),
+                                        it.GetProperty("HELPSTRING"),
+                                        it.GetType());
+      }
+    }
+  mf->SetCacheManager(this->CacheManager);
+  bool result = mf->ReadListFile(listfile, external);
+  this->CacheManager->SaveCache((cm->GetHomeOutputDirectory()
+                                      + std::string("/toolchain/")).c_str());
+  return result;
 }
 
 bool cmToolchain::GetLanguageEnabled(const char* l) const

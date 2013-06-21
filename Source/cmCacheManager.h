@@ -184,6 +184,7 @@ private:
   friend class cmake; // allow access to add cache values
   friend class cmakewizard; // allow access to add cache values
   friend class cmMarkAsAdvancedCommand; // allow access to add cache values
+  friend class cmToolchain; // allow access to add cache values
 };
 
 #endif

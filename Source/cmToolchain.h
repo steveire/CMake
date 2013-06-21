@@ -6,6 +6,7 @@
 
 class cmMakefile;
 class cmSourceFile;
+class cmCacheManager;
 
 class cmToolchain
 {
@@ -51,6 +52,7 @@ public:
   std::map<cmStdString, int> LanguageToLinkerPreference;
   std::map<cmStdString, cmStdString> LanguageToOriginalSharedLibFlags;
 private:
+  cmCacheManager *CacheManager;
 };
 
 #endif
