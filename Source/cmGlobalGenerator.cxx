@@ -1598,9 +1598,14 @@ void cmGlobalGenerator::EnableInstallTarget()
   this->InstallTargetEnabled = true;
 }
 
-cmLocalGenerator *cmGlobalGenerator::CreateLocalGenerator()
+cmLocalGenerator*
+cmGlobalGenerator::CreateLocalGenerator(cmLocalGenerator* parent)
 {
   cmLocalGenerator *lg = new cmLocalGenerator;
+  if(parent)
+    {
+    lg->SetParent(parent);
+    }
   lg->SetGlobalGenerator(this);
   return lg;
 }

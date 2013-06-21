@@ -39,7 +39,7 @@ public:
   virtual void AddPlatformDefinitions(cmMakefile* mf);
 
   ///! create the correct local generator
-  virtual cmLocalGenerator *CreateLocalGenerator();
+  virtual cmLocalGenerator *CreateLocalGenerator(cmLocalGenerator* parent = 0);
 
   virtual void Generate();
 

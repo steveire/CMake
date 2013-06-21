@@ -458,9 +458,14 @@ cmGlobalNinjaGenerator::cmGlobalNinjaGenerator()
 //----------------------------------------------------------------------------
 // Virtual public methods.
 
-cmLocalGenerator* cmGlobalNinjaGenerator::CreateLocalGenerator()
+cmLocalGenerator*
+cmGlobalNinjaGenerator::CreateLocalGenerator(cmLocalGenerator* parent)
 {
   cmLocalGenerator* lg = new cmLocalNinjaGenerator;
+  if(parent)
+    {
+    lg->SetParent(parent);
+    }
   lg->SetGlobalGenerator(this);
   return lg;
 }

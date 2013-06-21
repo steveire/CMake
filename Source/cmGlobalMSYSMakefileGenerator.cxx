@@ -92,9 +92,14 @@ void cmGlobalMSYSMakefileGenerator
 }
 
 ///! Create a local generator appropriate to this Global Generator
-cmLocalGenerator *cmGlobalMSYSMakefileGenerator::CreateLocalGenerator()
+cmLocalGenerator*
+cmGlobalMSYSMakefileGenerator::CreateLocalGenerator(cmLocalGenerator* parent)
 {
   cmLocalUnixMakefileGenerator3* lg = new cmLocalUnixMakefileGenerator3;
+  if(parent)
+    {
+    lg->SetParent(parent);
+    }
   lg->SetWindowsShell(false);
   lg->SetMSYSShell(true);
   lg->SetGlobalGenerator(this);

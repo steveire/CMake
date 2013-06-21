@@ -47,7 +47,7 @@ public:
   virtual ~cmGlobalGenerator();
 
   ///! Create a local generator appropriate to this Global Generator
-  virtual cmLocalGenerator *CreateLocalGenerator();
+  virtual cmLocalGenerator *CreateLocalGenerator(cmLocalGenerator* parent = 0);
 
   ///! Get the name for this generator
   virtual const char *GetName() const { return "Generic"; };

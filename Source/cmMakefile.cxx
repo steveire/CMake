@@ -1610,9 +1610,8 @@ void cmMakefile::AddSubDirectory(const char* srcPath, const char *binPath,
     }
 
   // create a new local generator and set its parent
-  cmLocalGenerator *lg2 =
-    this->LocalGenerator->GetGlobalGenerator()->CreateLocalGenerator();
-  lg2->SetParent(this->LocalGenerator);
+  cmLocalGenerator *lg2 = this->LocalGenerator->GetGlobalGenerator()
+                                ->CreateLocalGenerator(this->LocalGenerator);
   this->LocalGenerator->GetGlobalGenerator()->AddLocalGenerator(lg2);
 
   // set the subdirs start dirs
