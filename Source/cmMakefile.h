@@ -750,6 +750,7 @@ public:
    * given a current CMakeLists file name
    */
   cmCacheManager *GetCacheManager() const;
+  void SetCacheManager(cmCacheManager *manager);
 
   /**
    * Get the variable watch. This is used to determine when certain variables
@@ -1026,6 +1027,8 @@ private:
 
   // Enforce rules about CMakeLists.txt files.
   void EnforceDirectoryLevelRules();
+
+  cmCacheManager *CacheManager;
 
   bool GeneratingBuildSystem;
 

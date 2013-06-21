@@ -98,6 +98,7 @@ cmMakefile::cmMakefile(): Internal(new Internals)
 
   this->DefineFlags = " ";
   this->LocalGenerator = 0;
+  this->CacheManager = 0;
 
   this->AddDefaultDefinitions();
   this->Initialize();
@@ -3167,7 +3168,14 @@ void cmMakefile::GetListOfMacros(std::string& macros)
 
 cmCacheManager *cmMakefile::GetCacheManager() const
 {
-  return this->GetCMakeInstance()->GetCacheManager();
+  return this->CacheManager
+    ? this->CacheManager
+    : this->GetCMakeInstance()->GetCacheManager();
+}
+
+void cmMakefile::SetCacheManager(cmCacheManager *manager)
+{
+  this->CacheManager = manager;
 }
 
 void cmMakefile::DisplayStatus(const char* message, float s)
