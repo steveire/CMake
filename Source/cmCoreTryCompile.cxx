@@ -218,6 +218,8 @@ int cmCoreTryCompile::TryCompileCode(std::vector<std::string> const& argv)
     cmGlobalGenerator* gg =
       this->Makefile->GetCMakeInstance()->GetGlobalGenerator();
     std::set<std::string> testLangs;
+    gg->TryCompileToolchain = gg->CurrentToolchain;
+    gg->CurrentToolchain = "";
     for(std::vector<std::string>::iterator si = sources.begin();
         si != sources.end(); ++si)
       {

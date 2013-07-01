@@ -295,6 +295,7 @@ public:
    * can be used in CMake to refer to lists, directories, etc.
    */
   void AddDefinition(const char* name, const char* value);
+  void AddDefinitionImpl(const char* name, const char* value);
   ///! Add a definition to this makefile and the global cmake cache.
   void AddCacheDefinition(const char* name, const char* value,
                           const char* doc,

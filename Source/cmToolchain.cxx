@@ -11,8 +11,8 @@
 
 #include "assert.h"
 
-cmToolchain::cmToolchain(cmMakefile const *mf_)
-  : Makefile(0)
+cmToolchain::cmToolchain(cmMakefile const *mf_, const std::string &name)
+  : Makefile(0), Name(name)
 {
   // Hack for try_compile. In cmMakefile::TryCompile, we have no makefile available.
   // Se if we should just make one at that point.
@@ -32,7 +32,7 @@ void cmToolchain::SetMakefile(cmMakefile const *mf_)
   cmMakefile *mf = const_cast<cmMakefile*>(mf_);
   cmake *cm = mf->GetLocalGenerator()->GetGlobalGenerator()->GetCMakeInstance();
   this->CacheManager = new cmCacheManager(cm);
-  std::string cacheDirName = cm->GetHomeOutputDirectory() + std::string("/toolchain");
+  std::string cacheDirName = cm->GetHomeOutputDirectory() + std::string("/") + (!this->Name.empty() ? this->Name : "HOST");
   if (cmSystemTools::FileExists((cacheDirName + "/CMakeCache.txt").c_str()))
     {
     this->CacheManager->LoadCache(cacheDirName.c_str());
@@ -50,8 +50,9 @@ void cmToolchain::SaveCache()
   cmMakefile *mf = const_cast<cmMakefile*>(this->Makefile);
   cmGlobalGenerator *gg = mf->GetLocalGenerator()->GetGlobalGenerator();
   cmake *cm = gg->GetCMakeInstance();
+  gg->CurrentToolchain = this->Name;
   this->Makefile->GetDefinition("CMAKE_C_COMPILER"); // Cache gets wrong compiler when this is removed.
-  std::string cacheDirName = cm->GetHomeOutputDirectory() + std::string("/toolchain");
+  std::string cacheDirName = cm->GetHomeOutputDirectory() + std::string("/") + (!this->Name.empty() ? this->Name : "HOST");
   mf->GetCacheManager()->SaveCache(cacheDirName.c_str());
 }
 
@@ -71,6 +72,14 @@ cmToolchain::~cmToolchain()
 
 const char *cmToolchain::GetDefinition(const char *input) const
 {
+  if (this->Name.empty())
+    {
+    return this->Makefile->GetDefinitionImpl(input);
+    }
+  if (input == std::string("CURRENT_TOOLCHAIN"))
+    {
+    return this->Name.c_str();
+    }
   const char* def = this->Makefile->GetDefinitionImpl(input);
 
   if (!def)
@@ -173,6 +182,10 @@ static void cmakeProgressCallback(const char *m, float prog,
 bool cmToolchain::ReadListFile(const char* listfile,
                   const char* external)
 {
+  if (this->Name.empty())
+    {
+    return const_cast<cmMakefile*>(this->Makefile)->ReadListFile(listfile, external);
+    }
   this->Blocked = this->Makefile->GetDefinitions();
 
   cmGlobalGenerator *thisGlobalGenerator = const_cast<cmMakefile*>(this->Makefile)->GetLocalGenerator()->GetGlobalGenerator();
@@ -188,6 +201,7 @@ bool cmToolchain::ReadListFile(const char* listfile,
   // read in the list file to fill the cache
   cmsys::auto_ptr<cmLocalGenerator> lg(gg->CreateLocalGenerator());
   cmMakefile* mf = lg->GetMakefile();
+  gg->CurrentToolchain = this->Name;
   gg->EnableLanguagesFromGenerator(thisGlobalGenerator, const_cast<cmMakefile*>(this->Makefile), mf);
 
   for(std::vector<std::string>::const_iterator i = this->Blocked.begin();
@@ -220,7 +234,7 @@ bool cmToolchain::ReadListFile(const char* listfile,
     }
 
   cmake *thisCMake = thisGlobalGenerator->GetCMakeInstance();
-  std::string cacheDirName = thisCMake->GetHomeOutputDirectory() + std::string("/toolchain");
+  std::string cacheDirName = thisCMake->GetHomeOutputDirectory() + std::string("/") + (!this->Name.empty() ? this->Name : "HOST");
   if (cmSystemTools::FileExists((cacheDirName + "/CMakeCache.txt").c_str()))
     {
     mf->GetCacheManager()->LoadCache(cacheDirName.c_str());

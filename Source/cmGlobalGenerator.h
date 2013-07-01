@@ -77,14 +77,15 @@ public:
   virtual void EnableLanguage(std::vector<std::string>const& languages,
                               cmMakefile *, bool optional);
   void DetermineToolchain(std::vector<std::string>const& languages,
-                              cmMakefile *, const std::string &rootBin);
+                              cmMakefile *, const std::string &rootBin,
+                              const char *name);
 
   /**
    * Resolve the CMAKE_<lang>_COMPILER setting for the given language.
    * Intended to be called from EnableLanguage.
    */
   void ResolveLanguageCompiler(const std::string &lang, cmMakefile *mf,
-                               bool optional);
+                               bool optional, const char *name);
 
   /**
    * Try to determine system infomation, get it from another generator
@@ -276,7 +277,10 @@ public:
 
   void ProcessEvaluationFiles();
 
-  cmToolchain *GetToolchain(cmMakefile const * mf) const;
+  cmToolchain *GetToolchain(cmMakefile const * mf, const char *name) const;
+  cmToolchain* GetToolchain(cmMakefile const *mf) const;
+
+  void SaveToolchainCaches();
 
 protected:
   typedef std::vector<cmLocalGenerator*> GeneratorVector;
@@ -340,8 +344,12 @@ protected:
   virtual bool UseFolderProperty();
   void EnableMinGWLanguage(cmMakefile *mf);
 
-private:
+public:
   cmMakefile* TryCompileOuterMakefile;
+public:
+  std::string CurrentToolchain;
+  std::string TryCompileToolchain;
+private:
   float FirstTimeProgress;
 
   // Record hashes for rules and outputs.
@@ -383,7 +391,8 @@ private:
   // Set of binary directories on disk.
   std::set<cmStdString> BinaryDirectories;
 
-  mutable std::map<cmMakefile const*, cmToolchain*> Toolchains;
+  mutable std::map<cmStdString, std::map<const cmMakefile*, cmToolchain*> > Toolchains;
+  mutable cmToolchain* HostToolchain;
 };
 
 #endif

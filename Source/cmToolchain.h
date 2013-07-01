@@ -13,7 +13,7 @@ class cmSourceFile;
 class cmToolchain
 {
 public:
-  cmToolchain(cmMakefile const *mf);
+  cmToolchain(cmMakefile const *mf, const std::string &name = std::string());
   ~cmToolchain();
 
   const char *GetDefinition(const char *) const;
@@ -38,6 +38,9 @@ public:
   const cmMakefile *GetMakefile() { return this->Makefile; }
 
   void SaveCache();
+
+  std::string GetName() { return this->Name; }
+
 private:
   bool IsOverridden(const char *input) const;
 
@@ -57,6 +60,7 @@ public:
   std::string GetSharedLibFlagsForLanguage(std::string const& lang);
 private:
   cmMakefile const *Makefile;
+  std::string Name;
   mutable cmDefinitions Override;
   cmake::RegisteredCommandsMap OverrideCommands;
   std::vector<std::string> Blocked;

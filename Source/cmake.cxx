@@ -2439,6 +2439,7 @@ int cmake::ActualConfigure()
   if ( this->GetWorkingMode() == NORMAL_MODE )
     {
     this->CacheManager->SaveCache(this->GetHomeOutputDirectory());
+    this->GlobalGenerator->SaveToolchainCaches();
     }
   if ( !this->GraphVizFile.empty() )
     {
@@ -2606,7 +2607,24 @@ int cmake::Generate()
     {
     return -1;
     }
-  this->GlobalGenerator->Generate();
+
+  cmMakefile* mf = this->GlobalGenerator->GetLocalGenerators()[0]->GetMakefile();
+  std::vector<std::string> toolchains;
+  cmSystemTools::ExpandListArgument(mf->GetSafeDefinition("CMAKE_TOOLCHAINS"), toolchains);
+
+  if (!toolchains.empty())
+    {
+    for(std::vector<std::string>::const_iterator ti = toolchains.begin();
+        ti != toolchains.end(); ++ti)
+      {
+      this->GlobalGenerator->CurrentToolchain = *ti;
+      this->GlobalGenerator->Generate();
+      }
+    }
+  else
+    {
+    this->GlobalGenerator->Generate();
+    }
   if(this->WarnUnusedCli)
     {
     this->RunCheckForUnusedVariables();
@@ -2626,6 +2644,7 @@ int cmake::Generate()
   if ( this->GetWorkingMode() == NORMAL_MODE )
     {
     this->CacheManager->SaveCache(this->GetHomeOutputDirectory());
+    this->GlobalGenerator->SaveToolchainCaches();
     }
   return 0;
 }

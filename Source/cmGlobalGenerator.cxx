@@ -59,6 +59,7 @@ cmGlobalGenerator::cmGlobalGenerator()
   // how long to let try compiles run
   this->TryCompileTimeout = 0;
 
+  this->HostToolchain = 0;
   this->ExtraGenerator = 0;
   this->CurrentLocalGenerator = 0;
   this->TryCompileOuterMakefile = 0;
@@ -104,13 +105,22 @@ bool cmGlobalGenerator::SetGeneratorToolset(std::string const& ts)
 
 void cmGlobalGenerator::ResolveLanguageCompiler(const std::string &lang,
                                                 cmMakefile *mf,
-                                                bool optional)
+                                                bool optional,
+                                                const char *tcname)
 {
   std::string langComp = "CMAKE_";
   langComp += lang;
   langComp += "_COMPILER";
 
-  if(!mf->GetDefinition(langComp.c_str()))
+  if (tcname && this->CurrentToolchain.empty()
+      && !this->TryCompileOuterMakefile)
+    {
+    this->CurrentToolchain = tcname;
+    }
+
+  cmToolchain *toolchain = this->GetToolchain(mf, tcname);
+
+  if(!toolchain->GetDefinition(langComp.c_str()))
     {
     if(!optional)
       {
@@ -119,7 +129,7 @@ void cmGlobalGenerator::ResolveLanguageCompiler(const std::string &lang,
       }
     return;
     }
-  const char* name = mf->GetRequiredDefinition(langComp.c_str());
+  const char* name = toolchain->GetRequiredDefinition(langComp.c_str());
   std::string path;
   if(!cmSystemTools::FileIsFullPath(name))
     {
@@ -174,6 +184,8 @@ void cmGlobalGenerator::ResolveLanguageCompiler(const std::string &lang,
     }
   mf->AddCacheDefinition(langComp.c_str(), path.c_str(),
                          doc.c_str(), cmCacheManager::FILEPATH);
+  toolchain->SaveCache();
+  this->CurrentToolchain = "";
 }
 
 // Find the make program for the generator, required for try compiles
@@ -303,7 +315,14 @@ cmGlobalGenerator::EnableLanguage(std::vector<std::string>const& languages,
 
   if(this->TryCompileOuterMakefile)
     {
+    cmGlobalGenerator *gg = this->TryCompileOuterMakefile
+                                  ->GetLocalGenerator()->GetGlobalGenerator();
+    cmToolchain *outtc = gg->GetToolchain(this->TryCompileOuterMakefile);
+                                  // The same as this->CurrentToolchain ?
     cmToolchain *mytc = this->GetToolchain(mf);
+    mytc->EnableLanguagesFromToolchain(outtc);
+    mytc->CopyOverrides(outtc);
+
     // In a try-compile we can only enable languages provided by caller.
     for(std::vector<std::string>::const_iterator li = languages.begin();
         li != languages.end(); ++li)
@@ -349,7 +368,38 @@ cmGlobalGenerator::EnableLanguage(std::vector<std::string>const& languages,
   // find and make sure CMAKE_MAKE_PROGRAM is defined
   this->FindMakeProgram(mf);
 
-  this->DetermineToolchain(languages, mf, rootBin);
+  std::vector<std::string> toolchains;
+
+  if (const char *tcs = mf->GetDefinition("CMAKE_TOOLCHAINS"))
+    {
+    if (mf->GetDefinition("CMAKE_TOOLCHAIN_FILE"))
+      {
+      // Error
+        std::cout << "ERROR" << std::endl;
+      exit(1);
+      }
+    cmSystemTools::ExpandListArgument(tcs, toolchains);
+    }
+
+  if (!toolchains.empty())
+    {
+    for(std::vector<std::string>::const_iterator it = toolchains.begin();
+        it != toolchains.end(); ++it)
+      {
+      this->DetermineToolchain(languages, mf, rootBin, it->c_str());
+      }
+    }
+  else
+    {
+    if(this->TryCompileOuterMakefile)
+      {
+      this->DetermineToolchain(languages, mf, rootBin, this->TryCompileOuterMakefile->GetDefinition("CURRENT_TOOLCHAIN"));
+      }
+    else
+      {
+      this->DetermineToolchain(languages, mf, rootBin, 0);
+      }
+    }
 
   // Now load files that can override any settings on the platform or for
   // the project First load the project compatibility file if it is in
@@ -364,18 +414,34 @@ cmGlobalGenerator::EnableLanguage(std::vector<std::string>const& languages,
     }
 }
 
-cmToolchain *cmGlobalGenerator::GetToolchain(cmMakefile const * _mf) const
+cmToolchain *cmGlobalGenerator::GetToolchain(cmMakefile const * _mf, const char *name) const
 {
+  if (!name || _mf->GetCMakeInstance()->GetIsInTryCompile())
+    {
+    if (!this->HostToolchain)
+      {
+      this->HostToolchain = new cmToolchain(_mf);
+      }
+    return this->HostToolchain;
+    }
+  std::map<cmStdString, std::map<cmMakefile const*, cmToolchain*> >::iterator it
+                                                = this->Toolchains.find(name);
+
+  std::map<cmMakefile const*, cmToolchain*> &tcs = this->Toolchains[name];
+  if (_mf && tcs.find(0) != tcs.end())
+    {
+    tcs.erase(tcs.find(0));
+    }
   cmMakefile const * mf = _mf;
   cmToolchain *tc = 0;
   while (mf)
     {
-    std::map<cmMakefile const*, cmToolchain*>::const_iterator it
-                                                  = this->Toolchains.find(mf);
-    if (it != this->Toolchains.end())
+    std::map<cmMakefile const*, cmToolchain*>::const_iterator it2
+                                                  = tcs.find(mf);
+    if (it2 != tcs.end())
       {
-      tc = it->second;
-      tc->SetMakefile(_mf);
+      tc = it2->second;
+      tc->SetMakefileOnly(_mf);
       break;
       }
     cmLocalGenerator *lgParent = const_cast<cmMakefile*>(mf)
@@ -385,26 +451,54 @@ cmToolchain *cmGlobalGenerator::GetToolchain(cmMakefile const * _mf) const
 
   if (!tc)
     {
-    tc = new cmToolchain(_mf);
-    this->Toolchains[_mf] = tc;
+    tc = new cmToolchain(_mf, name);
+    this->Toolchains[name][_mf] = tc;
     }
+
+  const_cast<cmMakefile*>(_mf)->SetCacheManager(tc->GetCacheManager());
+  const_cast<cmMakefile*>(_mf)->GetLocalGenerator()->GetGlobalGenerator()->CurrentToolchain = name;
   return tc;
 }
 
 void
 cmGlobalGenerator::DetermineToolchain(std::vector<std::string>const& languages,
-                                  cmMakefile *mf, const std::string &rootBin)
+                                  cmMakefile *mf, const std::string &rootBin_,
+                                  const char *name)
 {
+  std::string rootBin = rootBin_;
+
+  if (name)
+    {
+    std::cout << "---- Determine Toolchain: " << name << std::endl;
+    rootBin += "_";
+    rootBin += name;
+    }
+  else if (this->GetCMakeInstance()->GetIsInTryCompile())
+    {
+    if (!this->TryCompileToolchain.empty())
+      {
+      rootBin += "_";
+      rootBin += this->TryCompileToolchain;
+      }
+    }
+
   std::string fpath = rootBin;
-  std::map<cmStdString, bool> needTestLanguage;
-  std::map<cmStdString, bool> needSetLanguageEnabledMaps;
-  // foreach language
-  // load the CMakeDetermine(LANG)Compiler.cmake file to find
-  // the compiler
 
-  cmToolchain *toolchain = GetToolchain(mf);
+  cmToolchain *toolchain = this->GetToolchain(mf, name);
 
-  // try and load the CMakeSystem.cmake if it is there
+  if (!this->TryCompileOuterMakefile && name)
+    {
+    if (strcmp(name, "HOST") != 0)
+      {
+      std::string tcf = (mf)->GetStartDirectory();
+      tcf += "/";
+      tcf += name;
+      tcf += "Toolchain.cmake";
+      toolchain->AddOverride("CMAKE_TOOLCHAIN_FILE", tcf.c_str());
+      }
+    toolchain->AddOverride("CMAKE_PLATFORM_INFO_DIR",rootBin.c_str());
+    }
+
   if(!toolchain->GetDefinition("CMAKE_SYSTEM_LOADED"))
     {
     fpath += "/CMakeSystem.cmake";
@@ -426,7 +520,7 @@ cmGlobalGenerator::DetermineToolchain(std::vector<std::string>const& languages,
     cmOStringStream windowsVersionString;
     windowsVersionString << osvi.dwMajorVersion << "." << osvi.dwMinorVersion;
     windowsVersionString.str();
-    mf->AddDefinition("CMAKE_HOST_SYSTEM_VERSION",
+    toolchain->AddOverride("CMAKE_HOST_SYSTEM_VERSION",
                       windowsVersionString.str().c_str());
 #endif
     // Read the DetermineSystem file
@@ -438,6 +532,19 @@ cmGlobalGenerator::DetermineToolchain(std::vector<std::string>const& languages,
     fpath += "/CMakeSystem.cmake";
     toolchain->ReadListFile(0,fpath.c_str());
     }
+
+  if (name && this->CurrentToolchain.empty() && !this->GetCMakeInstance()->GetIsInTryCompile())
+    this->CurrentToolchain = name;
+
+  fpath = rootBin;
+
+  std::map<std::string, bool> unsetEnv;
+
+  std::map<cmStdString, bool> needTestLanguage;
+  std::map<cmStdString, bool> needSetLanguageEnabledMaps;
+  // foreach language
+  // load the CMakeDetermine(LANG)Compiler.cmake file to find
+  // the compiler
 
   for(std::vector<std::string>::const_iterator l = languages.begin();
       l != languages.end(); ++l)
@@ -520,6 +627,7 @@ cmGlobalGenerator::DetermineToolchain(std::vector<std::string>const& languages,
         std::string env = envVar;
         env += "=";
         env += envVarValue;
+        unsetEnv[lang] = true;
         cmSystemTools::PutEnv(env.c_str());
         }
 
@@ -669,15 +777,65 @@ cmGlobalGenerator::DetermineToolchain(std::vector<std::string>const& languages,
       toolchain->LanguageToOriginalSharedLibFlags[lang] = sharedLibFlags;
       }
     } // end for each language
+
+  if (name)
+    std::cout << "---- Determine Toolchain Done: " << name << std::endl;
+
+  for (std::map<std::string, bool>::const_iterator ueit = unsetEnv.begin();
+       ueit != unsetEnv.end(); ++ueit)
+    {
+    if(ueit->second)
+      {
+      std::string compilerEnv = "CMAKE_";
+      compilerEnv += ueit->first;
+      compilerEnv += "_COMPILER_ENV_VAR";
+      std::string envVar = toolchain->GetRequiredDefinition(compilerEnv.c_str());
+      cmSystemTools::UnPutEnv(envVar.c_str());
+      }
+    }
+  this->CurrentToolchain = "";
+}
+
+void cmGlobalGenerator::SaveToolchainCaches()
+{
+  std::set<cmToolchain*> emitted;
+  for (std::map<cmStdString, std::map<const cmMakefile*, cmToolchain*> >::iterator it
+                                                    = this->Toolchains.begin();
+        it != this->Toolchains.end(); ++it)
+    {
+    for (std::map<const cmMakefile*, cmToolchain*>::iterator it2
+                                                      = it->second.begin();
+          it2 != it->second.end(); ++it2)
+      {
+      if (emitted.insert(it2->second).second)
+        {
+        it2->second->SaveCache();
+        }
+      }
+    }
+}
+
+cmToolchain* cmGlobalGenerator::GetToolchain(cmMakefile const *mf) const
+{
+  return GetToolchain(mf, this->CurrentToolchain.empty() ? 0 : this->CurrentToolchain.c_str());
 }
 
 void cmGlobalGenerator::ClearEnabledLanguages()
 {
-  for (std::map<const cmMakefile*, cmToolchain*>::iterator it
+  std::set<cmToolchain*> emitted;
+  for (std::map<cmStdString, std::map<const cmMakefile*, cmToolchain*> >::iterator it
                                                     = this->Toolchains.begin();
         it != this->Toolchains.end(); ++it)
     {
-    it->second->ClearEnabledLanguages();
+    for (std::map<const cmMakefile*, cmToolchain*>::iterator it2
+                                                      = it->second.begin();
+          it2 != it->second.end(); ++it2)
+      {
+      if (emitted.insert(it2->second).second)
+        {
+        it2->second->ClearEnabledLanguages();
+        }
+      }
     }
 }
 
@@ -1449,9 +1607,10 @@ void cmGlobalGenerator::EnableLanguagesFromGenerator(cmGlobalGenerator *gen,
                                           "make program",
                                           cmCacheManager::FILEPATH);
 
-  cmToolchain *tc = gen->GetToolchain(mf);
+  cmToolchain *tc = gen->GetToolchain(mf, gen->CurrentToolchain.empty() ? 0 : gen->CurrentToolchain.c_str());
 
-  this->GetToolchain(mf2)->EnableLanguagesFromToolchain(tc);
+  this->GetToolchain(mf2, 0)->CopyOverrides(tc);
+  this->GetToolchain(mf2, 0)->EnableLanguagesFromToolchain(tc);
 }
 
 //----------------------------------------------------------------------------

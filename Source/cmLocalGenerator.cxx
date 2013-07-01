@@ -242,6 +242,12 @@ void cmLocalGenerator::SetGlobalGenerator(cmGlobalGenerator *gg)
   this->Makefile = new cmMakefile;
   this->Makefile->SetLocalGenerator(this);
 
+  cmToolchain *tc = this->GlobalGenerator->GetToolchain(this->Makefile, 0);
+  if (!tc->GetMakefile())
+    {
+    tc->SetMakefile(this->Makefile);
+    }
+
   // setup the home directories
   this->Makefile->GetProperties().SetCMakeInstance(gg->GetCMakeInstance());
   this->Makefile->SetHomeDirectory(

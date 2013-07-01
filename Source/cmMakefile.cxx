@@ -2349,8 +2349,13 @@ bool cmMakefile::IsDefinitionSet(const char* name) const
 
 const char* cmMakefile::GetDefinition(const char* name) const
 {
-  return this->LocalGenerator->GetGlobalGenerator()
-                             ->GetToolchain(this)->GetDefinition(name);
+  cmToolchain *tc = this->LocalGenerator->GetGlobalGenerator()
+                             ->GetToolchain(this);
+  if (tc->GetMakefile() != this)
+    {
+    tc->SetMakefileOnly(this);
+    }
+  return tc->GetDefinition(name);
 }
 
 const char* cmMakefile::GetDefinitionImpl(const char* name) const
@@ -3007,6 +3012,10 @@ int cmMakefile::TryCompile(const char *srcdir, const char *bindir,
   cm.SetIsInTryCompile(true);
   cmGlobalGenerator *gg = cm.CreateGlobalGenerator
     (this->LocalGenerator->GetGlobalGenerator()->GetName());
+
+  if (this->GetLocalGenerator()->GetGlobalGenerator()->TryCompileOuterMakefile)
+    gg->TryCompileToolchain = this->GetLocalGenerator()->GetGlobalGenerator()->TryCompileOuterMakefile->GetDefinition("CURRENT_TOOLCHAIN"); // this->GetLocalGenerator()->GetGlobalGenerator()->TryCompileToolchai
+
   if (!gg)
     {
     cmSystemTools::Error(

@@ -19,6 +19,8 @@
 #include "cmTarget.h"
 #include "cmGeneratorTarget.h"
 
+#include "cmToolchain.h"
+
 cmGlobalUnixMakefileGenerator3::cmGlobalUnixMakefileGenerator3()
 {
   // This type of makefile always requires unix style paths
@@ -47,7 +49,28 @@ void cmGlobalUnixMakefileGenerator3
       {
       continue;
       }
-    this->ResolveLanguageCompiler(*l, mf, optional);
+
+    if (const char *tcs = mf->GetDefinition("CMAKE_TOOLCHAINS"))
+      {
+      std::vector<std::string> toolchains;
+      cmSystemTools::ExpandListArgument(tcs, toolchains);
+      for(std::vector<std::string>::const_iterator it = toolchains.begin();
+          it != toolchains.end(); ++it)
+        {
+        this->ResolveLanguageCompiler(*l, mf, optional, it->c_str());
+        }
+      }
+    else
+      {
+      if(this->TryCompileOuterMakefile)
+        {
+        this->ResolveLanguageCompiler(*l, mf, optional, this->TryCompileOuterMakefile->GetDefinition("CURRENT_TOOLCHAIN"));
+        }
+      else
+        {
+        this->ResolveLanguageCompiler(*l, mf, optional, 0);
+        }
+      }
     }
 }
 
