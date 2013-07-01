@@ -349,42 +349,6 @@ cmGlobalGenerator::EnableLanguage(std::vector<std::string>const& languages,
   // find and make sure CMAKE_MAKE_PROGRAM is defined
   this->FindMakeProgram(mf);
 
-  // try and load the CMakeSystem.cmake if it is there
-  std::string fpath = rootBin;
-  if(!mf->GetDefinition("CMAKE_SYSTEM_LOADED"))
-    {
-    fpath += "/CMakeSystem.cmake";
-    if(cmSystemTools::FileExists(fpath.c_str()))
-      {
-      mf->ReadListFile(0,fpath.c_str());
-      }
-    }
-  //  Load the CMakeDetermineSystem.cmake file and find out
-  // what platform we are running on
-  if (!mf->GetDefinition("CMAKE_SYSTEM"))
-    {
-#if defined(_WIN32) && !defined(__CYGWIN__)
-    /* Windows version number data.  */
-    OSVERSIONINFO osvi;
-    ZeroMemory(&osvi, sizeof(osvi));
-    osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-    GetVersionEx (&osvi);
-    cmOStringStream windowsVersionString;
-    windowsVersionString << osvi.dwMajorVersion << "." << osvi.dwMinorVersion;
-    windowsVersionString.str();
-    mf->AddDefinition("CMAKE_HOST_SYSTEM_VERSION",
-                      windowsVersionString.str().c_str());
-#endif
-    // Read the DetermineSystem file
-    std::string systemFile = mf->GetModulesFile("CMakeDetermineSystem.cmake");
-    mf->ReadListFile(0, systemFile.c_str());
-    // load the CMakeSystem.cmake from the binary directory
-    // this file is configured by the CMakeDetermineSystem.cmake file
-    fpath = rootBin;
-    fpath += "/CMakeSystem.cmake";
-    mf->ReadListFile(0,fpath.c_str());
-    }
-
   this->DetermineToolchain(languages, mf, rootBin);
 
   // Now load files that can override any settings on the platform or for
@@ -439,6 +403,41 @@ cmGlobalGenerator::DetermineToolchain(std::vector<std::string>const& languages,
   // the compiler
 
   cmToolchain *toolchain = GetToolchain(mf);
+
+  // try and load the CMakeSystem.cmake if it is there
+  if(!toolchain->GetDefinition("CMAKE_SYSTEM_LOADED"))
+    {
+    fpath += "/CMakeSystem.cmake";
+    if(cmSystemTools::FileExists(fpath.c_str()))
+      {
+      toolchain->ReadListFile(0,fpath.c_str());
+      }
+    }
+  //  Load the CMakeDetermineSystem.cmake file and find out
+  // what platform we are running on
+  if (!toolchain->GetDefinition("CMAKE_SYSTEM"))
+    {
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    /* Windows version number data.  */
+    OSVERSIONINFO osvi;
+    ZeroMemory(&osvi, sizeof(osvi));
+    osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+    GetVersionEx (&osvi);
+    cmOStringStream windowsVersionString;
+    windowsVersionString << osvi.dwMajorVersion << "." << osvi.dwMinorVersion;
+    windowsVersionString.str();
+    mf->AddDefinition("CMAKE_HOST_SYSTEM_VERSION",
+                      windowsVersionString.str().c_str());
+#endif
+    // Read the DetermineSystem file
+    std::string systemFile = mf->GetModulesFile("CMakeDetermineSystem.cmake");
+    toolchain->ReadListFile(0, systemFile.c_str());
+    // load the CMakeSystem.cmake from the binary directory
+    // this file is configured by the CMakeDetermineSystem.cmake file
+    fpath = rootBin;
+    fpath += "/CMakeSystem.cmake";
+    toolchain->ReadListFile(0,fpath.c_str());
+    }
 
   for(std::vector<std::string>::const_iterator l = languages.begin();
       l != languages.end(); ++l)
