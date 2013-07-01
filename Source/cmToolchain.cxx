@@ -1,23 +1,88 @@
 
 #include "cmToolchain.h"
 #include "cmMakefile.h"
-#include "cmLocalGenerator.h"
+#include "cmDefinitions.h"
 #include "cmGlobalGenerator.h"
+#include "cmLocalGenerator.h"
+#include "cmSourceFile.h"
+#include "cmCommand.h"
 
 #include "cmSourceFile.h"
 
+#include "assert.h"
+
 cmToolchain::cmToolchain(cmMakefile const *mf_)
-  : Makefile(mf_)
+  : Makefile(0)
 {
+  // Hack for try_compile. In cmMakefile::TryCompile, we have no makefile available.
+  // Se if we should just make one at that point.
+  if (mf_)
+    {
+    this->SetMakefile(mf_);
+    }
+  else
+    {
+    this->CacheManager = 0;
+    }
+}
+
+void cmToolchain::SetMakefile(cmMakefile const *mf_)
+{
+  assert(!this->Makefile);
   cmMakefile *mf = const_cast<cmMakefile*>(mf_);
-  cmake *cm =
-            mf->GetLocalGenerator()->GetGlobalGenerator()->GetCMakeInstance();
+  cmake *cm = mf->GetLocalGenerator()->GetGlobalGenerator()->GetCMakeInstance();
   this->CacheManager = new cmCacheManager(cm);
+  std::string cacheDirName = cm->GetHomeOutputDirectory() + std::string("/toolchain");
+  if (cmSystemTools::FileExists((cacheDirName + "/CMakeCache.txt").c_str()))
+    {
+    this->CacheManager->LoadCache(cacheDirName.c_str());
+    }
+  cmCacheManager::CacheIterator it = cm->GetCacheManager()->GetCacheIterator();
+  for ( it.Begin(); !it.IsAtEnd(); it.Next() )
+    {
+    this->CacheManager->AddCacheEntry(it.GetName(), it.GetValue(), it.GetProperty("HELPSTRING"), it.GetType());
+    }
+  this->Makefile = mf_;
+}
+
+void cmToolchain::SaveCache()
+{
+  cmMakefile *mf = const_cast<cmMakefile*>(this->Makefile);
+  cmGlobalGenerator *gg = mf->GetLocalGenerator()->GetGlobalGenerator();
+  cmake *cm = gg->GetCMakeInstance();
+  this->Makefile->GetDefinition("CMAKE_C_COMPILER"); // Cache gets wrong compiler when this is removed.
+  std::string cacheDirName = cm->GetHomeOutputDirectory() + std::string("/toolchain");
+  mf->GetCacheManager()->SaveCache(cacheDirName.c_str());
+}
+
+void cmToolchain::SetMakefileOnly(cmMakefile const *mf_)
+{
+  this->Makefile = mf_;
+}
+
+cmToolchain::~cmToolchain()
+{
+  for(cmake::RegisteredCommandsMap::iterator j = this->OverrideCommands.begin();
+      j != this->OverrideCommands.end(); ++j)
+    {
+    delete (*j).second;
+    }
 }
 
 const char *cmToolchain::GetDefinition(const char *input) const
 {
-  return this->Makefile->GetDefinitionImpl(input);
+  const char* def = this->Makefile->GetDefinitionImpl(input);
+
+  if (!def)
+    {
+    def = this->Override.Get(input);
+    }
+  return def;
+}
+
+bool cmToolchain::IsOverridden(const char *input) const
+{
+  return this->Override.Get(input) != 0;
 }
 
 const char *cmToolchain::GetSafeDefinition(const char *input) const
@@ -40,34 +105,158 @@ bool cmToolchain::IsSet(const char* name) const
   return this->Makefile->IsSet(name);
 }
 
+
+static cmMakefile* cmakeGetMakefile(void *clientdata)
+{
+  cmake* cm = (cmake *)clientdata;
+  if(cm && cm->GetDebugOutput())
+    {
+    cmGlobalGenerator* gg=cm->GetGlobalGenerator();
+    if (gg)
+      {
+      cmLocalGenerator* lg=gg->GetCurrentLocalGenerator();
+      if (lg)
+        {
+        cmMakefile* mf = lg->GetMakefile();
+        return mf;
+        }
+      }
+    }
+  return 0;
+}
+
+static std::string cmakeGetStack(void *clientdata)
+{
+  std::string msg;
+  cmMakefile* mf=cmakeGetMakefile(clientdata);
+  if (mf)
+    {
+    msg = mf->GetListFileStack();
+    if (!msg.empty())
+      {
+      msg = "\n   Called from: " + msg;
+      }
+    }
+
+  return msg;
+}
+
+void cmToolchain::AddOverride(const char *name, const char *value)
+{
+  this->Override.Set(name, value);
+}
+
+static void cmakeProgressCallback(const char *m, float prog,
+                                      void* clientdata)
+{
+  cmMakefile* mf = cmakeGetMakefile(clientdata);
+  std::string dir;
+  if ((mf) && (strstr(m, "Configuring")==m) && (prog<0))
+    {
+    dir = " ";
+    dir += mf->GetCurrentDirectory();
+    }
+  else if ((mf) && (strstr(m, "Generating")==m))
+    {
+    dir = " ";
+    dir += mf->GetCurrentOutputDirectory();
+    }
+
+  if ((prog < 0) || (!dir.empty()))
+    {
+    std::cout << "-- " << m << dir << cmakeGetStack(clientdata)<<std::endl;
+    }
+
+  std::cout.flush();
+}
+
 bool cmToolchain::ReadListFile(const char* listfile,
                   const char* external)
 {
-  cmMakefile *mf = const_cast<cmMakefile*>(this->Makefile);
-  cmGlobalGenerator* gg = mf->GetLocalGenerator()->GetGlobalGenerator();
-  cmake *cm = gg->GetCMakeInstance();
-  if (cmSystemTools::FileExists((cm->GetHomeOutputDirectory()
-                        + std::string("/toolchain/CMakeCache.txt")).c_str()))
+  this->Blocked = this->Makefile->GetDefinitions();
+
+  cmGlobalGenerator *thisGlobalGenerator = const_cast<cmMakefile*>(this->Makefile)->GetLocalGenerator()->GetGlobalGenerator();
+
+  cmake tmp;
+  tmp.SetProgressCallback(cmakeProgressCallback, (void *)&tmp);
+  cmGlobalGenerator *gg = tmp.CreateGlobalGenerator
+    (thisGlobalGenerator->GetName());
+
+  gg->SetCMakeInstance(&tmp);
+  tmp.SetGlobalGenerator(gg);
+
+  // read in the list file to fill the cache
+  cmsys::auto_ptr<cmLocalGenerator> lg(gg->CreateLocalGenerator());
+  cmMakefile* mf = lg->GetMakefile();
+  gg->EnableLanguagesFromGenerator(thisGlobalGenerator, const_cast<cmMakefile*>(this->Makefile), mf);
+
+  for(std::vector<std::string>::const_iterator i = this->Blocked.begin();
+      i != this->Blocked.end(); ++i)
     {
-    this->CacheManager->LoadCache((cm->GetHomeOutputDirectory()
-                                      + std::string("/toolchain/")).c_str());
+    mf->AddDefinition(i->c_str(), this->Makefile->GetDefinition(i->c_str()));
     }
-  else
+  std::set<cmStdString> odefs = this->Override.LocalKeys();
+  for(std::set<cmStdString>::const_iterator i = odefs.begin();
+      i != odefs.end(); ++i)
     {
-    cmCacheManager::CacheIterator it =
-                                    cm->GetCacheManager()->GetCacheIterator();
-    for ( it.Begin(); !it.IsAtEnd(); it.Next() )
+    mf->AddDefinition(i->c_str(), this->Override.Get(i->c_str()));
+    }
+
+  std::vector<std::string> origCommands;
+  {
+  cmake::RegisteredCommandsMap *origCommandsMap = tmp.GetCommands();
+
+  for(cmake::RegisteredCommandsMap::const_iterator li = origCommandsMap->begin();
+      li != origCommandsMap->end(); ++li)
+    {
+    origCommands.push_back(li->first);
+    }
+  }
+
+  for(cmake::RegisteredCommandsMap::const_iterator li = this->OverrideCommands.begin();
+      li != this->OverrideCommands.end(); ++li)
+    {
+    tmp.AddCommand(li->second->Clone());
+    }
+
+  cmake *thisCMake = thisGlobalGenerator->GetCMakeInstance();
+  std::string cacheDirName = thisCMake->GetHomeOutputDirectory() + std::string("/toolchain");
+  if (cmSystemTools::FileExists((cacheDirName + "/CMakeCache.txt").c_str()))
+    {
+    mf->GetCacheManager()->LoadCache(cacheDirName.c_str());
+    }
+  const bool result = mf->ReadListFile(listfile, external);
+
+  mf->GetCacheManager()->SaveCache(cacheDirName.c_str());
+
+  std::vector<std::string> defs = mf->GetDefinitions();
+
+  for(std::vector<std::string>::const_iterator i = defs.begin();
+      i != defs.end(); ++i)
+    {
+    if (std::find(this->Blocked.begin(), this->Blocked.end(), *i) == this->Blocked.end())
       {
-      this->CacheManager->AddCacheEntry(it.GetName(),
-                                        it.GetValue(),
-                                        it.GetProperty("HELPSTRING"),
-                                        it.GetType());
+      this->Override.Set(i->c_str(), mf->GetDefinitionImpl(i->c_str()));
       }
     }
-  mf->SetCacheManager(this->CacheManager);
-  bool result = mf->ReadListFile(listfile, external);
-  this->CacheManager->SaveCache((cm->GetHomeOutputDirectory()
-                                      + std::string("/toolchain/")).c_str());
+  cmake::RegisteredCommandsMap *commands = tmp.GetCommands();
+
+  for(cmake::RegisteredCommandsMap::const_iterator li = commands->begin();
+      li != commands->end(); ++li)
+    {
+    if (std::find(origCommands.begin(), origCommands.end(), li->first) == origCommands.end())
+      {
+      this->OverrideCommands.insert(std::make_pair(li->first, li->second->Clone()));
+      }
+    }
+  {
+  cmPropertyMap props = tmp.GetProperties();
+  for(cmPropertyMap::const_iterator it = props.begin(); it != props.end(); ++it)
+    {
+    thisGlobalGenerator->GetCMakeInstance()->SetProperty(it->first.c_str(),
+                                                        it->second.GetValue());
+    }
+  }
   return result;
 }
 
@@ -282,6 +471,16 @@ std::string cmToolchain::GetSharedLibFlagsForLanguage(
     return this->LanguageToOriginalSharedLibFlags[l];
     }
   return "";
+}
+
+void cmToolchain::CopyOverrides(cmToolchain *other)
+{
+  std::set<cmStdString> odefs = other->Override.LocalKeys();
+  for(std::set<cmStdString>::const_iterator i = odefs.begin();
+      i != odefs.end(); ++i)
+    {
+    this->Override.Set(i->c_str(), other->Override.Get(i->c_str()));
+    }
 }
 
 void cmToolchain::EnableLanguagesFromToolchain(cmToolchain *tch)

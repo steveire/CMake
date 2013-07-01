@@ -3,15 +3,18 @@
 #define cmToolchain_h
 
 #include "cmStandardIncludes.h"
+#include "cmake.h"
+#include "cmCacheManager.h"
+#include "cmDefinitions.h"
 
 class cmMakefile;
 class cmSourceFile;
-class cmCacheManager;
 
 class cmToolchain
 {
 public:
   cmToolchain(cmMakefile const *mf);
+  ~cmToolchain();
 
   const char *GetDefinition(const char *) const;
   const char *GetSafeDefinition(const char *) const;
@@ -23,8 +26,22 @@ public:
   bool ReadListFile(const char* listfile,
                     const char* external= 0);
 
-  void SetMakefile(cmMakefile const *mf) { this->Makefile = mf; }
+  void SetMakefile(cmMakefile const *mf);
+  void SetMakefileOnly(cmMakefile const *mf);
 
+  cmCacheManager* GetCacheManager() { return this->CacheManager; }
+
+  void AddOverride(const char *name, const char *value);
+
+  void CopyOverrides(cmToolchain *other);
+
+  const cmMakefile *GetMakefile() { return this->Makefile; }
+
+  void SaveCache();
+private:
+  bool IsOverridden(const char *input) const;
+
+public:
   bool GetLanguageEnabled(const char*) const;
   void ClearEnabledLanguages();
   void GetEnabledLanguages(std::vector<std::string>& lang);
@@ -40,6 +57,9 @@ public:
   std::string GetSharedLibFlagsForLanguage(std::string const& lang);
 private:
   cmMakefile const *Makefile;
+  mutable cmDefinitions Override;
+  cmake::RegisteredCommandsMap OverrideCommands;
+  std::vector<std::string> Blocked;
   // If you add a new map here, make sure it is copied
   // in EnableLanguagesFromGenerator
 public:
