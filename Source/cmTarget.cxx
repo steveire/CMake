@@ -5543,6 +5543,41 @@ bool cmTarget::IsLinkInterfaceDependentStringProperty(const std::string &p,
 }
 
 //----------------------------------------------------------------------------
+bool cmTarget::IgnoreCurrentToolchain()
+{
+  const char *prop = this->GetProperty("BUILD_TOOLCHAINS");
+  if (!prop)
+    {
+    return this->Makefile->GetDefinition("CMAKE_TOOLCHAINS")
+      ? this->GetType() < UTILITY
+      : false;
+    }
+
+  std::string curTc = this->Makefile->GetLocalGenerator()
+                            ->GetGlobalGenerator()->CurrentToolchain;
+
+  if (curTc.empty())
+    {
+    return false;
+    }
+
+  std::vector<std::string> toolchains;
+  cmSystemTools::ExpandListArgument(prop, toolchains);
+
+  if (std::find(toolchains.begin(), toolchains.end(),
+                   curTc) != toolchains.end())
+    {
+    return false;
+    }
+  if (std::find(toolchains.begin(), toolchains.end(),
+                   "TARGET") != toolchains.end())
+    {
+    return strcmp(curTc.c_str(), "HOST") == 0;
+    }
+  return true;
+}
+
+//----------------------------------------------------------------------------
 void cmTarget::GetLanguages(std::set<cmStdString>& languages) const
 {
   for(std::vector<cmSourceFile*>::const_iterator

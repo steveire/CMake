@@ -337,6 +337,8 @@ public:
       is returned if the property is not set or cannot be parsed.  */
   void GetTargetVersion(bool soversion, int& major, int& minor, int& patch);
 
+  bool IgnoreCurrentToolchain();
+
   /**
    * Trace through the source files in this target and add al source files
    * that they depend on, used by all generators

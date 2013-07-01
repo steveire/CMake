@@ -989,6 +989,10 @@ void cmGlobalGenerator::Generate()
 
     for ( tit = targets->begin(); tit != targets->end(); ++ tit )
       {
+      if (tit->second.IgnoreCurrentToolchain())
+        {
+        continue;
+        }
       tit->second.AppendBuildInterfaceIncludes();
       }
     }
@@ -1066,6 +1070,10 @@ bool cmGlobalGenerator::ComputeTargetDepends()
   for(std::vector<cmTarget*>::const_iterator ti = targets.begin();
       ti != targets.end(); ++ti)
     {
+    if ((*ti)->IgnoreCurrentToolchain())
+      {
+      continue;
+      }
     ctd.GetTargetDirectDepends(*ti, this->TargetDependencies[*ti]);
     }
   return true;
@@ -1083,6 +1091,10 @@ bool cmGlobalGenerator::CheckTargets()
         ti != targets.end(); ++ti)
       {
       cmTarget& target = ti->second;
+      if (target.IgnoreCurrentToolchain())
+        {
+        continue;
+        }
       if(target.GetType() == cmTarget::EXECUTABLE ||
          target.GetType() == cmTarget::STATIC_LIBRARY ||
          target.GetType() == cmTarget::SHARED_LIBRARY ||
@@ -1113,6 +1125,10 @@ void cmGlobalGenerator::CreateAutomocTargets()
         ti != targets.end(); ++ti)
       {
       cmTarget& target = ti->second;
+      if (target.IgnoreCurrentToolchain())
+        {
+        continue;
+        }
       if(target.GetType() == cmTarget::EXECUTABLE ||
          target.GetType() == cmTarget::STATIC_LIBRARY ||
          target.GetType() == cmTarget::SHARED_LIBRARY ||
@@ -1159,6 +1175,10 @@ void cmGlobalGenerator::CreateGeneratorTargets()
       {
       cmTarget* t = &ti->second;
 
+      if (t->IgnoreCurrentToolchain())
+        {
+        continue;
+        }
       {
       t->AppendProperty("COMPILE_DEFINITIONS", noconfig_compile_definitions);
       for(std::vector<std::string>::const_iterator ci = configs.begin();
@@ -1181,6 +1201,10 @@ void cmGlobalGenerator::CreateGeneratorTargets()
           j = mf->GetOwnedImportedTargets().begin();
         j != mf->GetOwnedImportedTargets().end(); ++j)
       {
+      if ((*j)->IgnoreCurrentToolchain())
+        {
+        continue;
+        }
       cmGeneratorTarget* gt = new cmGeneratorTarget(*j);
       this->GeneratorTargets[*j] = gt;
       generatorTargets[*j] = gt;
@@ -1702,7 +1726,10 @@ void cmGlobalGenerator::FillLocalGeneratorToTargetMap()
     for(cmTargets::iterator t = targets.begin(); t != targets.end(); ++t)
       {
       cmTarget& target = t->second;
-
+      if (target.IgnoreCurrentToolchain())
+        {
+        continue;
+        }
       // Consider the directory containing the target and all its
       // parents until something excludes the target.
       for(cmLocalGenerator* clg = lg; clg && !this->IsExcluded(clg, target);
@@ -2496,6 +2523,10 @@ void cmGlobalGenerator::WriteSummary()
   for(std::map<cmStdString,cmTarget *>::const_iterator ti =
         this->TotalTargets.begin(); ti != this->TotalTargets.end(); ++ti)
     {
+    if (ti->second->IgnoreCurrentToolchain())
+      {
+      continue;
+      }
     this->WriteSummary(ti->second);
     fout << ti->second->GetSupportDirectory() << "\n";
     }

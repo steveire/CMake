@@ -151,6 +151,10 @@ void cmLocalUnixMakefileGenerator3::Generate()
     static_cast<cmGlobalUnixMakefileGenerator3*>(this->GlobalGenerator);
   for(cmTargets::iterator t = targets.begin(); t != targets.end(); ++t)
     {
+    if (t->second.IgnoreCurrentToolchain())
+      {
+      continue;
+      }
     cmsys::auto_ptr<cmMakefileTargetGenerator> tg(
       cmMakefileTargetGenerator::New(&(t->second)));
     if (tg.get())

@@ -267,6 +267,10 @@ void cmLocalGenerator::TraceDependencies()
   cmTargets& targets = this->Makefile->GetTargets();
   for(cmTargets::iterator t = targets.begin(); t != targets.end(); ++t)
     {
+    if (t->second.IgnoreCurrentToolchain())
+      {
+      continue;
+      }
     const char* projectFilename = 0;
     if (this->IsMakefileGenerator == false)  // only use of this variable
       {
@@ -544,6 +548,10 @@ void cmLocalGenerator::GenerateTargetManifest()
   for(cmTargets::iterator t = targets.begin(); t != targets.end(); ++t)
     {
     cmTarget& target = t->second;
+    if (target.IgnoreCurrentToolchain())
+      {
+      continue;
+      }
     if(configNames.empty())
       {
       target.GenerateTargetManifest(0);
@@ -2770,6 +2778,10 @@ cmLocalGenerator
   cmTargets& tgts = this->Makefile->GetTargets();
   for(cmTargets::iterator l = tgts.begin(); l != tgts.end(); ++l)
     {
+    if (l->second.IgnoreCurrentToolchain())
+      {
+      continue;
+      }
     // Include the user-specified pre-install script for this target.
     if(const char* preinstall = l->second.GetProperty("PRE_INSTALL_SCRIPT"))
       {
