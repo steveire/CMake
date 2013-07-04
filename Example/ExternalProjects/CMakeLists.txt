@@ -11,4 +11,5 @@ ExternalProject_Add(host
 
 ExternalProject_Add(target
   SOURCE_DIR "${CMAKE_SOURCE_DIR}/target"
+  DEPENDS host
 )
