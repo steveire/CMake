@@ -6,9 +6,9 @@ project(ExternalProjects)
 include(ExternalProject)
 
 ExternalProject_Add(host
-  SOURCE_DIR host
+  SOURCE_DIR "${CMAKE_SOURCE_DIR}/host"
 )
 
 ExternalProject_Add(target
-  SOURCE_DIR target
+  SOURCE_DIR "${CMAKE_SOURCE_DIR}/target"
 )
