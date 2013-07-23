@@ -1,0 +1,79 @@
+
+Add BAR package generator for BlackBerry devices.
+
+Then we can use a CMakeLists file like this:
+
+  cmake_minimum_required(VERSION 2.8)
+  project(Foo)
+
+  find_package(Qt4 REQUIRED)
+
+  set(CMAKE_AUTOMOC ON)
+  set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+  add_executable(foo
+    main.cpp
+    applicationui.cpp
+  )
+
+  find_library(BBCASCADES_LIBRARY bbcascades)
+  target_link_libraries(foo ${BBCASCADES_LIBRARY})
+
+  target_link_libraries(foo Qt4::QtDeclarative)
+
+  install(TARGETS foo EXPORT fooTargets DESTINATION bin)
+  install(EXPORT fooTargets NAMESPACE Foo:: DESTINATION lib/cmake)
+  install(FILES assets/main.qml DESTINATION assets)
+  install(DIRECTORY assets/images DESTINATION assets)
+
+  set(CPACK_PACKAGE_NAME "foo")
+  set(CPACK_PACKAGE_VERSION_MAJOR 3)
+  set(CPACK_PACKAGE_VERSION_MINOR 4)
+  set(CPACK_PACKAGE_VERSION_PATCH 5)
+  set(CPACK_PROJECT_VERSION 3.4.5)
+  set(CPACK_PACKAGE_VERSION 3.4.5.1)
+  set(CPACK_PACKAGE_BUILD_VERSION 1)
+  set(CPACK_PACKAGE_CONTACT "Stephen Kelly")
+  set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "A test app")
+  set(CPACK_BAR_PERMISSIONS access_internet post_notification)
+  set(CPACK_BAR_ID "com.example.foo")
+  set(CPACK_BAR_AUTHOR_ID_FROM_DEBUG_TOKEN "/home/stephen/.rim/debugtoken.bar")
+  set(CPACK_BAR_ENTRY_POINT bin/foo)
+  set(CPACK_BAR_CASCADES 1)
+  set(CPACK_BAR_EXTRA_LD_LIBRARY_PATHS /usr/lib/qt4/lib)
+
+  include(CPack)
+
+  add_custom_target(bbpackage
+    COMMAND ${CMAKE_CPACK_COMMAND} -G BAR
+    )
+
+  add_custom_target(deploy
+    COMMAND blackberry-deploy -installApp -device ${BB_IP_ADDRESS} -password ${BBPASS} ${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CMAKE_SYSTEM_NAME}.bar
+    DEPENDS bbpackage
+    )
+  add_custom_target(launch
+    COMMAND blackberry-deploy -launchApp -device ${BB_IP_ADDRESS} -password ${BBPASS} ${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CMAKE_SYSTEM_NAME}.bar
+    DEPENDS deploy
+  )
+
+And simply invoke
+
+  cmake .. -DCMAKE_TOOLCHAIN_FILE=../Toolchain-blackberry-armv7le.cmake -DBBPASS=hunter2 -DBB_IP_ADDRESS=192.168.1.2
+  make launch
+
+to build, package, deploy and launch the app on the device.
+
+A bar-descriptor.xml file can contain sections for multiple different
+configs, but a .bar package is created for only one of them. As cpack
+can be invoked with -C for a single config, and as we generate the
+bar-descriptor.xml file on the fly, we don't need to be concerned
+with multiple-config issues.
+
+TODO:
+Investigate if we can generate shared libs instead of executables
+from add_executable as a built-in CMake feature. This is something
+done on blackberry, maemo/meego/mer, KDE4 and 5 (3?).
+
+ http://devblog.blackberry.com/2012/12/cascades-project-zygote/
+ http://www.cydiasubstrate.com/id/727f62ed-69d3-4956-86b2-bc0ffea110c1/
