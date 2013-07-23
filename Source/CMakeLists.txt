@@ -560,6 +560,7 @@ if(UNIX)
   set(CPACK_SRCS ${CPACK_SRCS}
     CPack/cmCPackDebGenerator.cxx
     CPack/cmCPackRPMGenerator.cxx
+    CPack/cmCPackBARGenerator.cxx
     )
 endif()
 

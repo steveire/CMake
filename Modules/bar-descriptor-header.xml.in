@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<qnx xmlns="http://www.qnx.com/schemas/application/1.0">
+
+    <id>@CPACK_BAR_ID@</id>
+    <name>@CPACK_PACKAGE_NAME@</name>
+    <versionNumber>@CPACK_PROJECT_VERSION@</versionNumber>
+    <buildId>@CPACK_PACKAGE_BUILD_VERSION@</buildId>
+    <description>@CPACK_PACKAGE_DESCRIPTION_SUMMARY@</description>
+    <author>@CPACK_BAR_PACKAGE_CONTACT@</author>
+
+    <platformArchitecture>@CPACK_BAR_PLATFORM_ARCHITECTURE@</platformArchitecture>
+
+    <!-- Request permission to execute native code.  Required for native applications. -->
+    <permission system="true">run_native</permission>
+    <env var="LD_LIBRARY_PATH" value="app/native/lib@CPACK_BAR_EXTRA_LD_LIBRARY_PATHS@"/>

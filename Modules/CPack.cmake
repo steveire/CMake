@@ -428,6 +428,7 @@ if(NOT CPACK_GENERATOR)
       option(CPACK_BINARY_TBZ2 "Enable to build TBZ2 packages"    OFF)
       option(CPACK_BINARY_DEB  "Enable to build Debian packages"  OFF)
       option(CPACK_BINARY_RPM  "Enable to build RPM packages"     OFF)
+      option(CPACK_BINARY_BAR  "Enable to build BAR packages"     OFF)
       option(CPACK_BINARY_NSIS "Enable to build NSIS packages"    OFF)
     endif()
   else()
@@ -443,6 +444,7 @@ if(NOT CPACK_GENERATOR)
   cpack_optional_append(CPACK_GENERATOR  CPACK_BINARY_CYGWIN       CygwinBinary)
   cpack_optional_append(CPACK_GENERATOR  CPACK_BINARY_DEB          DEB)
   cpack_optional_append(CPACK_GENERATOR  CPACK_BINARY_RPM          RPM)
+  cpack_optional_append(CPACK_GENERATOR  CPACK_BINARY_BAR          BAR)
   cpack_optional_append(CPACK_GENERATOR  CPACK_BINARY_NSIS         NSIS)
   cpack_optional_append(CPACK_GENERATOR  CPACK_BINARY_STGZ         STGZ)
   cpack_optional_append(CPACK_GENERATOR  CPACK_BINARY_TGZ          TGZ)
@@ -562,6 +564,32 @@ set(CPACK_COMPONENT_UNSPECIFIED_REQUIRED TRUE)
 cpack_encode_variables()
 configure_file("${cpack_input_file}" "${CPACK_OUTPUT_CONFIG_FILE}" @ONLY)
 
+set(GENERATED_CONTENT)
+
+foreach(binary ${CPACK_BAR_BINARIES})
+  message("BIN!!! ${binary}")
+  list(APPEND binaries $<TARGET_FILE_NAME:${binary}>)
+endforeach()
+
+if (binaries)
+  set(GENERATED_CONTENT
+    "set(CPACK_BAR_BINARIES ${binaries})\n"
+  )
+endif()
+
+if(CPACK_BAR_ENTRY_POINT)
+  set(GENERATED_CONTENT
+    "${GENERATED_CONTENT}set(CPACK_BAR_ENTRY_POINT $<TARGET_FILE_NAME:${CPACK_BAR_ENTRY_POINT}>)\n"
+  )
+endif()
+
+if(GENERATED_CONTENT)
+  file(GENERATE OUTPUT "${CPACK_OUTPUT_CONFIG_FILE}.generated"
+    CONTENT "${GENERATED_CONTENT}"
+  )
+  file(APPEND "${CPACK_OUTPUT_CONFIG_FILE}" "include(\"${CPACK_OUTPUT_CONFIG_FILE}.generated\")\n")
+endif()
+
 # Generate source file
 cpack_set_if_not_set(CPACK_SOURCE_INSTALLED_DIRECTORIES
   "${CMAKE_SOURCE_DIR};/")
@@ -581,3 +609,10 @@ set(CPACK_STRIP_FILES "${CPACK_SOURCE_STRIP_FILES}")
 cpack_encode_variables()
 configure_file("${cpack_source_input_file}"
   "${CPACK_SOURCE_OUTPUT_CONFIG_FILE}" @ONLY)
+
+if(CPACK_BAR_ENTRY_POINT)
+  file(GENERATE OUTPUT "${CPACK_SOURCE_OUTPUT_CONFIG_FILE}.generated"
+    CONTENT "${GENERATED_CONTENT}"
+  )
+  file(APPEND "${CPACK_SOURCE_OUTPUT_CONFIG_FILE}" "include(\"${CPACK_SOURCE_OUTPUT_CONFIG_FILE}.generated\")\n")
+endif()
