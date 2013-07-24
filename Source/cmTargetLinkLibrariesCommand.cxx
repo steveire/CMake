@@ -138,6 +138,7 @@ bool cmTargetLinkLibrariesCommand
   // Keep track of link configuration specifiers.
   cmTarget::LinkLibraryType llt = cmTarget::GENERAL;
   bool haveLLT = false;
+  bool haveSystem = false;
 
   // Start with primary linking and switch to link interface
   // specification if the keyword is encountered as the first argument.
@@ -150,27 +151,40 @@ bool cmTargetLinkLibrariesCommand
     if(args[i] == "LINK_INTERFACE_LIBRARIES")
       {
       this->CurrentProcessingState = ProcessingPlainLinkInterface;
-      if(i != 1)
+      if(i != 1 && (i != 2 && !haveSystem))
         {
         this->Makefile->IssueMessage(
           cmake::FATAL_ERROR,
-          "The LINK_INTERFACE_LIBRARIES option must appear as the second "
-          "argument, just after the target name."
+          "The LINK_INTERFACE_LIBRARIES option must appear just after the "
+          "target name or SYSTEM keyword."
           );
         return true;
         }
       }
+    else if(args[i] == "SYSTEM")
+      {
+      if(i != 1)
+        {
+        this->Makefile->IssueMessage(
+          cmake::FATAL_ERROR,
+          "The SYSTEM option must appear as the second argument, just after "
+          "the target name."
+          );
+        return true;
+        }
+      haveSystem = true;
+      }
     else if(args[i] == "INTERFACE")
       {
-      if(i != 1
+      if((i != 1 && (i != 2 && !haveSystem))
           && this->CurrentProcessingState != ProcessingKeywordPrivateInterface
           && this->CurrentProcessingState != ProcessingKeywordPublicInterface
           && this->CurrentProcessingState != ProcessingKeywordLinkInterface)
         {
         this->Makefile->IssueMessage(
           cmake::FATAL_ERROR,
-          "The INTERFACE option must appear as the second "
-          "argument, just after the target name."
+          "The INTERFACE option must appear just after the target name or "
+          "SYSTEM keyword."
           );
         return true;
         }
@@ -178,14 +192,14 @@ bool cmTargetLinkLibrariesCommand
       }
     else if(args[i] == "LINK_PUBLIC")
       {
-      if(i != 1
+      if((i != 1 && (i != 2 && !haveSystem))
           && this->CurrentProcessingState != ProcessingPlainPrivateInterface
           && this->CurrentProcessingState != ProcessingPlainPublicInterface)
         {
         this->Makefile->IssueMessage(
           cmake::FATAL_ERROR,
-          "The LINK_PUBLIC or LINK_PRIVATE option must appear as the second "
-          "argument, just after the target name."
+          "The LINK_PUBLIC or LINK_PRIVATE option must appear just after the "
+          "target name or SYSTEM keyword."
           );
         return true;
         }
@@ -193,15 +207,15 @@ bool cmTargetLinkLibrariesCommand
       }
     else if(args[i] == "PUBLIC")
       {
-      if(i != 1
+      if((i != 1 && (i != 2 && !haveSystem))
           && this->CurrentProcessingState != ProcessingKeywordPrivateInterface
           && this->CurrentProcessingState != ProcessingKeywordPublicInterface
           && this->CurrentProcessingState != ProcessingKeywordLinkInterface)
         {
         this->Makefile->IssueMessage(
           cmake::FATAL_ERROR,
-          "The PUBLIC or PRIVATE option must appear as the second "
-          "argument, just after the target name."
+          "The PUBLIC or PRIVATE option must appear just after the target "
+          "name or SYSTEM keyword."
           );
         return true;
         }
@@ -209,14 +223,14 @@ bool cmTargetLinkLibrariesCommand
       }
     else if(args[i] == "LINK_PRIVATE")
       {
-      if(i != 1
+      if((i != 1 && (i != 2 && !haveSystem))
           && this->CurrentProcessingState != ProcessingPlainPublicInterface
           && this->CurrentProcessingState != ProcessingPlainPrivateInterface)
         {
         this->Makefile->IssueMessage(
           cmake::FATAL_ERROR,
-          "The LINK_PUBLIC or LINK_PRIVATE option must appear as the second "
-          "argument, just after the target name."
+          "The LINK_PUBLIC or LINK_PRIVATE option must appear just after the "
+          "target name or SYSTEM keyword."
           );
         return true;
         }
@@ -224,15 +238,15 @@ bool cmTargetLinkLibrariesCommand
       }
     else if(args[i] == "PRIVATE")
       {
-      if(i != 1
+      if((i != 1 && (i != 2 && !haveSystem))
           && this->CurrentProcessingState != ProcessingKeywordPrivateInterface
           && this->CurrentProcessingState != ProcessingKeywordPublicInterface
           && this->CurrentProcessingState != ProcessingKeywordLinkInterface)
         {
         this->Makefile->IssueMessage(
           cmake::FATAL_ERROR,
-          "The PUBLIC or PRIVATE option must appear as the second "
-          "argument, just after the target name."
+          "The PUBLIC or PRIVATE option must appear just after the target "
+          "name or SYSTEM keyword."
           );
         return true;
         }
@@ -269,7 +283,7 @@ bool cmTargetLinkLibrariesCommand
       {
       // The link type was specified by the previous argument.
       haveLLT = false;
-      if (!this->HandleLibrary(args[i], llt))
+      if (!this->HandleLibrary(args[i], llt, haveSystem))
         {
         return false;
         }
@@ -298,7 +312,7 @@ bool cmTargetLinkLibrariesCommand
           llt = cmTarget::OPTIMIZED;
           }
         }
-      if (!this->HandleLibrary(args[i], llt))
+      if (!this->HandleLibrary(args[i], llt, haveSystem))
         {
         return false;
         }
@@ -350,7 +364,8 @@ cmTargetLinkLibrariesCommand
 //----------------------------------------------------------------------------
 bool
 cmTargetLinkLibrariesCommand::HandleLibrary(const std::string& lib,
-                                            cmTarget::LinkLibraryType llt)
+                                            cmTarget::LinkLibraryType llt,
+                                            bool haveSystem)
 {
   if(this->Target->GetType() == cmTarget::INTERFACE_LIBRARY
       && this->CurrentProcessingState != ProcessingKeywordLinkInterface)
@@ -419,6 +434,10 @@ cmTargetLinkLibrariesCommand::HandleLibrary(const std::string& lib,
     {
     this->Makefile
       ->AddLinkLibraryForTarget(this->Target->GetName(), lib, llt);
+    if (haveSystem)
+      {
+      this->Target->AddSystemIncludeDirectory(lib);
+      }
     if(this->CurrentProcessingState == ProcessingLinkLibraries)
       {
       this->Target->AppendProperty("INTERFACE_LINK_LIBRARIES",
@@ -448,6 +467,11 @@ cmTargetLinkLibrariesCommand::HandleLibrary(const std::string& lib,
 
   this->Target->AppendProperty("INTERFACE_LINK_LIBRARIES",
               this->Target->GetDebugGeneratorExpressions(lib, llt).c_str());
+
+  if (haveSystem)
+    {
+    this->Target->AppendProperty("INTERFACE_SYSTEM_INCLUDE_DIRECTORIES", lib);
+    }
 
   const cmPolicies::PolicyStatus policy22Status
                       = this->Target->GetPolicyStatusCMP0022();

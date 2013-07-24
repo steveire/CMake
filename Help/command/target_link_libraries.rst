@@ -90,7 +90,7 @@ Libraries for a Target and/or its Dependents
 
 ::
 
-  target_link_libraries(<target>
+  target_link_libraries(<target> SYSTEM
                         <PRIVATE|PUBLIC|INTERFACE> <item>...
                        [<PRIVATE|PUBLIC|INTERFACE> <item>...]...)
 

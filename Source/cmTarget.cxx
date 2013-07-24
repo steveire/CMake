@@ -1370,6 +1370,13 @@ cmTarget::AddSystemIncludeDirectories(const std::set<std::string> &incs)
 
 //----------------------------------------------------------------------------
 void
+cmTarget::AddSystemIncludeDirectory(const std::string &inc)
+{
+  this->SystemIncludeDirectories.insert(inc);
+}
+
+//----------------------------------------------------------------------------
+void
 cmTarget::AddSystemIncludeDirectories(const std::vector<std::string> &incs)
 {
   this->SystemIncludeDirectories.insert(incs.begin(), incs.end());

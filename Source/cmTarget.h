@@ -604,6 +604,7 @@ public:
 
   void AddSystemIncludeDirectories(const std::set<std::string> &incs);
   void AddSystemIncludeDirectories(const std::vector<std::string> &incs);
+  void AddSystemIncludeDirectory(const std::string &inc);
   std::set<std::string> const & GetSystemIncludeDirectories() const
     { return this->SystemIncludeDirectories; }
 
