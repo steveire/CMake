@@ -362,6 +362,7 @@ void cmComputeLinkDepends::FollowLinkEntry(BFSEntry const& qe)
   if(entry.Target)
     {
     // Follow the target dependencies.
+      // Debug here.
     if(cmTarget::LinkInterface const* iface =
        entry.Target->GetLinkInterface(this->Config, this->Target))
       {
@@ -550,6 +551,7 @@ void cmComputeLinkDepends::AddVarLinkEntries(int depender_index,
 //----------------------------------------------------------------------------
 void cmComputeLinkDepends::AddDirectLinkEntries()
 {
+  // Debug here.
   // Add direct link dependencies in this configuration.
   cmTarget::LinkImplementation const* impl =
     this->Target->GetLinkImplementation(this->Config);

@@ -460,6 +460,34 @@ void cmComputeTargetDepends::AddTargetDepend(
 
 //----------------------------------------------------------------------------
 void cmComputeTargetDepends::AddTargetDepend(int depender_index,
+                                             const cmValueWithOrigin &value,
+                                             bool linking, bool debugLinkImpl)
+{
+  // Get the depender.
+  cmTarget* depender = this->Targets[depender_index];
+
+  // Check the target's makefile first.
+  cmTarget* dependee =
+    depender->GetMakefile()->FindTargetToUse(value.Value.c_str());
+
+  // Skip targets that will not really be linked.  This is probably a
+  // name conflict between an external library and an executable
+  // within the project.
+  if(linking && dependee &&
+     dependee->GetType() == cmTarget::EXECUTABLE &&
+     !dependee->IsExecutableWithExports())
+    {
+    dependee = 0;
+    }
+
+  if(dependee)
+    {
+    this->AddTargetDepend(depender_index, dependee, linking, debugLinkImpl);
+    }
+}
+
+//----------------------------------------------------------------------------
+void cmComputeTargetDepends::AddTargetDepend(int depender_index,
                                              const cmGeneratorTarget* dependee,
                                              bool linking, bool debugLinkImpl)
 {
