@@ -212,6 +212,25 @@ void cmComputeTargetDepends::CollectTargetDepends(int depender_index)
     return;
     }
 
+  std::vector<std::string> debugProperties;
+  const char *debugProp =
+      depender->GetMakefile()->GetDefinition("CMAKE_DEBUG_TARGET_PROPERTIES");
+  if (debugProp)
+    {
+    cmSystemTools::ExpandListArgument(debugProp, debugProperties);
+    }
+
+  bool debugLinkImpl = !depender->GetDebugLinkLibrariesDone()
+                    && std::find(debugProperties.begin(),
+                                 debugProperties.end(),
+                                 "LINK_LIBRARIES")
+                        != debugProperties.end();
+
+  if (depender->GetMakefile()->IsGeneratingBuildSystem())
+    {
+    depender->SetDebugLinkLibrariesDone(true);
+    }
+
   // Loop over all targets linked directly in all configs.
   // We need to make targets depend on the union of all config-specific
   // dependencies in all targets, because the generated build-systems can't
@@ -219,6 +238,29 @@ void cmComputeTargetDepends::CollectTargetDepends(int depender_index)
   {
   std::set<std::string> emitted;
 
+
+//  cmGeneratorTarget* gt = depender->GetMakefile()->GetLocalGenerator()
+//                                  ->GetGlobalGenerator()
+//                                  ->GetGeneratorTarget(depender);
+
+
+  {
+  std::vector<cmValueWithOrigin> tlibs;
+  depender->GetDirectLinkLibraries("", tlibs, depender);
+  // A target should not depend on itself.
+  emitted.insert(depender->GetName());
+  for(std::vector<cmValueWithOrigin>::const_iterator lib = tlibs.begin();
+      lib != tlibs.end(); ++lib)
+    {
+    // Don't emit the same library twice for this target.
+    if(emitted.insert(lib->Value).second)
+      {
+      this->AddTargetDepend(depender_index, lib->Value, true, debugLinkImpl);
+      this->AddInterfaceDepends(depender_index, lib->Value,
+                                true, emitted, debugLinkImpl);
+      }
+    }
+  }
   std::vector<std::string> configs;
   depender->Makefile->GetConfigurations(configs);
   if (configs.empty())
@@ -283,7 +325,7 @@ void cmComputeTargetDepends::CollectTargetDepends(int depender_index)
     // Don't emit the same utility twice for this target.
     if(emitted.insert(*util).second)
       {
-      this->AddTargetDepend(depender_index, *util, false);
+      this->AddTargetDepend(depender_index, *util, false, false);
       }
     }
   }
@@ -291,9 +333,10 @@ void cmComputeTargetDepends::CollectTargetDepends(int depender_index)
 
 //----------------------------------------------------------------------------
 void cmComputeTargetDepends::AddInterfaceDepends(int depender_index,
-                                             const cmGeneratorTarget* dependee,
-                                             const std::string& config,
-                                             std::set<std::string> &emitted)
+                                                 cmTarget const* dependee,
+                                                 const std::string& config,
+                                               std::set<cmStdString> &emitted,
+                                               bool debugLinkImpl)
 {
   cmGeneratorTarget const* depender = this->Targets[depender_index];
   if(cmTarget::LinkInterface const* iface =
@@ -317,7 +360,8 @@ void cmComputeTargetDepends::AddInterfaceDepends(int depender_index,
 //----------------------------------------------------------------------------
 void cmComputeTargetDepends::AddInterfaceDepends(int depender_index,
                                              cmLinkItem const& dependee_name,
-                                             std::set<std::string> &emitted)
+                                             std::set<std::string> &emitted,
+                                               bool debugLinkImpl)
 {
   cmGeneratorTarget const* depender = this->Targets[depender_index];
   cmTarget const* dependee = dependee_name.Target;
@@ -333,9 +377,7 @@ void cmComputeTargetDepends::AddInterfaceDepends(int depender_index,
 
   if(dependee)
     {
-    cmGeneratorTarget* gt =
-        this->GlobalGenerator->GetGeneratorTarget(dependee);
-    this->AddInterfaceDepends(depender_index, gt, "", emitted);
+    this->AddInterfaceDepends(depender_index, dependee, "", emitted, debugLinkImpl);
     std::vector<std::string> configs;
     depender->Makefile->GetConfigurations(configs);
     for (std::vector<std::string>::const_iterator it = configs.begin();
@@ -343,7 +385,8 @@ void cmComputeTargetDepends::AddInterfaceDepends(int depender_index,
       {
       // A target should not depend on itself.
       emitted.insert(depender->GetName());
-      this->AddInterfaceDepends(depender_index, gt, *it, emitted);
+      this->AddInterfaceDepends(depender_index, dependee,
+                                *it, emitted, debugLinkImpl);
       }
     }
 }
@@ -411,20 +454,22 @@ void cmComputeTargetDepends::AddTargetDepend(
 
   if(dependee)
     {
-    cmGeneratorTarget* gt =
-        this->GlobalGenerator->GetGeneratorTarget(dependee);
-    this->AddTargetDepend(depender_index, gt, linking);
+    this->AddTargetDepend(depender_index, dependee, linking, debugLinkImpl);
     }
 }
 
 //----------------------------------------------------------------------------
 void cmComputeTargetDepends::AddTargetDepend(int depender_index,
                                              const cmGeneratorTarget* dependee,
-                                             bool linking)
+                                             bool linking, bool debugLinkImpl)
 {
   if(dependee->Target->IsImported() ||
      dependee->GetType() == cmTarget::INTERFACE_LIBRARY)
     {
+    if (debugLinkImpl)
+      {
+
+      }
     // Skip IMPORTED and INTERFACE targets but follow their utility
     // dependencies.
     std::set<cmLinkItem> const& utils = dependee->Target->GetUtilityItems();
@@ -433,9 +478,8 @@ void cmComputeTargetDepends::AddTargetDepend(int depender_index,
       {
       if(cmTarget const* transitive_dependee = i->Target)
         {
-        cmGeneratorTarget* gt =
-            this->GlobalGenerator->GetGeneratorTarget(transitive_dependee);
-        this->AddTargetDepend(depender_index, gt, false);
+        this->AddTargetDepend(depender_index, transitive_dependee, false,
+                              debugLinkImpl);
         }
       }
     }

@@ -631,6 +631,11 @@ public:
   return this->LinkLibrariesForVS6;}
 #endif
 
+  bool GetDebugLinkLibrariesDone()
+  { return this->DebugLinkLibrariesDone; }
+  void SetDebugLinkLibrariesDone(bool debug)
+  { this->DebugLinkLibrariesDone = debug; }
+
 private:
   bool HandleLocationPropertyPolicy(cmMakefile* context) const;
 
@@ -758,6 +763,7 @@ private:
   mutable bool DebugCompileDefinitionsDone;
   mutable bool DebugSourcesDone;
   mutable bool DebugCompileFeaturesDone;
+  bool DebugLinkLibrariesDone;
   mutable bool LinkImplementationLanguageIsContextDependent;
 #if defined(_WIN32) && !defined(__CYGWIN__)
   bool LinkLibrariesForVS6Analyzed;

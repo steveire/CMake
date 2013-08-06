@@ -49,17 +49,19 @@ private:
   void CollectTargetDepends(int depender_index);
   void AddTargetDepend(int depender_index,
                        cmLinkItem const& dependee_name,
-                       bool linking);
+                       bool linking, bool debugLinkIpl);
   void AddTargetDepend(int depender_index, cmGeneratorTarget const* dependee,
-                       bool linking);
+                       bool linking, bool debugLinkIpl);
   bool ComputeFinalDepends(cmComputeComponentGraph const& ccg);
   void AddInterfaceDepends(int depender_index,
                            cmLinkItem const& dependee_name,
-                           std::set<std::string> &emitted);
+                           std::set<std::string> &emitted,  
+                           bool debugLinkImpl);
   void AddInterfaceDepends(int depender_index,
                            cmGeneratorTarget const* dependee,
-                           const std::string& config,
-                           std::set<std::string> &emitted);
+                           const char *config,
+                           std::set<cmStdString> &emitted,
+                           bool debugLinkImpl);
   cmGlobalGenerator* GlobalGenerator;
   bool DebugMode;
   bool NoCycles;

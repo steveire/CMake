@@ -254,6 +254,7 @@ cmTarget::cmTarget()
   this->DebugCompileFeaturesDone = false;
   this->DebugCompileDefinitionsDone = false;
   this->DebugSourcesDone = false;
+  this->DebugLinkLibrariesDone = false;
   this->LinkImplementationLanguageIsContextDependent = true;
 }
 
