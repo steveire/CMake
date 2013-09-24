@@ -1,0 +1,2 @@
+
+include(deprecation-behavior.cmake)

@@ -1,0 +1,22 @@
+.*deprecation/source/lib.cpp: In function 'void anotherFreeDeprecatedMethod\(\)':
+.*deprecation/source/lib.cpp:[0-9]+:[0-9]+: warning: 'void freeDeprecatedMethod1\(\)' is deprecated \(declared at .*deprecation/source/lib.cpp:[0-9]+\) \[-Wdeprecated-declarations\]
+.*deprecation/source/lib.cpp:[0-9]+:[0-9]+: warning: 'void freeDeprecatedMethod1\(\)' is deprecated \(declared at .*deprecation/source/lib.cpp:[0-9]+\) \[-Wdeprecated-declarations\]
+.*deprecation/source/lib.cpp: In function 'void freeNotDeprecatedMethod\(\)':
+.*deprecation/source/lib.cpp:[0-9]+:[0-9]+: warning: 'void freeDeprecatedMethod2\(\)' is deprecated \(declared at .*deprecation/source/lib.cpp:[0-9]+\) \[-Wdeprecated-declarations\]
+.*deprecation/source/lib.cpp:[0-9]+:[0-9]+: warning: 'void freeDeprecatedMethod2\(\)' is deprecated \(declared at .*deprecation/source/lib.cpp:[0-9]+\) \[-Wdeprecated-declarations\]
+.*deprecation/source/lib.cpp: In member function 'void AnotherDeprecated::notDeprecatedMethod\(\)':
+.*deprecation/source/lib.cpp:[0-9]+:[0-9]+: warning: 'Deprecated' is deprecated \(declared at .*deprecation/source/lib.cpp:[0-9]+\) \[-Wdeprecated-declarations\]
+.*deprecation/source/lib.cpp:[0-9]+:[0-9]+: warning: 'void Deprecated::deprecatedMethod\(\)' is deprecated \(declared at .*deprecation/source/lib.cpp:[0-9]+\) \[-Wdeprecated-declarations\]
+.*deprecation/source/lib.cpp:[0-9]+:[0-9]+: warning: 'void NotDeprecated::deprecatedMethod\(\)' is deprecated \(declared at .*deprecation/source/lib.cpp:[0-9]+\) \[-Wdeprecated-declarations\]
+.*deprecation/source/lib.cpp: In member function 'void AnotherNotDeprecated::deprecatedMethod\(\)':
+.*deprecation/source/lib.cpp:[0-9]+:[0-9]+: warning: 'Deprecated' is deprecated \(declared at .*deprecation/source/lib.cpp:[0-9]+\) \[-Wdeprecated-declarations\]
+.*deprecation/source/lib.cpp:[0-9]+:[0-9]+: warning: 'void Deprecated::deprecatedMethod\(\)' is deprecated \(declared at .*deprecation/source/lib.cpp:[0-9]+\) \[-Wdeprecated-declarations\]
+.*deprecation/source/lib.cpp:[0-9]+:[0-9]+: warning: 'void NotDeprecated::deprecatedMethod\(\)' is deprecated \(declared at .*deprecation/source/lib.cpp:[0-9]+\) \[-Wdeprecated-declarations\]
+.*deprecation/source/lib.cpp: In member function 'void AnotherNotDeprecated::notDeprecatedMethod\(\)':
+.*deprecation/source/lib.cpp:[0-9]+:[0-9]+: warning: 'Deprecated' is deprecated \(declared at .*deprecation/source/lib.cpp:[0-9]+\) \[-Wdeprecated-declarations\]
+.*deprecation/source/lib.cpp:[0-9]+:[0-9]+: warning: 'void Deprecated::deprecatedMethod\(\)' is deprecated \(declared at .*deprecation/source/lib.cpp:[0-9]+\) \[-Wdeprecated-declarations\]
+.*deprecation/source/lib.cpp:[0-9]+:[0-9]+: warning: 'void NotDeprecated::deprecatedMethod\(\)' is deprecated \(declared at .*deprecation/source/lib.cpp:[0-9]+\) \[-Wdeprecated-declarations\]
+.*deprecation/source/lib.cpp: At global scope:
+.*deprecation/source/lib.cpp:[0-9]+:[0-9]+: warning: 'Deprecated' is deprecated \(declared at .*deprecation/source/lib.cpp:[0-9]+\) \[-Wdeprecated-declarations\]
+.*deprecation/source/lib.cpp:[0-9]+:[0-9]+: warning: 'Deprecated' is deprecated \(declared at .*deprecation/source/lib.cpp:[0-9]+\) \[-Wdeprecated-declarations]
+Linking CXX static library libtestlib.a

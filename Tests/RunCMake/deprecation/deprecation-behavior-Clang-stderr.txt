@@ -1,0 +1,44 @@
+ .*deprecation/source/lib.cpp:[0-9]+:[0-9]+: warning: 'freeDeprecatedMethod2' is deprecated \[-Wdeprecated-declarations\]
+  freeDeprecatedMethod2\(\)
+  \^
+.*deprecation/source/lib.cpp:[0-9]+:[0-9]+: note: 'freeDeprecatedMethod2' declared here
+TESTLIB_DEPRECATED_EXPORT void freeDeprecatedMethod2\(void\) {
+                               \^
+.*source/lib.cpp:[0-9]+:[0-9]+: warning: 'Deprecated' is deprecated \[-Wdeprecated-declarations\]
+struct TESTLIB_EXPORT Derived : public Deprecated
+                                       \^
+.*deprecation/source/lib.cpp:[0-9]+:[0-9]+: note: 'Deprecated' declared here
+struct TESTLIB_DEPRECATED_EXPORT Deprecated
+                                 \^
+.*deprecation/source/lib.cpp:[0-9]+:[0-9]+: warning: 'Deprecated' is deprecated \[-Wdeprecated-declarations\]
+    Deprecated d3
+    \^
+.*deprecation/source/lib.cpp:[0-9]+:[0-9]+: note: 'Deprecated' declared here
+struct TESTLIB_DEPRECATED_EXPORT Deprecated
+                                 \^
+.*deprecation/source/lib.cpp:[0-9]+:[0-9]+: warning: 'deprecatedMethod' is deprecated \[-Wdeprecated-declarations\]
+    d3.deprecatedMethod\(\)
+       \^
+.*deprecation/source/lib.cpp:[0-9]+:[0-9]+: note: 'deprecatedMethod' declared here
+  TESTLIB_DEPRECATED void deprecatedMethod\(\) {}
+                          \^
+.*deprecation/source/lib.cpp:[0-9]+:[0-9]+: warning: 'deprecatedMethod' is deprecated \[-Wdeprecated-declarations\]
+    nd3.deprecatedMethod\(\)
+        \^
+.*deprecation/source/lib.cpp:[0-9]+:[0-9]+: note: 'deprecatedMethod' declared here
+  TESTLIB_DEPRECATED void deprecatedMethod\(\) {}
+                          \^
+.*deprecation/source/lib.cpp:[0-9]+:[0-9]+: warning: 'Deprecated' is deprecated \[-Wdeprecated-declarations\]
+typedef Deprecated TypeDef
+        \^
+.*deprecation/source/lib.cpp:[0-9]+:[0-9]+: note: 'Deprecated' declared here
+struct TESTLIB_DEPRECATED_EXPORT Deprecated
+                                 \^
+.*deprecation/source/lib.cpp:[0-9]+:[0-9]+: warning: 'Deprecated' is deprecated \[-Wdeprecated-declarations\]
+template<typename T = Deprecated>
+                      \^
+.*deprecation/source/lib.cpp:[0-9]+:[0-9]+: note: 'Deprecated' declared here
+struct TESTLIB_DEPRECATED_EXPORT Deprecated
+                                 \^
+7 warnings generated.
+Linking CXX static library libtestlib.a

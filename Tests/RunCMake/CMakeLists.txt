@@ -234,7 +234,12 @@ add_RunCMake_test(target_compile_features)
 add_RunCMake_test(CheckModules)
 add_RunCMake_test(CommandLine)
 add_RunCMake_test(CommandLineTar)
-
+if (CMAKE_CXX_COMPILER_ID MATCHES GNU
+    OR CMAKE_CXX_COMPILER_ID MATCHES Clang
+    AND CMAKE_GENERATOR MATCHES "Unix Makefiles")
+  set(deprecation_ARGS -DCOMPILER_ID=${CMAKE_CXX_COMPILER_ID})
+  add_RunCMake_test(deprecation)
+endif()
 add_RunCMake_test(install)
 add_RunCMake_test(CPackInstallProperties)
 add_RunCMake_test(ExternalProject)
