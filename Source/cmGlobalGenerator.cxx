@@ -229,21 +229,6 @@ cmGlobalGenerator::AddBuildExportExportSet(cmExportBuildFileGenerator* gen)
   this->BuildExportExportSets[gen->GetMainExportFileName()] = gen;
 }
 
-bool cmGlobalGenerator::GenerateImportFile(const std::string &file)
-{
-  std::map<std::string, cmExportBuildFileGenerator*>::iterator it
-                                          = this->BuildExportSets.find(file);
-  if (it != this->BuildExportSets.end())
-    {
-    bool result = it->second->GenerateImportFile();
-    delete it->second;
-    it->second = 0;
-    this->BuildExportSets.erase(it);
-    return result;
-    }
-  return false;
-}
-
 void cmGlobalGenerator::ForceLinkerLanguages()
 {
 
