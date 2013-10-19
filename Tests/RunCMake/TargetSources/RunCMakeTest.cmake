@@ -6,5 +6,3 @@ if(RunCMake_GENERATOR MATCHES "Visual Studio|Xcode" AND NOT XCODE_BELOW_2)
 else()
   run_cmake(OriginDebug)
 endif()
-
-run_cmake(CMP0026-LOCATION)

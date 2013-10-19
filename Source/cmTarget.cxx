@@ -2884,33 +2884,13 @@ bool cmTarget::HandleLocationPropertyPolicy(cmMakefile* context) const
     return true;
     }
   cmOStringStream e;
-  const char *modal = 0;
-  cmake::MessageType messageType = cmake::AUTHOR_WARNING;
-  switch (context->GetPolicyStatus(cmPolicies::CMP0026))
-    {
-    case cmPolicies::WARN:
-      e << (this->Makefile->GetPolicies()
-        ->GetPolicyWarning(cmPolicies::CMP0026)) << "\n";
-      modal = "should";
-    case cmPolicies::OLD:
-      break;
-    case cmPolicies::REQUIRED_ALWAYS:
-    case cmPolicies::REQUIRED_IF_USED:
-    case cmPolicies::NEW:
-      modal = "may";
-      messageType = cmake::FATAL_ERROR;
-    }
+  e << "The LOCATION property may not be read from target \""
+    << this->GetName() << "\".  Use the target name directly with "
+    "add_custom_command, or use the generator expression $<TARGET_FILE>, "
+    "as appropriate.\n";
+  context->IssueMessage(cmake::FATAL_ERROR, e.str());
 
-  if (modal)
-    {
-    e << "The LOCATION property " << modal << " not be read from target \""
-      << this->GetName() << "\".  Use the target name directly with "
-      "add_custom_command, or use the generator expression $<TARGET_FILE>, "
-      "as appropriate.\n";
-    context->IssueMessage(messageType, e.str());
-    }
-
-  return messageType != cmake::FATAL_ERROR;
+  return false;
 }
 
 //----------------------------------------------------------------------------
@@ -2974,7 +2954,7 @@ const char *cmTarget::GetProperty(const std::string& prop,
       // cannot take into account the per-configuration name of the
       // target because the configuration type may not be known at
       // CMake time.
-      this->Properties.SetProperty(propLOCATION, this->GetLocationForBuild(),
+      this->Properties.SetProperty("LOCATION", this->ImportedGetLocation(""),
                                    cmProperty::TARGET);
       }
 
@@ -2987,8 +2967,8 @@ const char *cmTarget::GetProperty(const std::string& prop,
         }
       const char* configName = prop.c_str() + 9;
       this->Properties.SetProperty(prop,
-                                   this->GetLocation(configName),
-                                   cmProperty::TARGET);
+                                this->ImportedGetLocation(configName),
+                                cmProperty::TARGET);
       }
     // Support "<CONFIG>_LOCATION".
     else if(cmHasLiteralSuffix(prop, "_LOCATION"))
@@ -3001,7 +2981,7 @@ const char *cmTarget::GetProperty(const std::string& prop,
           return 0;
           }
         this->Properties.SetProperty(prop,
-                                     this->GetLocation(configName),
+                                     this->ImportedGetLocation(configName),
                                      cmProperty::TARGET);
         }
       }
@@ -5265,47 +5245,6 @@ bool cmTarget::IsLinkInterfaceDependentNumberMaxProperty(const std::string &p,
 }
 
 //----------------------------------------------------------------------------
-void
-cmTarget::GetObjectLibrariesCMP0026(std::vector<cmTarget*>& objlibs) const
-{
-  // At configure-time, this method can be called as part of getting the
-  // LOCATION property or to export() a file to be include()d.  However
-  // there is no cmGeneratorTarget at configure-time, so search the SOURCES
-  // for TARGET_OBJECTS instead for backwards compatibility with OLD
-  // behavior of CMP0024 and CMP0026 only.
-  typedef cmTargetInternals::TargetPropertyEntry
-                              TargetPropertyEntry;
-  for(std::vector<TargetPropertyEntry*>::const_iterator
-        i = this->Internal->SourceEntries.begin();
-      i != this->Internal->SourceEntries.end(); ++i)
-    {
-    std::string entry = (*i)->ge->GetInput();
-
-    std::vector<std::string> files;
-    cmSystemTools::ExpandListArgument(entry, files);
-    for (std::vector<std::string>::const_iterator
-        li = files.begin(); li != files.end(); ++li)
-      {
-      if(cmHasLiteralPrefix(*li, "$<TARGET_OBJECTS:") &&
-          (*li)[li->size() - 1] == '>')
-        {
-        std::string objLibName = li->substr(17, li->size()-18);
-
-        if (cmGeneratorExpression::Find(objLibName) != std::string::npos)
-          {
-          continue;
-          }
-        cmTarget *objLib = this->Makefile->FindTargetToUse(objLibName);
-        if(objLib)
-          {
-          objlibs.push_back(objLib);
-          }
-        }
-      }
-    }
-}
-
-//----------------------------------------------------------------------------
 void cmTarget::GetLanguages(std::set<std::string>& languages,
                             const std::string& config) const
 {
@@ -5323,26 +5262,20 @@ void cmTarget::GetLanguages(std::set<std::string>& languages,
 
   std::vector<cmTarget*> objectLibraries;
   std::vector<cmSourceFile const*> externalObjects;
-  if (this->Makefile->GetGeneratorTargets().empty())
+  cmGeneratorTarget* gt = this->Makefile->GetLocalGenerator()
+                              ->GetGlobalGenerator()
+                              ->GetGeneratorTarget(this);
+  gt->GetExternalObjects(externalObjects, config);
+  for(std::vector<cmSourceFile const*>::const_iterator
+        i = externalObjects.begin(); i != externalObjects.end(); ++i)
     {
-    this->GetObjectLibrariesCMP0026(objectLibraries);
-    }
-  else
-    {
-    cmGeneratorTarget* gt = this->Makefile->GetLocalGenerator()
-                                ->GetGlobalGenerator()
-                                ->GetGeneratorTarget(this);
-    gt->GetExternalObjects(externalObjects, config);
-    for(std::vector<cmSourceFile const*>::const_iterator
-          i = externalObjects.begin(); i != externalObjects.end(); ++i)
+    std::string objLib = (*i)->GetObjectLibrary();
+    if (cmTarget* tgt = this->Makefile->FindTargetToUse(objLib))
       {
-      std::string objLib = (*i)->GetObjectLibrary();
-      if (cmTarget* tgt = this->Makefile->FindTargetToUse(objLib))
-        {
-        objectLibraries.push_back(tgt);
-        }
+      objectLibraries.push_back(tgt);
       }
     }
+
   for(std::vector<cmTarget*>::const_iterator
       i = objectLibraries.begin(); i != objectLibraries.end(); ++i)
     {
