@@ -2108,7 +2108,8 @@ bool cmLocalGenerator::GetRealDependency(const std::string& inName,
     }
 
   // Look for a CMake target with the given name.
-  if(cmTarget* target = this->Makefile->FindTargetToUse(name))
+  if(cmGeneratorTarget* target
+                    = this->Makefile->FindGeneratorTargetToUse(name))
     {
     // make sure it is not just a coincidence that the target name
     // found is part of the inName
