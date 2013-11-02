@@ -15,6 +15,7 @@ if(POLICY CMP0025)
 endif()
 project(CMake)
 
+
 if(CMAKE_BOOTSTRAP)
   # Running from bootstrap script.  Set local variable and remove from cache.
   set(CMAKE_BOOTSTRAP 1)
