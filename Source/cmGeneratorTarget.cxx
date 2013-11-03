@@ -227,6 +227,41 @@ cmGeneratorTarget::cmGeneratorTarget(cmTarget* t): Target(t),
   this->Makefile = this->Target->GetMakefile();
   this->LocalGenerator = this->Makefile->GetLocalGenerator();
   this->GlobalGenerator = this->LocalGenerator->GetGlobalGenerator();
+
+  this->DebugIncludesDone = false;
+
+}
+
+//----------------------------------------------------------------------------
+void deleteAndClear2(
+      std::vector<cmGeneratorTarget::TargetPropertyEntry*> &entries)
+{
+  for (std::vector<cmGeneratorTarget::TargetPropertyEntry*>::const_iterator
+      it = entries.begin(),
+      end = entries.end();
+      it != end; ++it)
+    {
+      delete *it;
+    }
+  entries.clear();
+}
+
+//----------------------------------------------------------------------------
+void deleteAndClear2(
+  std::map<std::string,
+          std::vector<cmGeneratorTarget::TargetPropertyEntry*> > &entries)
+{
+  for (std::map<std::string,
+          std::vector<cmGeneratorTarget::TargetPropertyEntry*> >::iterator
+        it = entries.begin(), end = entries.end(); it != end; ++it)
+    {
+    deleteAndClear2(it->second);
+    }
+}
+
+cmGeneratorTarget::~cmGeneratorTarget()
+{
+  deleteAndClear2(this->CachedLinkInterfaceIncludeDirectoriesEntries);
 }
 
 //----------------------------------------------------------------------------
@@ -1036,11 +1071,219 @@ cmGeneratorTarget::GetCreateRuleVariable(std::string const& lang,
 }
 
 //----------------------------------------------------------------------------
+static void processIncludeDirectories(cmTarget const* tgt,
+      const std::vector<cmGeneratorTarget::TargetPropertyEntry*> &entries,
+      std::vector<std::string> &includes,
+      UNORDERED_SET<std::string> &uniqueIncludes,
+      cmGeneratorExpressionDAGChecker *dagChecker,
+      const std::string& config, bool debugIncludes)
+{
+  cmMakefile *mf = tgt->GetMakefile();
+
+  for (std::vector<cmGeneratorTarget::TargetPropertyEntry*>::const_iterator
+      it = entries.begin(), end = entries.end(); it != end; ++it)
+    {
+    cmLinkImplItem const& item = (*it)->LinkImplItem;
+    std::string const& targetName = item;
+    bool const fromImported = item.Target && item.Target->IsImported();
+    bool const checkCMP0027 = item.FromGenex;
+    std::vector<std::string> entryIncludes;
+    cmSystemTools::ExpandListArgument((*it)->ge->Evaluate(mf,
+                                              config,
+                                              false,
+                                              tgt,
+                                              dagChecker),
+                                    entryIncludes);
+
+    std::string usedIncludes;
+    for(std::vector<std::string>::iterator
+          li = entryIncludes.begin(); li != entryIncludes.end(); ++li)
+      {
+      if (fromImported
+          && !cmSystemTools::FileExists(li->c_str()))
+        {
+        cmOStringStream e;
+        cmake::MessageType messageType = cmake::FATAL_ERROR;
+        if (checkCMP0027)
+          {
+          switch(tgt->GetPolicyStatusCMP0027())
+            {
+            case cmPolicies::WARN:
+              e << (mf->GetPolicies()
+                    ->GetPolicyWarning(cmPolicies::CMP0027)) << "\n";
+            case cmPolicies::OLD:
+              messageType = cmake::AUTHOR_WARNING;
+              break;
+            case cmPolicies::REQUIRED_ALWAYS:
+            case cmPolicies::REQUIRED_IF_USED:
+            case cmPolicies::NEW:
+              break;
+            }
+          }
+        e << "Imported target \"" << targetName << "\" includes "
+             "non-existent path\n  \"" << *li << "\"\nin its "
+             "INTERFACE_INCLUDE_DIRECTORIES. Possible reasons include:\n"
+             "* The path was deleted, renamed, or moved to another "
+             "location.\n"
+             "* An install or uninstall procedure did not complete "
+             "successfully.\n"
+             "* The installation package was faulty and references files it "
+             "does not provide.\n";
+        tgt->GetMakefile()->IssueMessage(messageType, e.str());
+        return;
+        }
+
+      if (!cmSystemTools::FileIsFullPath(li->c_str()))
+        {
+        cmOStringStream e;
+        bool noMessage = false;
+        cmake::MessageType messageType = cmake::FATAL_ERROR;
+        if (!targetName.empty())
+          {
+          e << "Target \"" << targetName << "\" contains relative "
+            "path in its INTERFACE_INCLUDE_DIRECTORIES:\n"
+            "  \"" << *li << "\"";
+          }
+        else
+          {
+          switch(tgt->GetPolicyStatusCMP0021())
+            {
+            case cmPolicies::WARN:
+              {
+              e << (mf->GetPolicies()
+                    ->GetPolicyWarning(cmPolicies::CMP0021)) << "\n";
+              messageType = cmake::AUTHOR_WARNING;
+              }
+              break;
+            case cmPolicies::OLD:
+              noMessage = true;
+            case cmPolicies::REQUIRED_IF_USED:
+            case cmPolicies::REQUIRED_ALWAYS:
+            case cmPolicies::NEW:
+              // Issue the fatal message.
+              break;
+            }
+          e << "Found relative path while evaluating include directories of "
+          "\"" << tgt->GetName() << "\":\n  \"" << *li << "\"\n";
+          }
+        if (!noMessage)
+          {
+          tgt->GetMakefile()->IssueMessage(messageType, e.str());
+          if (messageType == cmake::FATAL_ERROR)
+            {
+            return;
+            }
+          }
+        }
+
+      if (!cmSystemTools::IsOff(li->c_str()))
+        {
+        cmSystemTools::ConvertToUnixSlashes(*li);
+        }
+      std::string inc = *li;
+
+      if(uniqueIncludes.insert(inc).second)
+        {
+        includes.push_back(inc);
+        if (debugIncludes)
+          {
+          usedIncludes += " * " + inc + "\n";
+          }
+        }
+      }
+    if (!usedIncludes.empty())
+      {
+      mf->GetCMakeInstance()->IssueMessage(cmake::LOG,
+                            std::string("Used includes for target ")
+                            + tgt->GetName() + ":\n"
+                            + usedIncludes, (*it)->ge->GetBacktrace());
+      }
+    }
+}
+
+//----------------------------------------------------------------------------
 std::vector<std::string>
 cmGeneratorTarget::GetIncludeDirectories(const std::string& config) const
 {
-  return this->Target->GetIncludeDirectories(config);
+  std::vector<std::string> includes;
+  UNORDERED_SET<std::string> uniqueIncludes;
+
+  cmGeneratorExpressionDAGChecker dagChecker(this->GetName(),
+                                             "INCLUDE_DIRECTORIES", 0, 0);
+
+  std::vector<std::string> debugProperties;
+  const char *debugProp =
+              this->Makefile->GetDefinition("CMAKE_DEBUG_TARGET_PROPERTIES");
+  if (debugProp)
+    {
+    cmSystemTools::ExpandListArgument(debugProp, debugProperties);
+    }
+
+  bool debugIncludes = !this->DebugIncludesDone
+                    && std::find(debugProperties.begin(),
+                                 debugProperties.end(),
+                                 "INCLUDE_DIRECTORIES")
+                        != debugProperties.end();
+
+  if (this->Makefile->IsGeneratingBuildSystem())
+    {
+    this->DebugIncludesDone = true;
+    }
+
+  processIncludeDirectories(this->Target,
+                            this->Target->GetIncludeDirectoriesEntries(),
+                            includes,
+                            uniqueIncludes,
+                            &dagChecker,
+                            config,
+                            debugIncludes);
+
+  std::vector<TargetPropertyEntry*>
+    linkInterfaceIncludeDirectoriesEntries;
+  this->Target->AddInterfaceEntries(
+    config, "INTERFACE_INCLUDE_DIRECTORIES",
+    linkInterfaceIncludeDirectoriesEntries);
+
+  if(this->Makefile->IsOn("APPLE"))
+    {
+    cmTarget::LinkImplementation const* impl = this->Target->GetLinkImplementation(config);
+    for(std::vector<cmLinkImplItem>::const_iterator
+        it = impl->Libraries.begin();
+        it != impl->Libraries.end(); ++it)
+      {
+      std::string libDir = cmSystemTools::CollapseFullPath(*it);
+
+      static cmsys::RegularExpression
+        frameworkCheck("(.*\\.framework)(/Versions/[^/]+)?/[^/]+$");
+      if(!frameworkCheck.find(libDir))
+        {
+        continue;
+        }
+
+      libDir = frameworkCheck.match(1);
+
+      cmGeneratorExpression ge;
+      cmsys::auto_ptr<cmCompiledGeneratorExpression> cge =
+                ge.Parse(libDir.c_str());
+      linkInterfaceIncludeDirectoriesEntries
+              .push_back(new TargetPropertyEntry(cge));
+      }
+    }
+
+  processIncludeDirectories(this->Target,
+                            linkInterfaceIncludeDirectoriesEntries,
+                            includes,
+                            uniqueIncludes,
+                            &dagChecker,
+                            config,
+                            debugIncludes);
+
+  deleteAndClear(linkInterfaceIncludeDirectoriesEntries);
+
+  return includes;
 }
+
+cmLinkImplItem cmGeneratorTarget::TargetPropertyEntry::NoLinkImplItem;
 
 //----------------------------------------------------------------------------
 void cmGeneratorTarget::GenerateTargetManifest(

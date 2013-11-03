@@ -102,6 +102,13 @@ public:
 #include <set>
 #include <deque>
 
+#if defined(CMAKE_BUILD_WITH_CMAKE)
+#include <cmsys/hash_set.hxx>
+#define UNORDERED_SET cmsys::hash_set
+#else
+#define UNORDERED_SET std::set
+#endif
+
 #if defined(_MSC_VER)
 # pragma warning(pop)
 #endif

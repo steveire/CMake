@@ -13,6 +13,7 @@
 #define cmGeneratorTarget_h
 
 #include "cmStandardIncludes.h"
+#include "cmGeneratorExpression.h"
 
 class cmCustomCommand;
 class cmGlobalGenerator;
@@ -21,10 +22,38 @@ class cmMakefile;
 class cmSourceFile;
 class cmTarget;
 
+// Basic information about each link item.
+class cmLinkItem: public std::string
+{
+  typedef std::string std_string;
+public:
+  cmLinkItem(): std_string(), Target(0) {}
+  cmLinkItem(const std_string& n,
+             cmTarget const* t): std_string(n), Target(t) {}
+  cmLinkItem(cmLinkItem const& r): std_string(r), Target(r.Target) {}
+  cmTarget const* Target;
+};
+class cmLinkImplItem: public cmLinkItem
+{
+public:
+  cmLinkImplItem(): cmLinkItem(), Backtrace(0), FromGenex(false) {}
+  cmLinkImplItem(std::string const& n,
+                 cmTarget const* t,
+                 cmListFileBacktrace const& bt,
+                 bool fromGenex):
+    cmLinkItem(n, t), Backtrace(bt), FromGenex(fromGenex) {}
+  cmLinkImplItem(cmLinkImplItem const& r):
+    cmLinkItem(r), Backtrace(r.Backtrace), FromGenex(r.FromGenex) {}
+  cmListFileBacktrace Backtrace;
+  bool FromGenex;
+};
+
 class cmGeneratorTarget
 {
 public:
   cmGeneratorTarget(cmTarget*);
+
+  ~cmGeneratorTarget();
 
   bool IsImported() const;
   const char *GetLocation(const std::string& config) const;
@@ -119,6 +148,17 @@ public:
   std::vector<cmSourceFile*> const*
   GetSourceDepends(cmSourceFile const* sf) const;
 
+  class TargetPropertyEntry {
+    static cmLinkImplItem NoLinkImplItem;
+  public:
+    TargetPropertyEntry(cmsys::auto_ptr<cmCompiledGeneratorExpression> cge,
+                        cmLinkImplItem const& item = NoLinkImplItem)
+      : ge(cge), LinkImplItem(item)
+    {}
+    const cmsys::auto_ptr<cmCompiledGeneratorExpression> ge;
+    cmLinkImplItem const& LinkImplItem;
+  };
+
   /**
    * Flags for a given source file as used in this target. Typically assigned
    * via SET_TARGET_PROPERTIES when the property is a list of source files.
@@ -156,11 +196,16 @@ private:
 
   mutable std::map<cmSourceFile const*, std::string> Objects;
   std::set<cmSourceFile const*> ExplicitObjectName;
+  std::set<std::string> ExpectedResxHeaders;
   mutable std::map<std::string, std::vector<std::string> > SystemIncludesCache;
 
   void ConstructSourceFileFlags() const;
   mutable bool SourceFileFlagsConstructed;
   mutable std::map<cmSourceFile const*, SourceFileFlags> SourceFlagsMap;
+  mutable bool DebugIncludesDone;
+  mutable std::map<std::string, std::vector<TargetPropertyEntry*> >
+                                CachedLinkInterfaceIncludeDirectoriesEntries;
+  mutable std::map<std::string, bool> CacheLinkInterfaceIncludeDirectoriesDone;
 
   cmGeneratorTarget(cmGeneratorTarget const&);
   void operator=(cmGeneratorTarget const&);
