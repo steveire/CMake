@@ -66,9 +66,10 @@ void cmInstallTargetGenerator::GenerateScriptForConfig(std::ostream& os,
                                                     const std::string& config,
                                                     Indent const& indent)
 {
+  this->CreateGeneratorTarget();
   // Compute the build tree directory from which to copy the target.
   std::string fromDirConfig;
-  if(this->Target->NeedRelinkBeforeInstall(config))
+  if(this->GeneratorTarget->NeedRelinkBeforeInstall(config))
     {
     fromDirConfig = this->Target->GetMakefile()->GetStartOutputDirectory();
     fromDirConfig += cmake::GetCMakeFilesDirectory();
