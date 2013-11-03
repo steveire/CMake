@@ -1251,7 +1251,8 @@ void cmGlobalXCodeGenerator::ForceLinkerLanguage(cmTarget& cmtarget)
     return;
     }
 
-  std::string llang = cmtarget.GetLinkerLanguage("NOCONFIG");
+  cmGeneratorTarget *gtgt = this->GetGeneratorTarget(&cmtarget);
+  std::string llang = gtgt->GetLinkerLanguage("NOCONFIG");
   if(llang.empty()) { return; }
 
   // If the language is compiled as a source trust Xcode to link with it.
@@ -1714,7 +1715,8 @@ void cmGlobalXCodeGenerator::CreateBuildSettings(cmTarget& target,
                  (target.GetType() == cmTarget::EXECUTABLE) ||
                  shared);
 
-  std::string lang = target.GetLinkerLanguage(configName);
+  cmGeneratorTarget *gtgt = this->GetGeneratorTarget(&target);
+  std::string lang = gtgt->GetLinkerLanguage(configName);
   std::string cflags;
   if(!lang.empty())
     {
@@ -1766,7 +1768,6 @@ void cmGlobalXCodeGenerator::CreateBuildSettings(cmTarget& target,
     // Add the export symbol definition for shared library objects.
     this->AppendDefines(ppDefs, exportMacro);
     }
-  cmGeneratorTarget *gtgt = this->GetGeneratorTarget(&target);
   std::vector<std::string> targetDefines;
   target.GetCompileDefinitions(targetDefines, configName);
   this->AppendDefines(ppDefs, targetDefines);

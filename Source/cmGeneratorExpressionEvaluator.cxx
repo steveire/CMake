@@ -986,7 +986,10 @@ static const struct TargetPropertyNode : public cmGeneratorExpressionNode
             "link libraries for a static library");
         return std::string();
         }
-      return target->GetLinkerLanguage(context->Config);
+      cmGeneratorTarget *gtgt = target->GetMakefile()->GetLocalGenerator()
+                                      ->GetGlobalGenerator()
+                                      ->GetGeneratorTarget(target);
+      return gtgt->GetLinkerLanguage(context->Config);
       }
 
     cmGeneratorExpressionDAGChecker dagChecker(context->Backtrace,
@@ -1591,7 +1594,7 @@ struct TargetFilesystemArtifactResultCreator<ArtifactPdbTag>
                             cmGeneratorExpressionContext *context,
                             const GeneratorExpressionContent *content)
   {
-    std::string language = target->Target->GetLinkerLanguage(context->Config);
+    std::string language = target->GetLinkerLanguage(context->Config);
 
     std::string pdbSupportVar = "CMAKE_" + language + "_LINKER_SUPPORTS_PDB";
 

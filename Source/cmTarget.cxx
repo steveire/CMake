@@ -2946,12 +2946,6 @@ private:
 };
 
 //----------------------------------------------------------------------------
-std::string cmTarget::GetLinkerLanguage(const std::string& config) const
-{
-  return this->GetLinkClosure(config)->LinkerLanguage;
-}
-
-//----------------------------------------------------------------------------
 cmTarget::LinkClosure const*
 cmTarget::GetLinkClosure(const std::string& config) const
 {

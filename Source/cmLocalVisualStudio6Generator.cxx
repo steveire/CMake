@@ -1267,8 +1267,8 @@ void cmLocalVisualStudio6Generator
     extraLinkOptionsRelWithDebInfo += targetLinkFlags;
     }
 
-
-
+  cmGeneratorTarget* gt =
+    this->GlobalGenerator->GetGeneratorTarget(&target);
 
   // Get standard libraries for this language.
   if(targetBuilds)
@@ -1277,10 +1277,10 @@ void cmLocalVisualStudio6Generator
     std::vector<std::string> configs;
     target.GetMakefile()->GetConfigurations(configs);
     std::vector<std::string>::const_iterator it = configs.begin();
-    const std::string& linkLanguage = target.GetLinkerLanguage(*it);
+    const std::string& linkLanguage = gt->GetLinkerLanguage(*it);
     for ( ; it != configs.end(); ++it)
       {
-      const std::string& configLinkLanguage = target.GetLinkerLanguage(*it);
+      const std::string& configLinkLanguage = gt->GetLinkerLanguage(*it);
       if (configLinkLanguage != linkLanguage)
         {
         cmSystemTools::Error
@@ -1712,10 +1712,10 @@ void cmLocalVisualStudio6Generator
       std::vector<std::string> configs;
       target.GetMakefile()->GetConfigurations(configs);
       std::vector<std::string>::const_iterator it = configs.begin();
-      const std::string& linkLanguage = target.GetLinkerLanguage(*it);
+      const std::string& linkLanguage = gt->GetLinkerLanguage(*it);
       for ( ; it != configs.end(); ++it)
         {
-        const std::string& configLinkLanguage = target.GetLinkerLanguage(*it);
+        const std::string& configLinkLanguage = gt->GetLinkerLanguage(*it);
         if (configLinkLanguage != linkLanguage)
           {
           cmSystemTools::Error
