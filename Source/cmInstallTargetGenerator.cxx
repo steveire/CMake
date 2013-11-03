@@ -648,12 +648,13 @@ cmInstallTargetGenerator
                     const std::string& config,
                     std::string const& toDestDirPath)
 {
+  this->CreateGeneratorTarget();
+
   // Skip the chrpath if the target does not need it.
-  if(this->ImportLibrary || !this->Target->IsChrpathUsed(config))
+  if(this->ImportLibrary || !this->GeneratorTarget->IsChrpathUsed(config))
     {
     return;
     }
-
   // Skip if on Apple
   if(this->Target->GetMakefile()->IsOn("CMAKE_PLATFORM_HAS_INSTALLNAME"))
     {
@@ -689,8 +690,9 @@ cmInstallTargetGenerator
                       const std::string& config,
                       std::string const& toDestDirPath)
 {
+  this->CreateGeneratorTarget();
   // Skip the chrpath if the target does not need it.
-  if(this->ImportLibrary || !this->Target->IsChrpathUsed(config))
+  if(this->ImportLibrary || !this->GeneratorTarget->IsChrpathUsed(config))
     {
     return;
     }
