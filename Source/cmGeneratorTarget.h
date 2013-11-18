@@ -194,6 +194,9 @@ public:
   std::vector<cmSourceFile*> const*
   GetSourceDepends(cmSourceFile const* sf) const;
 
+  /** Whether this library has soname enabled and platform supports it.  */
+  bool HasSOName(const std::string& config) const;
+
   class TargetPropertyEntry {
     static cmLinkImplItem NoLinkImplItem;
   public:

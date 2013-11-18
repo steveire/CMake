@@ -485,7 +485,7 @@ void cmNinjaNormalTargetGenerator::WriteLinkStatement()
     vars["LANGUAGE_COMPILE_FLAGS"] = t;
     }
 
-  if (target.HasSOName(cfgName))
+  if (this->GetGeneratorTarget()->HasSOName(cfgName))
     {
     vars["SONAME_FLAG"] = mf->GetSONameFlag(this->TargetLinkLanguage);
     vars["SONAME"] = this->TargetNameSO;

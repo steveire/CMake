@@ -830,7 +830,7 @@ cmExportFileGenerator
       {
       std::string prop;
       std::string value;
-      if(target->Target->HasSOName(config))
+      if(target->HasSOName(config))
         {
         if(mf->IsOn("CMAKE_PLATFORM_HAS_INSTALLNAME"))
           {
