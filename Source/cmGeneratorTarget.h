@@ -183,6 +183,9 @@ public:
     SourceFileType Type;
     const char* MacFolder; // location inside Mac content folders
   };
+  void GetAutoUicOptions(std::vector<std::string> &result,
+                         const std::string& config) const;
+
 
   struct SourceFileFlags
   GetTargetSourceFileFlags(const cmSourceFile* sf) const;
@@ -196,7 +199,6 @@ private:
   struct SourceEntry { std::vector<cmSourceFile*> Depends; };
   typedef std::map<cmSourceFile const*, SourceEntry> SourceEntriesType;
   SourceEntriesType SourceEntries;
-
   mutable std::map<cmSourceFile const*, std::string> Objects;
   std::set<cmSourceFile const*> ExplicitObjectName;
   std::set<std::string> ExpectedResxHeaders;
