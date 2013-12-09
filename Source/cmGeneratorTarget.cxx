@@ -256,6 +256,8 @@ cmGeneratorTarget::cmGeneratorTarget(cmTarget* t): Target(t),
 
   this->DebugIncludesDone = false;
   this->PolicyWarnedCMP0022 = false;
+
+  this->IsApple = this->Makefile->IsOn("APPLE");
 }
 
 //----------------------------------------------------------------------------
@@ -3368,11 +3370,11 @@ void cmGeneratorTarget::GetLibraryNames(std::string& name,
   else
   {
     // The library's soname.
-    this->Target->ComputeVersionedName(soName, prefix, base, suffix,
+    this->ComputeVersionedName(soName, prefix, base, suffix,
                               name, soversion);
 
     // The library's real name on disk.
-    this->Target->ComputeVersionedName(realName, prefix, base, suffix,
+    this->ComputeVersionedName(realName, prefix, base, suffix,
                               name, version);
   }
 
@@ -4323,4 +4325,21 @@ bool cmGeneratorTarget::MacOSXRpathInstallNameDirDefault() const
     }
 
   return false;
+}
+
+//----------------------------------------------------------------------------
+void cmGeneratorTarget::ComputeVersionedName(std::string& vName,
+                                             std::string const& prefix,
+                                             std::string const& base,
+                                             std::string const& suffix,
+                                             std::string const& name,
+                                             const char* version) const
+{
+  vName = this->IsApple? (prefix+base) : name;
+  if(version)
+    {
+    vName += ".";
+    vName += version;
+    }
+  vName += this->IsApple? suffix : std::string();
 }

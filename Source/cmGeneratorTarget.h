@@ -503,6 +503,12 @@ private:
   typedef std::map<std::string,
                    HeadToLinkImplementationMap> LinkImplMapType;
   mutable LinkImplMapType LinkImplMap;
+  void ComputeVersionedName(std::string& vName,
+                            std::string const& prefix,
+                            std::string const& base,
+                            std::string const& suffix,
+                            std::string const& name,
+                            const char* version) const;
 
   typedef std::map<std::string, LinkClosure> LinkClosureMapType;
   mutable LinkClosureMapType LinkClosureMap;
@@ -533,6 +539,8 @@ private:
     bool Done;
   };
   mutable std::map<std::string, LinkImplClosure> LinkImplClosureMap;
+
+  bool IsApple;
 
 public:
   std::vector<cmTarget const*> const&

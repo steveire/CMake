@@ -147,7 +147,6 @@ cmTarget::cmTarget()
   this->HaveInstallRule = false;
   this->DLLPlatform = false;
   this->IsAndroid = false;
-  this->IsApple = false;
   this->IsImportedTarget = false;
   this->BuildInterfaceIncludesAppended = false;
   this->DebugCompileOptionsDone = false;
@@ -205,9 +204,6 @@ void cmTarget::SetMakefile(cmMakefile* mf)
   this->IsAndroid =
     strcmp(this->Makefile->GetSafeDefinition("CMAKE_SYSTEM_NAME"),
            "Android") == 0;
-
-  // Check whether we are targeting an Apple platform.
-  this->IsApple = this->Makefile->IsOn("APPLE");
 
   // Setup default property values.
   if (this->GetType() != INTERFACE_LIBRARY && this->GetType() != UTILITY)
@@ -2863,23 +2859,6 @@ cmTarget::ImportedGetFullPath(const std::string& config, bool implib) const
     result += "-NOTFOUND";
     }
   return result;
-}
-
-//----------------------------------------------------------------------------
-void cmTarget::ComputeVersionedName(std::string& vName,
-                                    std::string const& prefix,
-                                    std::string const& base,
-                                    std::string const& suffix,
-                                    std::string const& name,
-                                    const char* version) const
-{
-  vName = this->IsApple? (prefix+base) : name;
-  if(version)
-    {
-    vName += ".";
-    vName += version;
-    }
-  vName += this->IsApple? suffix : std::string();
 }
 
 //----------------------------------------------------------------------------

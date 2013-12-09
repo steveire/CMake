@@ -499,7 +499,6 @@ private:
   LinkLibraryVectorType OriginalLinkLibraries;
   bool DLLPlatform;
   bool IsAndroid;
-  bool IsApple;
   bool IsImportedTarget;
   mutable bool DebugCompileOptionsDone;
   mutable bool DebugCompileDefinitionsDone;
@@ -566,12 +565,6 @@ private:
   friend class cmTargetTraceDependencies;
   cmTargetInternalPointer Internal;
 
-  void ComputeVersionedName(std::string& vName,
-                            std::string const& prefix,
-                            std::string const& base,
-                            std::string const& suffix,
-                            std::string const& name,
-                            const char* version) const;
 
   mutable bool LinkImplementationLanguageIsContextDependent;
 };
