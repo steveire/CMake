@@ -1014,7 +1014,10 @@ cmGlobalVisualStudio7Generator::IsPartOfDefaultBuild(
     {
     return activeConfigs;
     }
-  if(type == cmTarget::UTILITY && !this->IsDependedOn(projectTargets, target))
+  cmGeneratorTarget const* gtgt = target->GetMakefile()->GetLocalGenerator()
+                                        ->GetGlobalGenerator()
+                                        ->GetGeneratorTarget(target);
+  if(type == cmTarget::UTILITY && !this->IsDependedOn(project, gtgt))
     {
     return activeConfigs;
     }

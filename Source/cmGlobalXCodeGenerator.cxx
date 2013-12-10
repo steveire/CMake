@@ -2824,7 +2824,11 @@ void cmGlobalXCodeGenerator
     }
 
   // Add dependencies on other CMake targets.
-  TargetDependSet const& deps = this->GetTargetDirectDepends(*cmtarget);
+
+  cmGeneratorTarget const* gtgt = cmtarget->GetMakefile()->GetLocalGenerator()
+                                    ->GetGlobalGenerator()
+                                    ->GetGeneratorTarget(cmtarget);
+  TargetDependSet const& deps = this->GetTargetDirectDepends(*gtgt);
   for(TargetDependSet::const_iterator i = deps.begin(); i != deps.end(); ++i)
     {
     if(cmXCodeObject* dptarget = this->FindXCodeTarget(*i))
@@ -2868,7 +2872,6 @@ void cmGlobalXCodeGenerator
       }
 
     // Compute the link library and directory information.
-    cmGeneratorTarget* gtgt = this->GetGeneratorTarget(cmtarget);
     cmComputeLinkInformation* pcli = gtgt->GetLinkInformation(configName);
     if(!pcli)
       {

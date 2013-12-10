@@ -2582,7 +2582,7 @@ void cmVisualStudio10TargetGenerator::WriteEvent(
 void cmVisualStudio10TargetGenerator::WriteProjectReferences()
 {
   cmGlobalGenerator::TargetDependSet const& unordered
-    = this->GlobalGenerator->GetTargetDirectDepends(*this->Target);
+    = this->GlobalGenerator->GetTargetDirectDepends(*this->GeneratorTarget);
   typedef cmGlobalVisualStudioGenerator::OrderedTargetDependSet
     OrderedTargetDependSet;
   OrderedTargetDependSet depends(unordered);

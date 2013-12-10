@@ -916,7 +916,12 @@ cmGlobalUnixMakefileGenerator3
   if(emitted.insert(target).second)
     {
     count = this->ProgressMap[target].Marks.size();
-    TargetDependSet const& depends = this->GetTargetDirectDepends(*target);
+
+    cmGeneratorTarget *gtgt = target->GetMakefile()->GetLocalGenerator()
+                                    ->GetGlobalGenerator()
+                                    ->GetGeneratorTarget(target);
+
+    TargetDependSet const& depends = this->GetTargetDirectDepends(*gtgt);
     for(TargetDependSet::const_iterator di = depends.begin();
         di != depends.end(); ++di)
       {
@@ -990,7 +995,11 @@ cmGlobalUnixMakefileGenerator3
 ::AppendGlobalTargetDepends(std::vector<std::string>& depends,
                             cmTarget& target)
 {
-  TargetDependSet const& depends_set = this->GetTargetDirectDepends(target);
+  cmGeneratorTarget *gtgt = target.GetMakefile()->GetLocalGenerator()
+                                  ->GetGlobalGenerator()
+                                  ->GetGeneratorTarget(&target);
+
+  TargetDependSet const& depends_set = this->GetTargetDirectDepends(*gtgt);
   for(TargetDependSet::const_iterator i = depends_set.begin();
       i != depends_set.end(); ++i)
     {
