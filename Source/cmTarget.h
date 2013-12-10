@@ -148,17 +148,10 @@ public:
   typedef std::pair<std::string, LinkLibraryType> LibraryID;
 
   typedef std::vector<LibraryID > LinkLibraryVectorType;
-  const LinkLibraryVectorType &GetOriginalLinkLibraries() const
-    {return this->OriginalLinkLibraries;}
-
-  /**
-   * Clear the dependency information recorded for this target, if any.
-   */
-  void ClearDependencyInformation(cmMakefile& mf, const std::string& target);
 
   // Check to see if a library is a framework and treat it different on Mac
   bool NameResolvesToFramework(const std::string& libname) const;
-  void AddLinkLibrary(cmMakefile& mf,
+  void AddLinkLibrary(
                       const std::string& target, const std::string& lib,
                       LinkLibraryType llt);
   enum TLLSignature {
@@ -168,7 +161,7 @@ public:
   bool PushTLLCommandTrace(TLLSignature signature);
   void GetTllSignatureTraces(cmOStringStream &s, TLLSignature sig) const;
 
-  void MergeLinkLibraries( cmMakefile& mf, const std::string& selfname,
+  void MergeLinkLibraries( const std::string& selfname,
                            const LinkLibraryVectorType& libs );
 
   const std::vector<std::string>& GetLinkDirectories() const;
@@ -429,16 +422,6 @@ private:
                    std::set<LibraryID>& emitted,
                    std::set<LibraryID>& visited,
                    DependencyList& link_line);
-
-  /**
-   * Finds the dependencies for \a lib and inserts them into \a
-   * dep_map.
-   */
-  void GatherDependenciesForVS6( const cmMakefile& mf,
-                                 const LibraryID& lib,
-                                 DependencyMap& dep_map);
-
-  void AnalyzeLibDependenciesForVS6( const cmMakefile& mf );
 #endif
 
   const char* GetSuffixVariableInternal(bool implib) const;
@@ -476,10 +459,6 @@ private:
   std::vector<cmCustomCommand> PostBuildCommands;
   TargetType TargetTypeValue;
   LinkLibraryVectorType PrevLinkedLibraries;
-#if defined(_WIN32) && !defined(__CYGWIN__)
-  LinkLibraryVectorType LinkLibrariesForVS6;
-  bool LinkLibrariesForVS6Analyzed;
-#endif
   std::vector<std::string> LinkDirectories;
   std::set<std::string> LinkDirectoriesEmmitted;
   bool HaveInstallRule;
@@ -490,7 +469,6 @@ private:
   std::map<std::string, cmListFileBacktrace> UtilityBacktraces;
   bool RecordDependencies;
   mutable cmPropertyMap Properties;
-  LinkLibraryVectorType OriginalLinkLibraries;
   bool DLLPlatform;
   bool IsAndroid;
   bool IsImportedTarget;

@@ -1509,7 +1509,7 @@ void cmMakefile::AddLinkLibraryForTarget(const std::string& target,
         this->IssueMessage(cmake::FATAL_ERROR, e.str());
         }
       }
-    i->second.AddLinkLibrary( *this, target, lib, llt );
+    i->second.AddLinkLibrary( target, lib, llt );
     }
   else
     {
@@ -2009,7 +2009,7 @@ void cmMakefile::AddGlobalLinkInformation(const std::string& name,
     {
     target.AddLinkDirectory(*j);
     }
-  target.MergeLinkLibraries( *this, name, this->LinkLibraries );
+  target.MergeLinkLibraries( name, this->LinkLibraries );
 }
 
 
@@ -2037,10 +2037,6 @@ cmTarget* cmMakefile::AddLibrary(const std::string& lname,
     }
 
   cmTarget* target = this->AddNewTarget(type, lname);
-  // Clear its dependencies. Otherwise, dependencies might persist
-  // over changes in CMakeLists.txt, making the information stale and
-  // hence useless.
-  target->ClearDependencyInformation( *this, lname );
   if(excludeFromAll)
     {
     target->SetProperty("EXCLUDE_FROM_ALL", "TRUE");

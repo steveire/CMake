@@ -337,7 +337,6 @@ foreach(command_file
     cmCMakeHostSystemInformationCommand
     cmElseIfCommand
     cmExportCommand
-    cmExportLibraryDependenciesCommand
     cmFLTKWrapUICommand
     cmIncludeExternalMSProjectCommand
     cmInstallProgramsCommand

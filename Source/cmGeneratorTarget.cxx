@@ -1408,25 +1408,6 @@ cmGeneratorTarget::ComputeLinkImplementationLibraries(
       }
     cge->GetMaxLanguageStandard(this->Target, this->MaxLanguageStandards);
     }
-
-  cmTarget::LinkLibraryType linkType = static_cast<cmTarget::LinkLibraryType>(this->ComputeLinkType(config));
-  cmTarget::LinkLibraryVectorType const& oldllibs =
-    this->Target->GetOriginalLinkLibraries();
-  for(cmTarget::LinkLibraryVectorType::const_iterator li = oldllibs.begin();
-      li != oldllibs.end(); ++li)
-    {
-    if(li->second != cmTarget::GENERAL && li->second != linkType)
-      {
-      std::string name = this->Target->CheckCMP0004(li->first);
-      if(name == this->GetName() || name.empty())
-        {
-        continue;
-        }
-      // Support OLD behavior for CMP0003.
-      impl.WrongConfigLibraries.push_back(
-        cmLinkItem(name, this->FindTargetToLink(name)));
-      }
-    }
 }
 
 //----------------------------------------------------------------------------
@@ -3497,7 +3478,7 @@ cmGeneratorTarget::LinkInterface const* cmGeneratorTarget::GetLinkInterface(
     iface.AllDone = true;
     if(iface.Exists)
       {
-      this->ComputeLinkInterface(config, iface, head);
+      this->ComputeLinkInterface(config, iface);
       }
     }
 
@@ -3700,7 +3681,6 @@ cmGeneratorTarget::ComputeLinkInterfaceLibraries(
                               this->GetLinkImplementation(config, headTarget);
     iface.ImplementationIsInterface = true;
     iface.Libraries = impl->Libraries;
-    iface.WrongConfigLibraries = impl->WrongConfigLibraries;
     if(this->Target->LinkLanguagePropagatesToDependents())
       {
       // Targets using this archive need its language runtime libraries.
@@ -3778,8 +3758,7 @@ cmGeneratorTarget::ComputeLinkInterfaceLibraries(
 
 //----------------------------------------------------------------------------
 void cmGeneratorTarget::ComputeLinkInterface(const std::string& config,
-                                             OptionalLinkInterface& iface,
-                                             cmTarget const* headTarget) const
+                                             OptionalLinkInterface& iface) const
 {
   if(iface.ExplicitLibraries)
     {
@@ -3827,12 +3806,7 @@ void cmGeneratorTarget::ComputeLinkInterface(const std::string& config,
   else if (this->Target->GetPolicyStatusCMP0022() == cmPolicies::WARN
         || this->Target->GetPolicyStatusCMP0022() == cmPolicies::OLD)
     {
-    // The link implementation is the default link interface.
-    LinkImplementationLibraries const*
-      impl = this->GetLinkImplementationLibrariesInternal(config,
-                                                                headTarget);
     iface.ImplementationIsInterface = true;
-    iface.WrongConfigLibraries = impl->WrongConfigLibraries;
     }
 
   if(this->Target->LinkLanguagePropagatesToDependents())

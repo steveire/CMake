@@ -141,9 +141,6 @@ cmTarget::cmTarget()
 #undef INITIALIZE_TARGET_POLICY_MEMBER
 
   this->Makefile = 0;
-#if defined(_WIN32) && !defined(__CYGWIN__)
-  this->LinkLibrariesForVS6Analyzed = false;
-#endif
   this->HaveInstallRule = false;
   this->DLLPlatform = false;
   this->IsAndroid = false;
@@ -413,14 +410,6 @@ void cmTarget::FinishConfigure()
   // system generation uses up-to-date information even if other cache
   // invalidation code in this source file is buggy.
   this->ClearLinkMaps();
-
-#if defined(_WIN32) && !defined(__CYGWIN__)
-  // Do old-style link dependency analysis only for CM_USE_OLD_VS6.
-  if(this->Makefile->GetLocalGenerator()->GetGlobalGenerator()->IsForVS6())
-    {
-    this->AnalyzeLibDependenciesForVS6(*this->Makefile);
-    }
-#endif
 }
 
 //----------------------------------------------------------------------------
@@ -979,8 +968,7 @@ cmSourceFile* cmTarget::AddSource(const std::string& src)
 }
 
 //----------------------------------------------------------------------------
-void cmTarget::MergeLinkLibraries( cmMakefile& mf,
-                                   const std::string& selfname,
+void cmTarget::MergeLinkLibraries( const std::string& selfname,
                                    const LinkLibraryVectorType& libs )
 {
   // Only add on libraries we haven't added on before.
@@ -990,7 +978,7 @@ void cmTarget::MergeLinkLibraries( cmMakefile& mf,
   for( ; i != libs.end(); ++i )
     {
     // This is equivalent to the target_link_libraries plain signature.
-    this->AddLinkLibrary( mf, selfname, i->first, i->second );
+    this->AddLinkLibrary( selfname, i->first, i->second );
     this->AppendProperty("INTERFACE_LINK_LIBRARIES",
       this->GetDebugGeneratorExpressions(i->first, i->second).c_str());
     }
@@ -1011,34 +999,6 @@ void cmTarget::AddLinkDirectory(const std::string& d)
 const std::vector<std::string>& cmTarget::GetLinkDirectories() const
 {
   return this->LinkDirectories;
-}
-
-//----------------------------------------------------------------------------
-void cmTarget::ClearDependencyInformation( cmMakefile& mf,
-                                           const std::string& target )
-{
-  // Clear the dependencies. The cache variable must exist iff we are
-  // recording dependency information for this target.
-  std::string depname = target;
-  depname += "_LIB_DEPENDS";
-  if (this->RecordDependencies)
-    {
-    mf.AddCacheDefinition(depname, "",
-                          "Dependencies for target", cmCacheManager::STATIC);
-    }
-  else
-    {
-    if (mf.GetDefinition( depname ))
-      {
-      std::string message = "Target ";
-      message += target;
-      message += " has dependency information when it shouldn't.\n";
-      message += "Your cache is probably stale. Please remove the entry\n  ";
-      message += depname;
-      message += "\nfrom the cache.";
-      cmSystemTools::Error( message.c_str() );
-      }
-    }
 }
 
 //----------------------------------------------------------------------------
@@ -1144,9 +1104,7 @@ void cmTarget::GetTllSignatureTraces(cmOStringStream &s,
 }
 
 //----------------------------------------------------------------------------
-void cmTarget::AddLinkLibrary(cmMakefile& mf,
-                              const std::string& target,
-                              const std::string& lib,
+void cmTarget::AddLinkLibrary(const std::string& target, const std::string& lib,
                               LinkLibraryType llt)
 {
   cmTarget *tgt = this->Makefile->FindTargetToUse(lib);
@@ -1171,50 +1129,7 @@ void cmTarget::AddLinkLibrary(cmMakefile& mf,
   cmTarget::LibraryID tmp;
   tmp.first = lib;
   tmp.second = llt;
-#if defined(_WIN32) && !defined(__CYGWIN__)
-  this->LinkLibrariesForVS6.push_back( tmp );
-#endif
-  this->OriginalLinkLibraries.push_back(tmp);
   this->ClearLinkMaps();
-
-  // Add the explicit dependency information for this target. This is
-  // simply a set of libraries separated by ";". There should always
-  // be a trailing ";". These library names are not canonical, in that
-  // they may be "-framework x", "-ly", "/path/libz.a", etc.
-  // We shouldn't remove duplicates here because external libraries
-  // may be purposefully duplicated to handle recursive dependencies,
-  // and we removing one instance will break the link line. Duplicates
-  // will be appropriately eliminated at emit time.
-  if(this->RecordDependencies)
-    {
-    std::string targetEntry = target;
-    targetEntry += "_LIB_DEPENDS";
-    std::string dependencies;
-    const char* old_val = mf.GetDefinition( targetEntry );
-    if( old_val )
-      {
-      dependencies += old_val;
-      }
-    switch (llt)
-      {
-      case cmTarget::GENERAL:
-        dependencies += "general";
-        break;
-      case cmTarget::DEBUG:
-        dependencies += "debug";
-        break;
-      case cmTarget::OPTIMIZED:
-        dependencies += "optimized";
-        break;
-      }
-    dependencies += ";";
-    dependencies += lib;
-    dependencies += ";";
-    mf.AddCacheDefinition( targetEntry, dependencies.c_str(),
-                           "Dependencies for the target",
-                           cmCacheManager::STATIC );
-    }
-
 }
 
 //----------------------------------------------------------------------------
@@ -1241,150 +1156,9 @@ cmTarget::AddSystemIncludeDirectories(const std::vector<std::string> &incs)
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 //----------------------------------------------------------------------------
-void
-cmTarget::AnalyzeLibDependenciesForVS6( const cmMakefile& mf )
-{
-  // There are two key parts of the dependency analysis: (1)
-  // determining the libraries in the link line, and (2) constructing
-  // the dependency graph for those libraries.
-  //
-  // The latter is done using the cache entries that record the
-  // dependencies of each library.
-  //
-  // The former is a more thorny issue, since it is not clear how to
-  // determine if two libraries listed on the link line refer to the a
-  // single library or not. For example, consider the link "libraries"
-  //    /usr/lib/libtiff.so -ltiff
-  // Is this one library or two? The solution implemented here is the
-  // simplest (and probably the only practical) one: two libraries are
-  // the same if their "link strings" are identical. Thus, the two
-  // libraries above are considered distinct. This also means that for
-  // dependency analysis to be effective, the CMake user must specify
-  // libraries build by his project without using any linker flags or
-  // file extensions. That is,
-  //    LINK_LIBRARIES( One Two )
-  // instead of
-  //    LINK_LIBRARIES( -lOne ${binarypath}/libTwo.a )
-  // The former is probably what most users would do, but it never
-  // hurts to document the assumptions. :-) Therefore, in the analysis
-  // code, the "canonical name" of a library is simply its name as
-  // given to a LINK_LIBRARIES command.
-  //
-  // Also, we will leave the original link line intact; we will just add any
-  // dependencies that were missing.
-  //
-  // There is a problem with recursive external libraries
-  // (i.e. libraries with no dependency information that are
-  // recursively dependent). We must make sure that the we emit one of
-  // the libraries twice to satisfy the recursion, but we shouldn't
-  // emit it more times than necessary. In particular, we must make
-  // sure that handling this improbable case doesn't cost us when
-  // dealing with the common case of non-recursive libraries. The
-  // solution is to assume that the recursion is satisfied at one node
-  // of the dependency tree. To illustrate, assume libA and libB are
-  // extrenal and mutually dependent. Suppose libX depends on
-  // libA, and libY on libA and libX. Then
-  //   TARGET_LINK_LIBRARIES( Y X A B A )
-  //   TARGET_LINK_LIBRARIES( X A B A )
-  //   TARGET_LINK_LIBRARIES( Exec Y )
-  // would result in "-lY -lX -lA -lB -lA". This is the correct way to
-  // specify the dependencies, since the mutual dependency of A and B
-  // is resolved *every time libA is specified*.
-  //
-  // Something like
-  //   TARGET_LINK_LIBRARIES( Y X A B A )
-  //   TARGET_LINK_LIBRARIES( X A B )
-  //   TARGET_LINK_LIBRARIES( Exec Y )
-  // would result in "-lY -lX -lA -lB", and the mutual dependency
-  // information is lost. This is because in some case (Y), the mutual
-  // dependency of A and B is listed, while in another other case (X),
-  // it is not. Depending on which line actually emits A, the mutual
-  // dependency may or may not be on the final link line.  We can't
-  // handle this pathalogical case cleanly without emitting extra
-  // libraries for the normal cases. Besides, the dependency
-  // information for X is wrong anyway: if we build an executable
-  // depending on X alone, we would not have the mutual dependency on
-  // A and B resolved.
-  //
-  // IMPROVEMENTS:
-  // -- The current algorithm will not always pick the "optimal" link line
-  //    when recursive dependencies are present. It will instead break the
-  //    cycles at an aribtrary point. The majority of projects won't have
-  //    cyclic dependencies, so this is probably not a big deal. Note that
-  //    the link line is always correct, just not necessary optimal.
-
- {
- // Expand variables in link library names.  This is for backwards
- // compatibility with very early CMake versions and should
- // eventually be removed.  This code was moved here from the end of
- // old source list processing code which was called just before this
- // method.
- for(LinkLibraryVectorType::iterator p = this->LinkLibrariesForVS6.begin();
-     p != this->LinkLibrariesForVS6.end(); ++p)
-   {
-   this->Makefile->ExpandVariablesInString(p->first, true, true);
-   }
- }
-
- // The dependency map.
- DependencyMap dep_map;
-
- // 1. Build the dependency graph
- //
- for(LinkLibraryVectorType::reverse_iterator lib
-       = this->LinkLibrariesForVS6.rbegin();
-     lib != this->LinkLibrariesForVS6.rend(); ++lib)
-   {
-   this->GatherDependenciesForVS6( mf, *lib, dep_map);
-   }
-
- // 2. Remove any dependencies that are already satisfied in the original
- // link line.
- //
- for(LinkLibraryVectorType::iterator lib = this->LinkLibrariesForVS6.begin();
-     lib != this->LinkLibrariesForVS6.end(); ++lib)
-   {
-   for( LinkLibraryVectorType::iterator lib2 = lib;
-        lib2 != this->LinkLibrariesForVS6.end(); ++lib2)
-     {
-     this->DeleteDependencyForVS6( dep_map, *lib, *lib2);
-     }
-   }
-
-
- // 3. Create the new link line by simply emitting any dependencies that are
- // missing.  Start from the back and keep adding.
- //
- std::set<DependencyMap::key_type> done, visited;
- std::vector<DependencyMap::key_type> newLinkLibrariesForVS6;
- for(LinkLibraryVectorType::reverse_iterator lib =
-       this->LinkLibrariesForVS6.rbegin();
-     lib != this->LinkLibrariesForVS6.rend(); ++lib)
-   {
-   // skip zero size library entries, this may happen
-   // if a variable expands to nothing.
-   if (lib->first.size() != 0)
-     {
-     this->EmitForVS6( *lib, dep_map, done, visited, newLinkLibrariesForVS6 );
-     }
-   }
-
- // 4. Add the new libraries to the link line.
- //
- for( std::vector<DependencyMap::key_type>::reverse_iterator k =
-        newLinkLibrariesForVS6.rbegin();
-      k != newLinkLibrariesForVS6.rend(); ++k )
-   {
-   // get the llt from the dep_map
-   this->LinkLibrariesForVS6.push_back( std::make_pair(k->first,k->second) );
-   }
- this->LinkLibrariesForVS6Analyzed = true;
-}
-
-//----------------------------------------------------------------------------
-void cmTarget::InsertDependencyForVS6( DependencyMap& depMap,
-                                       const LibraryID& lib,
-                                       const LibraryID& dep)
+void cmTarget::InsertDependency( DependencyMap& depMap,
+                                 const LibraryID& lib,
+                                 const LibraryID& dep)
 {
   depMap[lib].push_back(dep);
 }
@@ -1470,66 +1244,6 @@ void cmTarget::EmitForVS6(const LibraryID lib,
           }
         }
       }
-    }
-}
-
-//----------------------------------------------------------------------------
-void cmTarget::GatherDependenciesForVS6( const cmMakefile& mf,
-                                         const LibraryID& lib,
-                                         DependencyMap& dep_map)
-{
-  // If the library is already in the dependency map, then it has
-  // already been fully processed.
-  if( dep_map.find(lib) != dep_map.end() )
-    {
-    return;
-    }
-
-  const char* deps = mf.GetDefinition( lib.first+"_LIB_DEPENDS" );
-  if( deps && strcmp(deps,"") != 0 )
-    {
-    // Make sure this library is in the map, even if it has an empty
-    // set of dependencies. This distinguishes the case of explicitly
-    // no dependencies with that of unspecified dependencies.
-    dep_map[lib];
-
-    // Parse the dependency information, which is a set of
-    // type, library pairs separated by ";". There is always a trailing ";".
-    cmTarget::LinkLibraryType llt = cmTarget::GENERAL;
-    std::string depline = deps;
-    std::string::size_type start = 0;
-    std::string::size_type end;
-    end = depline.find( ";", start );
-    while( end != std::string::npos )
-      {
-      std::string l = depline.substr( start, end-start );
-      if( l.size() != 0 )
-        {
-        if (l == "debug")
-          {
-          llt = cmTarget::DEBUG;
-          }
-        else if (l == "optimized")
-          {
-          llt = cmTarget::OPTIMIZED;
-          }
-        else if (l == "general")
-          {
-          llt = cmTarget::GENERAL;
-          }
-        else
-          {
-          LibraryID lib2(l,llt);
-          this->InsertDependencyForVS6( dep_map, lib, lib2);
-          this->GatherDependenciesForVS6( mf, lib2, dep_map);
-          llt = cmTarget::GENERAL;
-          }
-        }
-      start = end+1; // skip the ;
-      end = depline.find( ";", start );
-      }
-    // cannot depend on itself
-    this->DeleteDependencyForVS6( dep_map, lib, lib);
     }
 }
 #endif

@@ -51,10 +51,6 @@ public:
   typedef std::vector<LinkEntry> EntryVector;
   EntryVector const& Compute();
 
-  void SetOldLinkDirMode(bool b);
-  std::set<cmTarget const*> const& GetOldWrongConfigItems() const
-    { return this->OldWrongConfigItems; }
-
 private:
 
   // Context information.
@@ -78,7 +74,6 @@ private:
   std::map<std::string, int>::iterator
   AllocateLinkEntry(std::string const& item);
   int AddLinkEntry(cmLinkItem const& item);
-  void AddVarLinkEntries(int depender_index, const char* value);
   void AddDirectLinkEntries();
   template <typename T>
     void AddLinkEntries(int depender_index, std::vector<T> const& libs);
@@ -89,14 +84,8 @@ private:
   std::vector<LinkEntry> EntryList;
   std::map<std::string, int> LinkEntryIndex;
 
-  // BFS of initial dependencies.
-  struct BFSEntry
-  {
-    int Index;
-    const char* LibDepends;
-  };
-  std::queue<BFSEntry> BFSQueue;
-  void FollowLinkEntry(BFSEntry const&);
+  std::queue<int> BFSQueue;
+  void FollowLinkEntry(int);
 
   // Shared libraries that are included only because they are
   // dependencies of other shared libraries, not because they are part
@@ -160,11 +149,6 @@ private:
 
   // Record of the original link line.
   std::vector<int> OriginalEntries;
-
-  // Compatibility help.
-  bool OldLinkDirMode;
-  void CheckWrongConfigItem(cmLinkItem const& item);
-  std::set<cmTarget const*> OldWrongConfigItems;
 };
 
 #endif

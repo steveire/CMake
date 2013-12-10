@@ -274,10 +274,6 @@ public:
     // or more static libraries.
     int Multiplicity;
 
-    // Libraries listed for other configurations.
-    // Needed only for OLD behavior of CMP0003.
-    std::vector<cmLinkItem> WrongConfigLibraries;
-
     bool ImplementationIsInterface;
 
     LinkInterface(): Multiplicity(0), ImplementationIsInterface(false) {}
@@ -319,8 +315,7 @@ public:
                            bool usage_requirements_only) const;
 
   void ComputeLinkInterface(const std::string& config,
-                            OptionalLinkInterface& iface,
-                            cmTarget const* head) const;
+                            OptionalLinkInterface& iface) const;
 
   void ExpandLinkItems(std::string const& prop, std::string const& value,
                        std::string const& config, cmTarget const* headTarget,
@@ -418,10 +413,6 @@ public:
   {
     // Libraries linked directly in this configuration.
     std::vector<cmLinkImplItem> Libraries;
-
-    // Libraries linked directly in other configurations.
-    // Needed only for OLD behavior of CMP0003.
-    std::vector<cmLinkItem> WrongConfigLibraries;
   };
   struct LinkImplementation: public LinkImplementationLibraries
   {
