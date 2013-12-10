@@ -16,4 +16,20 @@ CMake version |release| warns when the policy is not set and uses
 OLD behavior.  Use the cmake_policy command to set it to OLD or
 NEW explicitly.
 
-.. include:: DEPRECATED.txt
+CMP0042
+-------
+
+No compiler feature test for GenerateExportHeader.
+
+In CMake 2.8.12, the GenerateExportHeader module ran feature tests to determine
+the content to generate in export, import and deprecation macros, and the flag
+to pass to the compiler.
+
+The OLD behavior for this policy is to run the compiler feature tests to determine
+macro content and compiler flags. The NEW behavior for this policy is to rely on the
+:prop_tgt:`CXX_VISIBILITY_PRESET` and :prop_tgt:`VISIBILITY_INLINES_HIDDEN` target
+properties.
+
+This policy was introduced in CMake version 3.0.0.  CMake version
+|release| warns when the policy is not set and uses OLD behavior.  Use
+the cmake_policy command to set it to OLD or NEW explicitly.
