@@ -442,6 +442,9 @@ public:
 
   cmTarget const* FindTargetToLink(std::string const& name) const;
 
+  bool HaveBuildTreeRPATH(const std::string& config) const;
+  bool HaveInstallTreeRPATH() const;
+
   struct SourceFileFlags
   GetTargetSourceFileFlags(const cmSourceFile* sf) const;
 
@@ -450,7 +453,6 @@ public:
     mutable std::set<std::string> ExpectedResxHeaders;
     mutable std::vector<cmSourceFile const*> ResxSources;
   };
-  bool HaveBuildTreeRPATH(const std::string& config) const;
 private:
   friend class cmTargetTraceDependencies;
   struct SourceEntry { std::vector<cmSourceFile*> Depends; };

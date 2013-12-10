@@ -787,7 +787,7 @@ cmGeneratorTarget::NeedRelinkBeforeInstall(const std::string& config) const
   // will likely change between the build tree and install tree and
   // this target must be relinked.
   return this->HaveBuildTreeRPATH(config)
-      || this->Target->HaveInstallTreeRPATH();
+      || this->HaveInstallTreeRPATH();
 }
 
 //----------------------------------------------------------------------------
@@ -4342,4 +4342,12 @@ void cmGeneratorTarget::ComputeVersionedName(std::string& vName,
     vName += version;
     }
   vName += this->IsApple? suffix : std::string();
+}
+
+//----------------------------------------------------------------------------
+bool cmGeneratorTarget::HaveInstallTreeRPATH() const
+{
+  const char* install_rpath = this->GetProperty("INSTALL_RPATH");
+  return (install_rpath && *install_rpath) &&
+          !this->Makefile->IsOn("CMAKE_SKIP_INSTALL_RPATH");
 }
