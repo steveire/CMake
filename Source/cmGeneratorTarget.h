@@ -445,6 +445,8 @@ public:
   bool HaveBuildTreeRPATH(const std::string& config) const;
   bool HaveInstallTreeRPATH() const;
 
+  std::string GetOutputName(const std::string& config, bool implib) const;
+
   struct SourceFileFlags
   GetTargetSourceFileFlags(const cmSourceFile* sf) const;
 
