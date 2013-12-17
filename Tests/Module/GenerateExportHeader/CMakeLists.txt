@@ -59,7 +59,10 @@ include(GenerateExportHeader)
 
 add_subdirectory(lib_shared_and_static)
 
-add_compiler_export_flags()
+# add_compiler_export_flags()
+
+set(CMAKE_CXX_VISIBILITY_PRESET hidden)
+set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 

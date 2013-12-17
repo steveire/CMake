@@ -5,7 +5,10 @@ project(libshared)
 
 include(GenerateExportHeader)
 
-add_compiler_export_flags()
+# add_compiler_export_flags()
+
+set(CMAKE_CXX_VISIBILITY_PRESET hidden)
+set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
