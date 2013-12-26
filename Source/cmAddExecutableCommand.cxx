@@ -69,6 +69,15 @@ bool cmAddExecutableCommand
       }
     }
 
+  if (importTarget && s != args.end())
+    {
+    // Policy
+    cmOStringStream e;
+    e << "IMPORTED executable requires no source arguments.";
+    this->SetError(e.str().c_str());
+    return false;
+    }
+
   bool nameOk = cmGeneratorExpression::IsValidTargetName(exename) &&
     !cmGlobalGenerator::IsReservedTarget(exename);
 

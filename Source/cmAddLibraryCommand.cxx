@@ -63,6 +63,9 @@ bool cmAddLibraryCommand
       }
     else if(libType == "SHARED")
       {
+
+      // Test add_library(foo SHARED STATIC file.cpp) Should fail, but doesn't.
+
       if (type == cmTarget::INTERFACE_LIBRARY)
         {
         std::ostringstream e;
@@ -205,6 +208,15 @@ bool cmAddLibraryCommand
       }
     }
 
+  if (importTarget && s != args.end())
+    {
+    // Policy
+    cmOStringStream e;
+    e << "IMPORTED library requires no source arguments.";
+    this->SetError(e.str().c_str());
+    return false;
+    }
+
   bool nameOk = cmGeneratorExpression::IsValidTargetName(libName) &&
     !cmGlobalGenerator::IsReservedTarget(libName);
 
@@ -270,6 +282,12 @@ bool cmAddLibraryCommand
       std::ostringstream e;
       e << "ALIAS requires exactly one target argument.";
       this->SetError(e.str());
+      return false;
+      }
+    if(haveSpecifiedType)
+      {
+      // policy
+      this->SetError("Specific library type with ALIAS makes no sense.");
       return false;
       }
 
