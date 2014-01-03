@@ -746,6 +746,47 @@ static const struct ConfigurationTestNode : public cmGeneratorExpressionNode
       return "1";
       }
 
+    if (cmsysString_strcasecmp(parameters.front().c_str(), "DEBUG") == 0)
+      {
+      std::vector<std::string> const& debugConfigs =
+                    context->Makefile->GetCMakeInstance()->GetDebugConfigs();
+
+      bool debugLike = false;
+      for(std::vector<std::string>::const_iterator li = debugConfigs.begin();
+          li != debugConfigs.end(); ++li)
+        {
+        if (cmsysString_strcasecmp(context->Config,
+                                   li->c_str()) == 0)
+          {
+          debugLike = true;
+          break;
+          }
+        }
+      if (debugLike)
+        {
+        switch (context->Makefile->GetPolicyStatus(cmPolicies::CMP0002))
+          {
+          case cmPolicies::WARN:
+            {
+            cmOStringStream e;
+            e << context->Makefile->GetPolicies()
+                        ->GetPolicyWarning(cmPolicies::CMP0002);
+            e << "The configuration \"" << context->Config << "\" is listed "
+                 "in the global property DEBUG_CONFIGURATIONS.  The "
+                 "$<CONFIG:Debug> generator expression will not consider "
+                 "that during evaluation.";
+            context->Makefile->IssueMessage(cmake::AUTHOR_WARNING,
+                                            e.str().c_str());
+            }
+          case cmPolicies::OLD:
+            break;
+          case cmPolicies::REQUIRED_ALWAYS:
+          case cmPolicies::REQUIRED_IF_USED:
+          case cmPolicies::NEW:
+            return "1";
+          }
+        }
+      }
     if (context->CurrentTarget
         && context->CurrentTarget->IsImported())
       {
