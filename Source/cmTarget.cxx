@@ -4724,6 +4724,13 @@ std::pair<bool, const char*> consistentNumberProperty(const char *lhs,
 }
 
 //----------------------------------------------------------------------------
+const char * consistentVersionProperty(const char *lhs, const char *rhs)
+{
+  return cmSystemTools::VersionCompare(cmSystemTools::OP_GREATER, lhs, rhs)
+    ? lhs : rhs;
+}
+
+//----------------------------------------------------------------------------
 template<>
 std::pair<bool, const char*> consistentProperty(const char *lhs,
                                                 const char *rhs,
@@ -4754,6 +4761,8 @@ std::pair<bool, const char*> consistentProperty(const char *lhs,
   case NumberMinType:
   case NumberMaxType:
     return consistentNumberProperty(lhs, rhs, t);
+  case VersionType:
+    return consistentVersionProperty(lhs, rhs);
   }
   assert(0 && "Unreachable!");
   return std::pair<bool, const char*>(false, null_ptr);
@@ -5091,6 +5100,18 @@ const char * cmTarget::GetLinkInterfaceDependentNumberMaxProperty(
 }
 
 //----------------------------------------------------------------------------
+const char * cmTarget::GetLinkInterfaceDependentVersionProperty(
+                                                      const std::string &p,
+                                                      const char *config)
+{
+  return checkInterfacePropertyCompatibility<const char *>(this,
+                                                           p,
+                                                           config,
+                                                           "empty",
+                                                           VersionType, 0);
+}
+
+//----------------------------------------------------------------------------
 bool cmTarget::IsLinkInterfaceDependentBoolProperty(const std::string &p,
                                            const std::string& config) const
 {
@@ -5136,6 +5157,18 @@ bool cmTarget::IsLinkInterfaceDependentNumberMaxProperty(const std::string &p,
     return false;
     }
   return this->GetCompatibleInterfaces(config).PropsNumberMax.count(p) > 0;
+}
+
+//----------------------------------------------------------------------------
+bool cmTarget::IsLinkInterfaceDependentVersionProperty(const std::string &p,
+                                    const char *config)
+{
+  if (this->TargetTypeValue == OBJECT_LIBRARY)
+    {
+    return false;
+    }
+  return isLinkDependentProperty(this, p, "COMPATIBLE_INTERFACE_VERSION_MIN",
+                                 config);
 }
 
 //----------------------------------------------------------------------------
@@ -6448,6 +6481,8 @@ const char * getLinkInterfaceDependentProperty(cmTarget const* tgt,
     return tgt->GetLinkInterfaceDependentNumberMinProperty(prop, config);
   case NumberMaxType:
     return tgt->GetLinkInterfaceDependentNumberMaxProperty(prop, config);
+  case VersionType:
+    return tgt->GetLinkInterfaceDependentVersionProperty(prop, config);
   }
   assert(0 && "Unreachable!");
   return 0;
@@ -6553,13 +6588,10 @@ void cmTarget::CheckPropertyCompatibility(cmComputeLinkInformation *info,
   const cmComputeLinkInformation::ItemVector &deps = info->GetItems();
 
   std::set<std::string> emittedBools;
-  static std::string strBool = "COMPATIBLE_INTERFACE_BOOL";
   std::set<std::string> emittedStrings;
-  static std::string strString = "COMPATIBLE_INTERFACE_STRING";
   std::set<std::string> emittedMinNumbers;
-  static std::string strNumMin = "COMPATIBLE_INTERFACE_NUMBER_MIN";
   std::set<std::string> emittedMaxNumbers;
-  static std::string strNumMax = "COMPATIBLE_INTERFACE_NUMBER_MAX";
+  std::set<cmStdString> emittedVersions;
 
   for(cmComputeLinkInformation::ItemVector::const_iterator li =
       deps.begin();
@@ -6597,6 +6629,14 @@ void cmTarget::CheckPropertyCompatibility(cmComputeLinkInformation *info,
                                 strNumMax,
                                 emittedMaxNumbers, config,
                                 NumberMaxType, 0);
+    if (cmSystemTools::GetErrorOccuredFlag())
+      {
+      return;
+      }
+    checkPropertyConsistency<const char *>(this, li->Target,
+                                           "COMPATIBLE_INTERFACE_VERSION_MIN",
+                                           emittedVersions, config,
+                                           VersionType, 0);
     if (cmSystemTools::GetErrorOccuredFlag())
       {
       return;

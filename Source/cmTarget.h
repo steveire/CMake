@@ -588,6 +588,8 @@ public:
                          const std::string& config) const;
   bool IsLinkInterfaceDependentNumberMaxProperty(const std::string &p,
                          const std::string& config) const;
+  bool IsLinkInterfaceDependentVersionProperty(const std::string &p,
+                                              const char *config);
 
   bool GetLinkInterfaceDependentBoolProperty(const std::string &p,
                                              const std::string& config) const;
@@ -598,6 +600,8 @@ public:
                          const std::string& config) const;
   const char *GetLinkInterfaceDependentNumberMaxProperty(const std::string &p,
                          const std::string& config) const;
+  const char *GetLinkInterfaceDependentVersionProperty(const std::string &p,
+                                                      const char *config);
 
   std::string GetDebugGeneratorExpressions(const std::string &value,
                                   cmTarget::LinkLibraryType llt) const;

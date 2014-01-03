@@ -1224,6 +1224,16 @@ static const struct TargetPropertyNode : public cmGeneratorExpressionNode
                                                 context->Config);
         return propContent ? propContent : "";
         }
+      if (target->IsLinkInterfaceDependentVersionProperty(propertyName,
+                                                          context->Config))
+        {
+        context->HadContextSensitiveCondition = true;
+        const char *propContent =
+                              target->GetLinkInterfaceDependentVersionProperty(
+                                                propertyName,
+                                                context->Config);
+        return propContent ? propContent : "";
+        }
 
       return linkedTargetsContent;
       }
@@ -1247,6 +1257,16 @@ static const struct TargetPropertyNode : public cmGeneratorExpressionNode
         context->HadContextSensitiveCondition = true;
         const char *propContent =
                             target->GetLinkInterfaceDependentNumberMaxProperty(
+                                                propertyName,
+                                                context->Config);
+        return propContent ? propContent : "";
+        }
+      if (target->IsLinkInterfaceDependentVersionProperty(propertyName,
+                                                          context->Config))
+        {
+        context->HadContextSensitiveCondition = true;
+        const char *propContent =
+                              target->GetLinkInterfaceDependentVersionProperty(
                                                 propertyName,
                                                 context->Config);
         return propContent ? propContent : "";
