@@ -197,6 +197,74 @@ static const struct StrEqualNode : public cmGeneratorExpressionNode
 } strEqualNode;
 
 //----------------------------------------------------------------------------
+static const struct BuildInfoNode : public cmGeneratorExpressionNode
+{
+  BuildInfoNode() {}
+
+//   virtual int NumExpectedParameters() const { return TwoOrThreeParameters; }
+
+  std::string Evaluate(const std::vector<std::string> &parameters,
+                       cmGeneratorExpressionContext *,
+                       const GeneratorExpressionContent *,
+                       cmGeneratorExpressionDAGChecker *) const
+  {
+    std::string tgtName = parameters.front();
+    std::string info = parameters[1];
+    std::string iface = parameters[2]; // BUILD_INTERFACE or INSTALL_INTERFACE
+    if (info == "ALL_LIB_DEPENDS")
+      {
+      tgt->GetProperty("LINK_LIBRARIES");
+      }
+    else if (info == "ALL_INTERFACE_LIB_DEPENDS")
+      {
+      tgt->GetProperty("INTERFACE_LINK_LIBRARIES");
+      }
+    else if (info == "ALL_INTERFACE_TARGET_DEPENDS")
+      {
+      tgt->GetProperty("INTERFACE_LINK_LIBRARIES");
+      }
+    else if (info == "ALL_INTERFACE_LOCAL_TARGET_DEPENDS")
+      {
+      tgt->GetProperty("INTERFACE_LINK_LIBRARIES");
+      }
+    else if (info == "ALL_INTERFACE_IMPORTED_TARGET_DEPENDS")
+      {
+      tgt->GetProperty("INTERFACE_LINK_LIBRARIES");
+      }
+    else if (info == "DIRECT_LIB_DEPENDS")
+      {
+      tgt->GetProperty("LINK_LIBRARIES");
+      }
+    else if (info == "DIRECT_TARGET_DEPENDS")
+      {
+      tgt->GetProperty("LINK_LIBRARIES");
+      }
+    else if (info == "DIRECT_LOCAL_TARGET_DEPENDS")
+      {
+      tgt->GetProperty("LINK_LIBRARIES");
+      }
+    else if (info == "DIRECT_IMPORTED_TARGET_DEPENDS")
+      {
+      tgt->GetProperty("LINK_LIBRARIES");
+      }
+    else if (info == "DIRECT_INCLUDE_DIRS")
+      {
+      tgt->GetProperty("INCLUDE_DIRECTORIES");
+      }
+    else if (info == "ALL_INCLUDE_DIRS")
+      {
+      tgt->GetProperty("INCLUDE_DIRECTORIES");
+      }
+    else if (info == "INTERFACE_INCLUDE_DIRS")
+      {
+      tgt->GetProperty("INTERFACE_INCLUDE_DIRECTORIES");
+      }
+    // Compile definitions
+    return *parameters.begin() == parameters[1] ? "1" : "0";
+  }
+} buildInfoNode;
+
+//----------------------------------------------------------------------------
 static const struct EqualNode : public cmGeneratorExpressionNode
 {
   EqualNode() {}
