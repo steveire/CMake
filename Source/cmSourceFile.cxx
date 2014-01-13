@@ -295,6 +295,11 @@ void cmSourceFile::SetProperty(const std::string& prop, const char* value)
       const_cast<cmMakefile*>(mf)->AddQtUiFileWithOptions(this);
       }
     }
+  if(strcmp(prop, "SKIP_AUTOQDBUS") == 0)
+    {
+    cmMakefile const* mf = this->Location.GetMakefile();
+    const_cast<cmMakefile*>(mf)->SkipForQtAutoDBus(this);
+    }
 }
 
 //----------------------------------------------------------------------------

@@ -1313,6 +1313,7 @@ bool cmGlobalGenerator::ComputeTargetDepends()
 void cmGlobalGenerator::CreateQtAutoGeneratorsTargets(AutogensType &autogens)
 {
 #ifdef CMAKE_BUILD_WITH_CMAKE
+  std::vector<cmTarget*> dbusTargets;
   for(unsigned int i=0; i < this->LocalGenerators.size(); ++i)
     {
     cmTargets& targets =
@@ -1327,6 +1328,10 @@ void cmGlobalGenerator::CreateQtAutoGeneratorsTargets(AutogensType &autogens)
          target.GetType() == cmTarget::MODULE_LIBRARY ||
          target.GetType() == cmTarget::OBJECT_LIBRARY)
         {
+        if(target.GetPropertyAsBool("AUTOQDBUS"))
+          {
+          dbusTargets.push_back(&ti->second);
+          }
         if((target.GetPropertyAsBool("AUTOMOC")
               || target.GetPropertyAsBool("AUTOUIC")
               || target.GetPropertyAsBool("AUTORCC"))
@@ -1340,6 +1345,10 @@ void cmGlobalGenerator::CreateQtAutoGeneratorsTargets(AutogensType &autogens)
           }
         }
       }
+    }
+  if (!dbusTargets.empty())
+    {
+    cmQtAutoDBusXmlGenerator::SetupAutoDBusXmlTarget(dbusTargets);
     }
 #else
   (void)autogens;

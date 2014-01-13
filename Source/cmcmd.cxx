@@ -670,6 +670,12 @@ int cmcmd::ExecuteCMakeCommand(std::vector<std::string>& args)
         bool autogenSuccess = autogen.Run(args[2], config);
         return autogenSuccess ? 0 : 1;
       }
+    else if (args[1] == "cmake_autoqdbuscpp2xml" && args.size() >= 3)
+      {
+        cmQtAutoDBusXmlGenerator autogen;
+        bool autogenSuccess = autogen.RunDBusCpp2Xml(args[2].c_str());
+        return autogenSuccess ? 0 : 1;
+      }
 #endif
 
     // Tar files

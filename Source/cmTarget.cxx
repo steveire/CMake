@@ -288,6 +288,7 @@ void cmTarget::SetMakefile(cmMakefile* mf)
     this->SetPropertyDefault("AUTOMOC", 0);
     this->SetPropertyDefault("AUTOUIC", 0);
     this->SetPropertyDefault("AUTORCC", 0);
+    this->SetPropertyDefault("AUTOQDBUS", 0);
     this->SetPropertyDefault("AUTOMOC_MOC_OPTIONS", 0);
     this->SetPropertyDefault("AUTOUIC_OPTIONS", 0);
     this->SetPropertyDefault("AUTORCC_OPTIONS", 0);

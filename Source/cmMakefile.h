@@ -877,6 +877,9 @@ public:
   void AddQtUiFileWithOptions(cmSourceFile *sf);
   std::vector<cmSourceFile*> GetQtUiFilesWithOptions() const;
 
+  void SkipForQtAutoDBus(cmSourceFile *sf);
+  std::vector<cmSourceFile*> GetSkippedForQtAutoDBus() const;
+
   std::set<std::string> const & GetSystemIncludeDirectories() const
     { return this->SystemIncludeDirectories; }
 
@@ -1056,6 +1059,7 @@ private:
                                cmSourceFile* source);
 
   std::vector<cmSourceFile*> QtUiFilesWithOptions;
+  std::vector<cmSourceFile*> SkippedForQtAutoDBus;
 };
 
 //----------------------------------------------------------------------------

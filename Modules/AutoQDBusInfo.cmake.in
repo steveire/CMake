@@ -1,0 +1,7 @@
+set(AM_SKIP_DBUSCPP2XML @_skip_dbuscpp2xml@ )
+set(AM_CMAKE_BINARY_DIR "@CMAKE_BINARY_DIR@/")
+set(AM_CMAKE_SOURCE_DIR "@CMAKE_SOURCE_DIR@/")
+set(AM_QT4_DBUSCPP2XML_EXECUTABLE "@_qt4_dbuscpp2xml_executable@")
+set(AM_QT5_DBUSCPP2XML_EXECUTABLE "@_qt5_dbuscpp2xml_executable@")
+set(AM_QT4_DBUSCPP2XML_TARGETS @_qt4_dbuscpp2xml_targets@)
+set(AM_QT5_DBUSCPP2XML_TARGETS @_qt5_dbuscpp2xml_targets@)

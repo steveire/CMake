@@ -123,7 +123,38 @@ private:
   bool RunRccFailed;
   bool GenerateAll;
   bool RelaxedMode;
+};
 
+class cmQtAutoDBusXmlGenerator
+{
+public:
+  cmQtAutoDBusXmlGenerator();
+
+  static void SetupAutoDBusXmlTarget(std::vector<cmTarget*> targets);
+
+  bool RunDBusCpp2Xml(const char* targetDirectory);
+
+private:
+  bool RunAutoDBusCpp2Xml(cmMakefile* makefile);
+  bool ReadAutoDBusInfoFile(cmMakefile* makefile,
+                            const char* targetDirectory);
+  void ParseForDBus(const std::string& fileName,
+                    std::map<std::string, std::string>& dbusInterfaces);
+  bool GenerateDBusXml(const std::string &executable,
+                       const std::map<std::string, std::map<std::string, std::string> >& dbusFiles);
+
+  std::string ProjectBinaryDir;
+  std::string ProjectSourceDir;
+  std::string Qt4DbusCpp2XmlExecutable;
+  std::string Qt5DbusCpp2XmlExecutable;
+  std::vector<std::string> Qt4DBusTargets;
+  std::vector<std::string> Qt5DBusTargets;
+  std::map<std::string, std::string> DBusTargetSources;
+  std::map<std::string, std::vector<std::string> > DBusTargetOptions;
+
+  bool Verbose;
+  bool RunDBusCpp2XmlFailed;
+  bool GenerateAll;
 };
 
 #endif

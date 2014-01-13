@@ -195,6 +195,46 @@ bool cmQtAutoGenerators::InitializeAutogenTarget(cmTarget* target)
 
     target->AddSourceFile(mocCppSource);
     }
+
+  if (target->GetPropertyAsBool("AUTOQDBUS"))
+    {
+    cmCustomCommandLine currentLine;
+    currentLine.push_back(makefile->GetSafeDefinition("CMAKE_COMMAND"));
+    currentLine.push_back("-E");
+    currentLine.push_back("cmake_autoqdbuscpp2xml");
+
+    std::string dbusDir = makefile->GetHomeOutputDirectory();
+    dbusDir += "/CMakeFiles/";
+    currentLine.push_back(dbusDir);
+
+    cmCustomCommandLines commandLines;
+    commandLines.push_back(currentLine);
+
+    std::string autodbusComment = "Automatic D-Bus interface generation for "
+      "all targets";
+
+    std::vector<std::string> depends;
+
+    cmTarget* autodbusTarget = makefile->AddUtilityCommand(
+                                "cmake_autoqdbuscpp2xml", true,
+                                dbusDir.c_str(), depends,
+                                commandLines, false, autodbusComment.c_str());
+    // Set target folder
+    const char* autogenFolder = makefile->GetCMakeInstance()->GetProperty(
+                                                     "AUTOGEN_TARGETS_FOLDER");
+    if (autogenFolder && *autogenFolder)
+      {
+      autodbusTarget->SetProperty("FOLDER", autogenFolder);
+      }
+    else
+      {
+      // inherit FOLDER property from target
+      copyTargetProperty(autodbusTarget, target, "FOLDER");
+      }
+
+    target->AddUtility("cmake_autoqdbuscpp2xml");
+    }
+
   // create a custom target for running generators at buildtime:
   std::string autogenTargetName = getAutogenTargetName(target);
 
@@ -231,6 +271,10 @@ bool cmQtAutoGenerators::InitializeAutogenTarget(cmTarget* target)
   if (target->GetPropertyAsBool("AUTORCC"))
     {
     toolNames.push_back("rcc");
+    }
+  if (target->GetPropertyAsBool("AUTOQDBUS"))
+    {
+    depends.push_back("cmake_autoqdbuscpp2xml");
     }
 
   std::string tools = toolNames[0];
@@ -2144,4 +2188,472 @@ bool cmQtAutoGenerators::EndsWith(const std::string& str,
     return false;
     }
   return (str.substr(str.length() - with.length(), with.length()) == with);
+}
+
+cmQtAutoDBusXmlGenerator::cmQtAutoDBusXmlGenerator()
+  : Verbose(cmsys::SystemTools::GetEnv("VERBOSE") != 0),
+    RunDBusCpp2XmlFailed(false),
+    GenerateAll(false)
+{
+
+}
+
+void cmQtAutoDBusXmlGenerator::SetupAutoDBusXmlTarget(std::vector<cmTarget*> targets)
+{
+  if(targets.empty())
+    {
+    return;
+    }
+  cmMakefile *infoMakefile = targets.front()->GetMakefile();
+  std::string skip_cpp2xml;
+  const char *skipSep = "";
+
+  std::string qt5ExeLocation;
+  std::vector<cmTarget*> qt5Targets;
+  std::string qt4ExeLocation;
+  std::vector<cmTarget*> qt4Targets;
+
+  std::map<std::string, std::string> targetOptions;
+  std::map<std::string, std::string> targetSources;
+
+  cmMakefile *lastMakefile = infoMakefile;
+  // Don't check skipped multiple times
+
+  for(std::vector<cmTarget*>::const_iterator t = targets.begin();
+      t != targets.end(); ++t)
+    {
+    cmTarget* target = *t;
+    cmMakefile* makefile = target->GetMakefile();
+
+    if (const char *targetQtVersion =
+        target->GetLinkInterfaceDependentStringProperty("QT_MAJOR_VERSION", 0))
+      {
+      // This property is not set in Qt 5 IMPORTED targets prior to Qt 5.1.
+      if(strcmp(targetQtVersion, "5") == 0)
+        {
+        qt5Targets.push_back(*t);
+        if (qt5ExeLocation.empty())
+          {
+          cmTarget *qt5Cpp2Xml = infoMakefile->FindTargetToUse("Qt5::qdbuscpp2xml");
+          if (qt5Cpp2Xml)
+            {
+            qt5ExeLocation = qt5Cpp2Xml->GetLocation(0);
+            }
+          }
+        }
+      else if(strcmp(targetQtVersion, "4") == 0)
+        {
+        qt4Targets.push_back(*t);
+        if (qt4ExeLocation.empty())
+          {
+          cmTarget *qt4Cpp2Xml = infoMakefile->FindTargetToUse("Qt4::qdbuscpp2xml");
+          if (qt4Cpp2Xml)
+            {
+            qt4ExeLocation = qt4Cpp2Xml->GetLocation(0);
+            }
+          }
+        }
+      }
+
+    if(const char* opts = target->GetProperty("AUTOQDBUS_OPTIONS"))
+      {
+      targetOptions[target->GetName()] = opts;
+      }
+
+    std::vector<cmSourceFile*> srcFiles;
+    target->GetSourceFiles(srcFiles);
+
+    std::string _cpp_files;
+    const char *filesSep = "";
+    for(std::vector<cmSourceFile*>::const_iterator fileIt = srcFiles.begin();
+        fileIt != srcFiles.end();
+        ++fileIt)
+      {
+      cmSourceFile* sf = *fileIt;
+      std::string absFile = cmsys::SystemTools::GetRealPath(
+                                                      sf->GetFullPath().c_str());
+      bool generated = cmSystemTools::IsOn(sf->GetPropertyForUser("GENERATED"));
+
+      if (!generated)
+        {
+        std::string ext = sf->GetExtension();
+        cmSystemTools::FileFormat fileType = cmSystemTools::GetFileFormat(
+                                                                ext.c_str());
+        if (fileType == cmSystemTools::CXX_FILE_FORMAT)
+          {
+          _cpp_files += filesSep;
+          _cpp_files += absFile;
+          filesSep = ";";
+          }
+        }
+      }
+    targetSources[target->GetName()] = _cpp_files;
+
+    if(lastMakefile != makefile)
+      {
+      std::vector<cmSourceFile*> skippedFiles
+                                          = makefile->GetSkippedForQtAutoDBus();
+
+      for(std::vector<cmSourceFile*>::const_iterator fileIt = skippedFiles.begin();
+          fileIt != skippedFiles.end();
+          ++fileIt)
+        {
+        cmSourceFile* sf = *fileIt;
+
+        std::string absFile = cmsys::SystemTools::GetRealPath(
+                                                        sf->GetFullPath().c_str());
+        skip_cpp2xml += skipSep;
+        skip_cpp2xml += absFile;
+        skipSep = ";";
+        }
+      lastMakefile = makefile;
+      }
+    }
+
+  infoMakefile->AddDefinition("_skip_dbuscpp2xml",
+          cmLocalGenerator::EscapeForCMake(skip_cpp2xml.c_str()).c_str());
+
+//   std::vector<cmSourceFile*> dbusCppFilesWithOptions
+//                                         = makefile->GetQtDBusFilesWithOptions();
+
+  std::string dbusCppFileFiles;
+  std::string dbusCppFileOptions;
+//   sep = "";
+
+//   makefile->AddDefinition("_qt_dbus_options_files",
+//           cmLocalGenerator::EscapeForCMake(dbusCppFileFiles.c_str()).c_str());
+//   makefile->AddDefinition("_qt_dbus_options_options",
+//         cmLocalGenerator::EscapeForCMake(dbusCppFileOptions.c_str()).c_str());
+
+  if (!qt5ExeLocation.empty())
+    {
+    infoMakefile->AddDefinition("_qt5_dbuscpp2xml_executable",
+                                qt5ExeLocation.c_str());
+
+    std::string tgts;
+    const char* tgtSep = "";
+
+    for(std::vector<cmTarget*>::const_iterator t = qt5Targets.begin();
+        t != qt5Targets.end(); ++t)
+      {
+      tgts += tgtSep;
+      tgts += (*t)->GetName();
+      tgtSep = ";";
+      }
+    infoMakefile->AddDefinition("_qt5_dbuscpp2xml_targets", tgts.c_str());
+    }
+
+  if (!qt4ExeLocation.empty())
+    {
+    infoMakefile->AddDefinition("_qt4_dbuscpp2xml_executable",
+                                qt4ExeLocation.c_str());
+
+    std::string tgts;
+    const char* tgtSep = "";
+
+    for(std::vector<cmTarget*>::const_iterator t = qt4Targets.begin();
+        t != qt4Targets.end(); ++t)
+      {
+      tgts += tgtSep;
+      tgts += (*t)->GetName();
+      tgtSep = ";";
+      }
+    infoMakefile->AddDefinition("_qt4_dbuscpp2xml_targets", tgts.c_str());
+    }
+
+  const char* cmakeRoot = infoMakefile->GetSafeDefinition("CMAKE_ROOT");
+  std::string inputFile = cmakeRoot;
+  inputFile += "/Modules/AutoQDBusInfo.cmake.in";
+  std::string outDir = infoMakefile->GetHomeOutputDirectory();
+  outDir += "/CMakeFiles/";
+  std::string outputFile(cmSystemTools::CollapseFullPath(outDir.c_str()));
+  cmSystemTools::ConvertToUnixSlashes(outputFile);
+  outputFile += "/AutoQDBusInfo.cmake";
+  infoMakefile->ConfigureFile(inputFile.c_str(), outputFile.c_str(),
+                          false, true, false);
+
+  cmsys::ofstream infoFile(outputFile.c_str(), std::ios::app);
+  if ( !infoFile )
+    {
+    std::string error = "Internal CMake error when trying to open file: ";
+    error += outputFile.c_str();
+    error += " for writing.";
+    cmSystemTools::Error(error.c_str());
+    return;
+    }
+
+  for(std::map<std::string, std::string>::const_iterator li = targetOptions.begin();
+      li != targetOptions.end(); ++li)
+    {
+    infoFile << "set(AM_DBUSCPP2XML_TARGET_OPTIONS_" << li->first
+             << " \"" << li->second << "\")\n";
+    }
+  for(std::map<std::string, std::string>::const_iterator li = targetSources.begin();
+      li != targetSources.end(); ++li)
+    {
+    infoFile << "set(AM_DBUSCPP2XML_TARGET_SOURCES_" << li->first
+             << " \"" << li->second << "\")\n";
+    }
+}
+
+bool cmQtAutoDBusXmlGenerator::RunDBusCpp2Xml(const char* targetDirectory)
+{
+
+//   if (!cmsys::SystemTools::FileExists(this->OutMocCppFilename.c_str())
+//     || (this->OldCompileSettingsStr != this->CurrentCompileSettingsStr))
+//     {
+//     this->GenerateAll = true;
+//     }
+
+  cmake cm;
+  cmsys::auto_ptr<cmGlobalGenerator> gg(CreateGlobalGenerator(&cm, targetDirectory));
+  cmMakefile* makefile = gg->GetCurrentLocalGenerator()->GetMakefile();
+
+  this->ReadAutoDBusInfoFile(makefile, targetDirectory);
+
+  return this->RunAutoDBusCpp2Xml(makefile);
+}
+
+bool cmQtAutoDBusXmlGenerator::RunAutoDBusCpp2Xml(cmMakefile* makefile)
+{
+  const std::vector<std::string>& headerExtensions =
+                                              makefile->GetHeaderExtensions();
+
+  std::map<std::string, std::map<std::string, std::string> > qt4DBusInterfaces;
+  std::map<std::string, std::map<std::string, std::string> > qt5DBusInterfaces;
+  for (std::vector<std::string>::const_iterator t = this->Qt4DBusTargets.begin();
+       t != this->Qt4DBusTargets.end(); ++t)
+    {
+    std::vector<std::string> sourceFiles;
+    cmSystemTools::ExpandListArgument(this->DBusTargetSources[*t],
+                                      sourceFiles);
+
+    for(std::vector<std::string>::const_iterator it = sourceFiles.begin();
+        it != sourceFiles.end();
+        ++it)
+      {
+      const std::string &absFilename = *it;
+      if (this->Verbose)
+        {
+        std::cout << "AUTOQDBUS: Checking " << absFilename << std::endl;
+        }
+      const std::string absPath = cmsys::SystemTools::GetFilenamePath(
+                    cmsys::SystemTools::GetRealPath(absFilename.c_str())) + '/';
+
+      std::string basename = cmsys::SystemTools::
+                            GetFilenameWithoutLastExtension(absFilename.c_str());
+      std::string headerToProcess = findMatchingHeader(
+                              absPath, "", basename, headerExtensions);
+      this->ParseForDBus(headerToProcess, qt4DBusInterfaces[*t]);
+      }
+    }
+  for (std::vector<std::string>::const_iterator t = this->Qt5DBusTargets.begin();
+       t != this->Qt5DBusTargets.end(); ++t)
+    {
+    std::vector<std::string> sourceFiles;
+    cmSystemTools::ExpandListArgument(this->DBusTargetSources[*t],
+                                      sourceFiles);
+
+    for(std::vector<std::string>::const_iterator it = sourceFiles.begin();
+        it != sourceFiles.end();
+        ++it)
+      {
+      const std::string &absFilename = *it;
+      if (this->Verbose)
+        {
+        std::cout << "AUTOQDBUS: Checking " << absFilename << std::endl;
+        }
+      const std::string absPath = cmsys::SystemTools::GetFilenamePath(
+                    cmsys::SystemTools::GetRealPath(absFilename.c_str())) + '/';
+
+      std::string basename = cmsys::SystemTools::
+                            GetFilenameWithoutLastExtension(absFilename.c_str());
+      std::string headerToProcess = findMatchingHeader(
+                              absPath, "", basename, headerExtensions);
+      this->ParseForDBus(headerToProcess, qt5DBusInterfaces[*t]);
+      }
+    }
+  this->GenerateDBusXml(this->Qt4DbusCpp2XmlExecutable, qt4DBusInterfaces);
+  this->GenerateDBusXml(this->Qt5DbusCpp2XmlExecutable, qt5DBusInterfaces);
+
+  if (this->RunDBusCpp2XmlFailed)
+    {
+    std::cerr << "qdbuscpp2xml failed..." << std::endl;
+    return false;
+    }
+  return true;
+}
+
+
+bool cmQtAutoDBusXmlGenerator::ReadAutoDBusInfoFile(cmMakefile* makefile,
+                                              const char* targetDirectory)
+{
+  std::string filename(cmSystemTools::CollapseFullPath(targetDirectory));
+  cmSystemTools::ConvertToUnixSlashes(filename);
+  filename += "/AutoQDBusInfo.cmake";
+
+  if (!makefile->ReadListFile(0, filename.c_str()))
+    {
+    cmSystemTools::Error("Error processing file: ", filename.c_str());
+    return false;
+    }
+
+  this->ProjectBinaryDir = makefile->GetSafeDefinition("AM_CMAKE_BINARY_DIR");
+  this->ProjectSourceDir = makefile->GetSafeDefinition("AM_CMAKE_SOURCE_DIR");
+  this->Qt4DbusCpp2XmlExecutable =
+                makefile->GetSafeDefinition("AM_QT4_DBUSCPP2XML_EXECUTABLE");
+  this->Qt5DbusCpp2XmlExecutable =
+                makefile->GetSafeDefinition("AM_QT5_DBUSCPP2XML_EXECUTABLE");
+
+  if (const char *dbusTargetsProp
+              = makefile->GetSafeDefinition("AM_QT4_DBUSCPP2XML_TARGETS"))
+    {
+    cmSystemTools::ExpandListArgument(dbusTargetsProp, this->Qt4DBusTargets);
+    }
+  if (const char *dbusTargetsProp
+              = makefile->GetSafeDefinition("AM_QT5_DBUSCPP2XML_TARGETS"))
+    {
+    cmSystemTools::ExpandListArgument(dbusTargetsProp, this->Qt5DBusTargets);
+    }
+
+  for(std::vector<std::string>::const_iterator it = this->Qt4DBusTargets.begin();
+      it != this->Qt4DBusTargets.end(); ++it)
+    {
+    if (const char *dbusTargetOptions
+                = makefile->GetSafeDefinition(("AM_DBUSCPP2XML_TARGET_OPTIONS_" + *it).c_str()))
+      {
+      cmSystemTools::ExpandListArgument(dbusTargetOptions,
+                                        this->DBusTargetOptions[*it]);
+      }
+    this->DBusTargetSources[*it] = makefile->GetSafeDefinition(("AM_DBUSCPP2XML_TARGET_SOURCES_" + *it).c_str());
+    }
+
+  for(std::vector<std::string>::const_iterator it = this->Qt5DBusTargets.begin();
+      it != this->Qt5DBusTargets.end(); ++it)
+    {
+    if (const char *dbusTargetOptions
+                = makefile->GetSafeDefinition(("AM_DBUSCPP2XML_TARGET_OPTIONS_" + *it).c_str()))
+      {
+      cmSystemTools::ExpandListArgument(dbusTargetOptions,
+                                        this->DBusTargetOptions[*it]);
+      }
+    this->DBusTargetSources[*it] = makefile->GetSafeDefinition(("AM_DBUSCPP2XML_TARGET_SOURCES_" + *it).c_str());
+    }
+  return true;
+}
+
+void cmQtAutoDBusXmlGenerator::ParseForDBus(const std::string& absFilename,
+                          std::map<std::string, std::string>& dbusInterfaces)
+{
+  const std::string contentsString = ReadAll(absFilename);
+  if (contentsString.empty())
+    {
+    std::cerr << "AUTOGEN: warning: " << absFilename << ": file is empty\n"
+              << std::endl;
+    return;
+    }
+
+  std::map<std::string, std::string>::iterator it
+                                          = dbusInterfaces.find(absFilename);
+  if (it != dbusInterfaces.end() && it->second == std::string())
+    {
+    return;
+    }
+
+  cmsys::RegularExpression dbusInterfaceRegExp(
+              "Q_CLASSINFO.\"D-Bus Interface\",[ \t]+\"([^\"]+)\".");
+
+  std::string::size_type matchOffset = 0;
+  if ((strstr(contentsString.c_str(), "Q_CLASSINFO") != NULL)
+                                && (dbusInterfaceRegExp.find(contentsString)))
+    {
+    if (it != dbusInterfaces.end())
+      {
+      it->second = std::string();
+      return;
+      }
+    do
+      {
+      const std::string matchedInterface = dbusInterfaceRegExp.match(1);
+
+      dbusInterfaces[absFilename] = matchedInterface;
+
+      matchOffset += dbusInterfaceRegExp.end();
+      } while(dbusInterfaceRegExp.find(contentsString.c_str() + matchOffset));
+    }
+}
+
+bool cmQtAutoDBusXmlGenerator::GenerateDBusXml(const std::string &executable,
+                      const std::map<std::string, std::map<std::string, std::string> >& dbusInterfaces)
+{
+  // TODO: Need to create a separate cmake_autodbus target to run this. Make
+  // cmake_autogen depend on it. The xml file is needed to define the adaptor.
+  // Parsing for the adaptor should also give us the class name to use as the
+  // interface so that the "<foo>interface.h" include can be found in another
+  // target to run xml2cpp.
+
+  for (std::map<std::string, std::map<std::string, std::string> >::const_iterator
+      t = dbusInterfaces.begin(); t != dbusInterfaces.end(); ++t)
+    {
+    for (std::map<std::string, std::string>::const_iterator
+        it = t->second.begin(); it != t->second.end(); ++it)
+      {
+      std::string ifaceDir = this->ProjectBinaryDir + "/dbus_interfaces/";
+      std::string xmlFile = ifaceDir + it->second + ".xml";
+
+      int sourceNewerThanXml = 0;
+      bool success = cmsys::SystemTools::FileTimeCompare(it->first.c_str(),
+                                                        xmlFile.c_str(),
+                                                        &sourceNewerThanXml);
+      if (this->GenerateAll || !success || sourceNewerThanXml >= 0)
+        {
+        if (!cmsys::SystemTools::FileExists(ifaceDir.c_str(), false))
+          {
+          cmsys::SystemTools::MakeDirectory(ifaceDir.c_str());
+          }
+        std::vector<cmStdString> command;
+        command.push_back(executable);
+        command.push_back(it->first);
+
+  //       std::string opts = *(it + 2);
+  //       cmSystemTools::ReplaceString(opts, "@list_sep@", ";");
+        std::vector<std::string> dbusOptions;
+  //       cmSystemTools::ExpandListArgument(opts.c_str(), dbusOptions);
+
+        std::vector<std::string>& commandOptions =
+            dbusOptions.empty() ? this->DBusTargetOptions[t->first] : dbusOptions;
+        for(std::vector<std::string>::const_iterator optIt
+            = commandOptions.begin();
+            optIt != commandOptions.end(); ++optIt)
+          {
+          command.push_back(*optIt);
+          }
+        command.push_back("-o");
+        command.push_back(xmlFile);
+
+        if (this->Verbose)
+          {
+          for(std::vector<cmStdString>::const_iterator cmdIt = command.begin();
+              cmdIt != command.end();
+              ++cmdIt)
+            {
+            std::cout << *cmdIt << " ";
+            }
+          std::cout << std::endl;
+          }
+        std::string output;
+        int retVal = 0;
+        bool result = cmSystemTools::RunSingleCommand(command, &output, &retVal);
+        if (!result || retVal)
+          {
+          std::cerr << "AUTOQDBUS: error: process for " << xmlFile <<
+                    " failed:\n" << output << std::endl;
+          this->RunDBusCpp2XmlFailed = true;
+          cmSystemTools::RemoveFile(xmlFile.c_str());
+          return false;
+          }
+        }
+      }
+    }
+  return true;
 }

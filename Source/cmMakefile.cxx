@@ -4274,6 +4274,18 @@ std::vector<cmSourceFile*> cmMakefile::GetQtUiFilesWithOptions() const
 }
 
 //----------------------------------------------------------------------------
+void cmMakefile::SkipForQtAutoDBus(cmSourceFile *sf)
+{
+  this->SkippedForQtAutoDBus.push_back(sf);
+}
+
+//----------------------------------------------------------------------------
+std::vector<cmSourceFile*> cmMakefile::GetSkippedForQtAutoDBus() const
+{
+  return this->SkippedForQtAutoDBus;
+}
+
+//----------------------------------------------------------------------------
 cmPolicies::PolicyStatus
 cmMakefile::GetPolicyStatus(cmPolicies::PolicyID id) const
 {
