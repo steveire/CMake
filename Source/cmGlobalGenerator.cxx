@@ -1334,7 +1334,8 @@ void cmGlobalGenerator::CreateQtAutoGeneratorsTargets(AutogensType &autogens)
           }
         if((target.GetPropertyAsBool("AUTOMOC")
               || target.GetPropertyAsBool("AUTOUIC")
-              || target.GetPropertyAsBool("AUTORCC"))
+              || target.GetPropertyAsBool("AUTORCC")
+              || target.GetPropertyAsBool("AUTOQDBUS"))
             && !target.IsImported())
           {
           cmQtAutoGenerators autogen;

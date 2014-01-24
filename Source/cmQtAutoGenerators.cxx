@@ -32,6 +32,7 @@
 #endif
 
 #include "cmQtAutoGenerators.h"
+#include <cmsys/Directory.hxx>
 
 
 static bool requiresMocing(const std::string& text, std::string &macroName)
@@ -122,6 +123,94 @@ static std::string ReadAll(const std::string& filename)
   stream << file.rdbuf();
   file.close();
   return stream.str();
+}
+
+static bool ParseForDBus(const std::string& absFilename,
+                         std::map<std::string, std::string>& dbusInterfaces)
+{
+  const std::string contentsString = ReadAll(absFilename);
+  if (contentsString.empty())
+    {
+    std::cerr << "AUTOGEN: warning: " << absFilename << ": file is empty\n"
+              << std::endl;
+    return false;
+    }
+
+  std::map<std::string, std::string>::iterator it
+                                          = dbusInterfaces.find(absFilename);
+  if (it != dbusInterfaces.end() && it->second == std::string())
+    {
+    return false;
+    }
+
+  cmsys::RegularExpression dbusInterfaceRegExp(
+              "Q_CLASSINFO.\"D-Bus Interface\",[ \t]+\"([^\"]+)\".");
+
+  std::string::size_type matchOffset = 0;
+  if ((strstr(contentsString.c_str(), "Q_CLASSINFO") != NULL)
+                                && (dbusInterfaceRegExp.find(contentsString)))
+    {
+    if (it != dbusInterfaces.end())
+      {
+      it->second = std::string();
+      return true;
+      }
+    do
+      {
+      const std::string matchedInterface = dbusInterfaceRegExp.match(1);
+
+      dbusInterfaces[absFilename] = matchedInterface;
+
+      matchOffset += dbusInterfaceRegExp.end();
+      } while(dbusInterfaceRegExp.find(contentsString.c_str() + matchOffset));
+    return true;
+    }
+  return false;
+}
+
+static bool ParseForDBus(const std::string& absFilename,
+                         std::vector<std::string>& dbusInterfaces)
+{
+  std::map<std::string, std::string> mapping;
+  if (!ParseForDBus(absFilename, mapping))
+    {
+    return false;
+    }
+  for(std::map<std::string, std::string>::const_iterator
+                                                it = mapping.begin();
+      it != mapping.end();
+      ++it)
+    {
+    dbusInterfaces.push_back(it->second);
+    }
+  return true;
+}
+
+void cmQtAutoGenerators::ParseForDBusUse(const std::string& absFilename,
+                                         const std::string& contentsString,
+                         std::map<std::string, std::string>& dbusInterfaces)
+{
+  if (contentsString.empty())
+    {
+    std::cerr << "AUTOGEN: warning: " << absFilename << ": file is empty\n"
+              << std::endl;
+    return;
+    }
+
+  for(std::vector<std::string>::const_iterator i = this->AvailableDBusXmlSources.begin();
+      i != this->AvailableDBusXmlSources.end();
+      ++i)
+    {
+    std::string xmlName = *i;
+    cmSystemTools::ReplaceString(xmlName, "." , "::");
+    if (strstr(contentsString.c_str(), xmlName.c_str()) != NULL)
+      {
+      std::string iface = cmsys::SystemTools::GetFilenameLastExtension(*i);
+      iface = "qdbus_" + cmSystemTools::LowerCase(iface.c_str() + 1);
+      iface += "interface";
+      dbusInterfaces[*i] = iface;
+      }
+    }
 }
 
 cmQtAutoGenerators::cmQtAutoGenerators()
@@ -274,6 +363,7 @@ bool cmQtAutoGenerators::InitializeAutogenTarget(cmTarget* target)
     }
   if (target->GetPropertyAsBool("AUTOQDBUS"))
     {
+    toolNames.push_back("qdbusxml2cpp");
     depends.push_back("cmake_autoqdbuscpp2xml");
     }
 
@@ -455,6 +545,10 @@ void cmQtAutoGenerators::SetupAutoGenerateTarget(cmTarget const* target)
     {
     this->SetupAutoRccTarget(target);
     }
+  if (target->GetPropertyAsBool("AUTOQDBUS"))
+    {
+    this->SetupAutoDBusTarget(target);
+    }
 
   const char* cmakeRoot = makefile->GetSafeDefinition("CMAKE_ROOT");
   std::string inputFile = cmakeRoot;
@@ -524,6 +618,10 @@ void cmQtAutoGenerators::SetupSourceFiles(cmTarget const* target)
   const char *skipUicSep = "";
 
   std::vector<cmSourceFile*> newRccFiles;
+  std::map<std::string, std::string> dbusInterfaces;
+
+  const std::vector<std::string>& headerExtensions =
+                                               makefile->GetHeaderExtensions();
 
   for(std::vector<cmSourceFile*>::const_iterator fileIt = srcFiles.begin();
       fileIt != srcFiles.end();
@@ -542,6 +640,98 @@ void cmQtAutoGenerators::SetupSourceFiles(cmTarget const* target)
       skipUicSep = ";";
       }
 
+    std::string basename = cmsys::SystemTools::
+                                  GetFilenameWithoutLastExtension(absFile);
+
+    if (target->GetPropertyAsBool("AUTOQDBUS"))
+      {
+      {
+      const std::string absPath = cmsys::SystemTools::GetFilenamePath(
+                    cmsys::SystemTools::GetRealPath(absFile.c_str())) + '/';
+      std::string headerToProcess = findMatchingHeader(
+                              absPath, "", basename, headerExtensions);
+      if (!headerToProcess.empty())
+        {
+        if (ParseForDBus(headerToProcess, dbusInterfaces))
+          {
+          std::string adaptorName = "qdbus_" + basename + "adaptor";
+          std::string adaptor_file = makefile->GetCurrentOutputDirectory();
+          adaptor_file += "/" + adaptorName + ".cpp";
+
+          makefile->AppendProperty("ADDITIONAL_MAKE_CLEAN_FILES",
+                                  adaptor_file.c_str(), false);
+          cmSourceFile* rccCppSource
+                  = makefile->GetOrCreateSource(adaptor_file.c_str(), true);
+          newRccFiles.push_back(rccCppSource);
+
+          this->Sources += sepFiles;
+          this->Sources += adaptor_file;
+          sepFiles = ";";
+          }
+        }
+      }
+      std::string filename(cmSystemTools::CollapseFullPath(makefile->GetHomeOutputDirectory()));
+      cmSystemTools::ConvertToUnixSlashes(filename);
+      filename += "/CMakeFiles/AutoQDBusInfo.cmake";
+
+      if (!makefile->ReadListFile(0, filename.c_str()))
+        {
+        cmSystemTools::Error("Error processing file: ", filename.c_str());
+        return;
+        }
+
+        std::vector<std::string> targets;
+
+      if (const char *dbusTargetsProp
+                  = makefile->GetSafeDefinition("AM_QT4_DBUSCPP2XML_TARGETS"))
+        {
+        cmSystemTools::ExpandListArgument(dbusTargetsProp, targets);
+        }
+      if (const char *dbusTargetsProp
+                  = makefile->GetSafeDefinition("AM_QT5_DBUSCPP2XML_TARGETS"))
+        {
+        cmSystemTools::ExpandListArgument(dbusTargetsProp, targets);
+        }
+
+      std::vector<std::string> allTgtSrcs;
+
+      for(std::vector<std::string>::const_iterator it = targets.begin();
+          it != targets.end(); ++it)
+        {
+        cmSystemTools::ExpandListArgument(makefile->GetSafeDefinition(("AM_DBUSCPP2XML_TARGET_SOURCES_" + *it).c_str()), allTgtSrcs);
+        }
+      std::map<std::string, std::string> mapping;
+      for(std::vector<std::string>::const_iterator tgtIt = allTgtSrcs.begin();
+          tgtIt != allTgtSrcs.end();
+          ++tgtIt)
+        {
+        std::string tgtBasename = cmsys::SystemTools::
+                                      GetFilenameWithoutLastExtension(*tgtIt);
+        const std::string absPath = cmsys::SystemTools::GetFilenamePath(
+                      cmsys::SystemTools::GetRealPath(absFile.c_str())) + '/';
+        std::string headerToProcess = findMatchingHeader(
+                                absPath, "", tgtBasename, headerExtensions);
+        if (!headerToProcess.empty())
+          {
+          ParseForDBus(headerToProcess, this->AvailableDBusXmlSources);
+          }
+        }
+      // TODO: Don't process automoc files here.
+      std::map<std::string, std::string> includedInterfaces;
+      this->ParseForDBusUse(absFile, ReadAll(absFile), includedInterfaces);
+      for(std::map<std::string, std::string>::const_iterator
+                                                    it = includedInterfaces.begin();
+          it != includedInterfaces.end();
+          ++it)
+        {
+        std::string newFile = makefile->GetCurrentOutputDirectory();
+        newFile += "/" + it->second + ".cpp";
+        cmSourceFile* rccCppSource
+                = makefile->GetOrCreateSource(newFile.c_str(), true);
+        newRccFiles.push_back(rccCppSource);
+        }
+      }
+
     std::string ext = sf->GetExtension();
 
     if (target->GetPropertyAsBool("AUTORCC"))
@@ -549,9 +739,6 @@ void cmQtAutoGenerators::SetupSourceFiles(cmTarget const* target)
       if (ext == "qrc"
           && !cmSystemTools::IsOn(sf->GetPropertyForUser("SKIP_AUTORCC")))
         {
-        std::string basename = cmsys::SystemTools::
-                                      GetFilenameWithoutLastExtension(absFile);
-
         std::string rcc_output_file = makefile->GetCurrentOutputDirectory();
         rcc_output_file += "/qrc_" + basename + ".cpp";
         makefile->AppendProperty("ADDITIONAL_MAKE_CLEAN_FILES",
@@ -594,7 +781,16 @@ void cmQtAutoGenerators::SetupSourceFiles(cmTarget const* target)
       fileIt != newRccFiles.end();
       ++fileIt)
     {
+    // TODO: Emitted.
     const_cast<cmTarget*>(target)->AddSourceFile(*fileIt);
+    }
+  for(std::map<std::string, std::string>::const_iterator
+                                                it = dbusInterfaces.begin();
+      it != dbusInterfaces.end();
+      ++it)
+    {
+    this->DBusInterfaces.push_back(it->first); // Uniq
+    this->DBusInterfaces.push_back(it->second); // Uniq
     }
 }
 
@@ -1007,6 +1203,58 @@ void cmQtAutoGenerators::SetupAutoRccTarget(cmTarget const* target)
     }
 }
 
+void cmQtAutoGenerators::SetupAutoDBusTarget(cmTarget const* target)
+{
+  std::string dbusFiles;
+  const char* sepDBusFiles = "";
+  cmMakefile* makefile = target->GetMakefile();
+
+  for(std::vector<std::string>::const_iterator it = this->DBusInterfaces.begin();
+      it != DBusInterfaces.end();
+      ++it)
+    {
+    dbusFiles += sepDBusFiles;
+    dbusFiles += *it;
+    sepDBusFiles = ";";
+    }
+  // TODO: Options
+
+  makefile->AddDefinition("_dbusxml_files",
+          cmLocalGenerator::EscapeForCMake(dbusFiles.c_str()).c_str());
+
+
+  const char *qtVersion = makefile->GetDefinition("_target_qt_version");
+
+  const char* targetName = target->GetName();
+  if (strcmp(qtVersion, "5") == 0)
+    {
+    cmTarget *qt5DBusXml2Cpp = makefile->FindTargetToUse("Qt5::qdbusxml2cpp");
+    if (!qt5DBusXml2Cpp)
+      {
+      cmSystemTools::Error("Qt5::qdbusxml2cpp target not found ",
+                          targetName);
+      return;
+      }
+    makefile->AddDefinition("_qt_dbusxml2cpp_executable", qt5DBusXml2Cpp->GetLocation(0));
+    }
+  else if (strcmp(qtVersion, "4") == 0)
+    {
+    cmTarget *qt4DBusXml2Cpp = makefile->FindTargetToUse("Qt4::qdbusxml2cpp");
+    if (!qt4DBusXml2Cpp)
+      {
+      cmSystemTools::Error("Qt4::qdbusxml2cpp target not found ",
+                          targetName);
+      return;
+      }
+    makefile->AddDefinition("_qt_dbusxml2cpp_executable", qt4DBusXml2Cpp->GetLocation(0));
+    }
+  else
+    {
+    cmSystemTools::Error("The CMAKE_AUTOQDBUS feature supports only Qt 4 and "
+                        "Qt 5 ", targetName);
+    }
+}
+
 static cmGlobalGenerator* CreateGlobalGenerator(cmake* cm,
                                             const std::string& targetDirectory)
 {
@@ -1032,6 +1280,28 @@ bool cmQtAutoGenerators::Run(const std::string& targetDirectory,
   cmMakefile* makefile = gg->GetCurrentLocalGenerator()->GetMakefile();
 
   this->ReadAutogenInfoFile(makefile, targetDirectory, config);
+
+  {
+  std::string dir = this->ProjectBinaryDir + "/dbus_interfaces/";
+  dir = cmSystemTools::CollapseFullPath(dir.c_str());
+
+  cmsys::Directory d;
+  if(d.Load(dir.c_str()))
+    {
+    unsigned long n = d.GetNumberOfFiles();
+    for(unsigned long i = 0; i < n; ++i)
+      {
+      const char* f = d.GetFile(i);
+      if(strcmp(f, ".") != 0 && strcmp(f, "..") != 0)
+        {
+        std::string xmlFile = cmsys::SystemTools::
+                                  GetFilenameWithoutLastExtension(f);
+        this->AvailableDBusXmlSources.push_back(xmlFile);
+        }
+      }
+    }
+  }
+
   this->ReadOldMocDefinitionsFile(makefile, targetDirectory);
 
   this->Init();
@@ -1072,6 +1342,7 @@ bool cmQtAutoGenerators::ReadAutogenInfoFile(cmMakefile* makefile,
     }
   this->Sources = makefile->GetSafeDefinition("AM_SOURCES");
   this->RccSources = makefile->GetSafeDefinition("AM_RCC_SOURCES");
+  this->DBusXmlSources = makefile->GetSafeDefinition("AM_DBUSXML_SOURCES");
   this->SkipMoc = makefile->GetSafeDefinition("AM_SKIP_MOC");
   this->SkipUic = makefile->GetSafeDefinition("AM_SKIP_UIC");
   this->Headers = makefile->GetSafeDefinition("AM_HEADERS");
@@ -1082,6 +1353,7 @@ bool cmQtAutoGenerators::ReadAutogenInfoFile(cmMakefile* makefile,
   this->MocExecutable = makefile->GetSafeDefinition("AM_QT_MOC_EXECUTABLE");
   this->UicExecutable = makefile->GetSafeDefinition("AM_QT_UIC_EXECUTABLE");
   this->RccExecutable = makefile->GetSafeDefinition("AM_QT_RCC_EXECUTABLE");
+  this->Xml2CppExecutable = makefile->GetSafeDefinition("AM_QT_QDBUSXML2CPP_EXECUTABLE");
   {
   std::string compileDefsPropOrig = "AM_MOC_COMPILE_DEFINITIONS";
   std::string compileDefsProp = compileDefsPropOrig;
@@ -1167,6 +1439,9 @@ bool cmQtAutoGenerators::ReadAutogenInfoFile(cmMakefile* makefile,
     cmSystemTools::ReplaceString(*optionIt, "@list_sep@", ";");
     this->RccOptions[*fileIt] = *optionIt;
     }
+  }
+  {
+//     DBus
   }
   this->CurrentCompileSettingsStr = this->MakeCompileSettingsString(makefile);
 
@@ -1325,6 +1600,11 @@ bool cmQtAutoGenerators::RunAutogen(cmMakefile* makefile)
     this->GenerateAll = true;
     }
 
+  if(!this->Xml2CppExecutable.empty())
+    {
+    this->GenerateXml2Cpp();
+    }
+
   // the program goes through all .cpp files to see which moc files are
   // included. It is not really interesting how the moc file is named, but
   // what file the moc is created from. Once a moc is included the same moc
@@ -1344,6 +1624,7 @@ bool cmQtAutoGenerators::RunAutogen(cmMakefile* makefile)
   const std::vector<std::string>& headerExtensions =
                                                makefile->GetHeaderExtensions();
 
+  std::map<std::string, std::string> includedIface;
   std::map<std::string, std::string> includedUis;
   std::map<std::string, std::string> skippedUis;
   std::vector<std::string> uicSkipped;
@@ -1365,12 +1646,12 @@ bool cmQtAutoGenerators::RunAutogen(cmMakefile* makefile)
     if (this->RelaxedMode)
       {
       this->ParseCppFile(absFilename, headerExtensions, includedMocs,
-                         uiFiles);
+                         uiFiles, includedIface);
       }
     else
       {
       this->StrictParseCppFile(absFilename, headerExtensions, includedMocs,
-                               uiFiles);
+                               uiFiles, includedIface);
       }
     this->SearchHeadersForCppFile(absFilename, headerExtensions, headerFiles);
     }
@@ -1408,6 +1689,19 @@ bool cmQtAutoGenerators::RunAutogen(cmMakefile* makefile)
   std::map<std::string, std::string> notIncludedMocs;
   this->ParseHeaders(headerFiles, includedMocs, notIncludedMocs, includedUis);
 
+  if(!this->Xml2CppExecutable.empty())
+    {
+    this->GenerateXml2CppInterfaces(includedIface);
+    }
+  for (std::map<std::string, std::string>::iterator
+        it = includedIface.begin(), end = includedIface.end();
+        it != end; ++it)
+    {
+    const std::string currentMoc = "moc_" + it->second + ".cpp";
+    std::string headerName = this->Builddir;
+    headerName += "/" + it->second + ".h";
+    notIncludedMocs[headerName] = currentMoc;
+    }
   // run moc on all the moc's that are #included in source files
   for(std::map<std::string, std::string>::const_iterator
                                                      it = includedMocs.begin();
@@ -1498,7 +1792,8 @@ bool cmQtAutoGenerators::RunAutogen(cmMakefile* makefile)
 void cmQtAutoGenerators::ParseCppFile(const std::string& absFilename,
                               const std::vector<std::string>& headerExtensions,
                               std::map<std::string, std::string>& includedMocs,
-                              std::map<std::string, std::string> &includedUis)
+                              std::map<std::string, std::string> &includedUis,
+                              std::map<std::string, std::string> &includedInterfaces)
 {
   cmsys::RegularExpression mocIncludeRegExp(
               "[\n][ \t]*#[ \t]*include[ \t]+"
@@ -1512,6 +1807,7 @@ void cmQtAutoGenerators::ParseCppFile(const std::string& absFilename,
     return;
     }
   this->ParseForUic(absFilename, contentsString, includedUis);
+  this->ParseForDBusUse(absFilename, contentsString, includedInterfaces);
   if (this->MocExecutable.empty())
     {
     return;
@@ -1686,7 +1982,8 @@ void cmQtAutoGenerators::ParseCppFile(const std::string& absFilename,
 void cmQtAutoGenerators::StrictParseCppFile(const std::string& absFilename,
                               const std::vector<std::string>& headerExtensions,
                               std::map<std::string, std::string>& includedMocs,
-                              std::map<std::string, std::string>& includedUis)
+                              std::map<std::string, std::string>& includedUis,
+                              std::map<std::string, std::string> &includedInterfaces)
 {
   cmsys::RegularExpression mocIncludeRegExp(
               "[\n][ \t]*#[ \t]*include[ \t]+"
@@ -1700,6 +1997,7 @@ void cmQtAutoGenerators::StrictParseCppFile(const std::string& absFilename,
     return;
     }
   this->ParseForUic(absFilename, contentsString, includedUis);
+  this->ParseForDBusUse(absFilename, contentsString, includedInterfaces);
   if (this->MocExecutable.empty())
     {
     return;
@@ -2153,6 +2451,132 @@ bool cmQtAutoGenerators::GenerateQrc()
   return true;
 }
 
+bool cmQtAutoGenerators::GenerateXml2CppInterfaces(std::map<std::string, std::string> const& ifaces)
+{
+  for(std::map<std::string, std::string>::const_iterator li = ifaces.begin();
+      li != ifaces.end(); ++li)
+    {
+    std::vector<cmStdString> command;
+    command.push_back(this->Xml2CppExecutable);
+    command.push_back("-p");
+    command.push_back(li->second);
+    std::string xml_input_file = this->Builddir + "/dbus_interfaces/" + li->first + ".xml";
+    command.push_back(xml_input_file);
+
+    std::string iface_file = this->Builddir + li->second + ".cpp";
+
+    int sourceNewerThanQrc = 0;
+    bool success = cmsys::SystemTools::FileTimeCompare(xml_input_file.c_str(),
+                                                      iface_file.c_str(),
+                                                      &sourceNewerThanQrc);
+    if (this->GenerateAll || !success || sourceNewerThanQrc >= 0)
+      {
+      if (this->Verbose)
+        {
+        for(std::vector<cmStdString>::const_iterator cmdIt = command.begin();
+            cmdIt != command.end();
+            ++cmdIt)
+          {
+          std::cout << *cmdIt << " ";
+          }
+        std::cout << std::endl;
+        }
+      std::string output;
+      int retVal = 0;
+      bool result = cmSystemTools::RunSingleCommand(command, &output, &retVal);
+      if (!result || retVal)
+        {
+        std::cerr << "AUTOQDBUS: error: process for " << iface_file <<
+                  " failed:\n" << output << std::endl;
+        this->RunRccFailed = true;
+        cmSystemTools::RemoveFile(iface_file.c_str());
+        return false;
+        }
+      }
+    }
+  return true;
+}
+
+bool cmQtAutoGenerators::GenerateXml2Cpp()
+{
+  std::vector<std::string> sourceFiles;
+  cmSystemTools::ExpandListArgument(this->DBusXmlSources, sourceFiles);
+
+  for(std::vector<std::string>::const_iterator si = sourceFiles.begin();
+      si != sourceFiles.end(); ++si)
+    {
+    std::vector<cmStdString> command;
+    command.push_back(this->Xml2CppExecutable);
+
+    std::string basename = cmsys::SystemTools::
+                                  GetFilenameWithoutLastExtension(*si);
+    std::string adaptorName = basename + "adaptor";
+
+    ++si;
+
+    std::string xmlFileName = *si;
+
+    std::string xml_input_file = this->Builddir + "/dbus_interfaces/" + xmlFileName + ".xml";
+
+    std::string adaptor_file = this->Builddir + "qdbus_" + adaptorName + ".cpp";
+
+    int sourceNewerThanQrc = 0;
+    bool success = cmsys::SystemTools::FileTimeCompare(xmlFileName.c_str(),
+                                                      adaptor_file.c_str(),
+                                                      &sourceNewerThanQrc);
+    if (this->GenerateAll || !success || sourceNewerThanQrc >= 0)
+      {
+//       std::map<std::string, std::string>::const_iterator optionIt
+//               = this->RccOptions.find(*si);
+//       if (optionIt != this->RccOptions.end())
+//         {
+//         std::vector<std::string> opts;
+//         cmSystemTools::ExpandListArgument(optionIt->second, opts);
+//         for(std::vector<std::string>::const_iterator optIt = opts.begin();
+//             optIt != opts.end();
+//             ++optIt)
+//           {
+//           command.push_back(*optIt);
+//           }
+//         }
+
+      std::string adaptorClassName = cmsys::SystemTools::
+                                  GetFilenameLastExtension(xmlFileName);
+      adaptorClassName = adaptorClassName.substr(1) + "Adaptor";
+
+      command.push_back("-a");
+      command.push_back("qdbus_" + adaptorName);
+      command.push_back("-c");
+      command.push_back(adaptorClassName);
+
+      command.push_back(xml_input_file);
+
+      if (this->Verbose)
+        {
+        for(std::vector<cmStdString>::const_iterator cmdIt = command.begin();
+            cmdIt != command.end();
+            ++cmdIt)
+          {
+          std::cout << *cmdIt << " ";
+          }
+        std::cout << std::endl;
+        }
+      std::string output;
+      int retVal = 0;
+      bool result = cmSystemTools::RunSingleCommand(command, &output, &retVal);
+      if (!result || retVal)
+        {
+        std::cerr << "AUTOQDBUS: error: process for " << adaptor_file <<
+                  " failed:\n" << output << std::endl;
+        this->RunRccFailed = true;
+        cmSystemTools::RemoveFile(adaptor_file.c_str());
+        return false;
+        }
+      }
+    }
+  return true;
+}
+
 std::string cmQtAutoGenerators::Join(const std::vector<std::string>& lst,
                               char separator)
 {
@@ -2444,7 +2868,7 @@ bool cmQtAutoDBusXmlGenerator::RunAutoDBusCpp2Xml(cmMakefile* makefile)
                             GetFilenameWithoutLastExtension(absFilename.c_str());
       std::string headerToProcess = findMatchingHeader(
                               absPath, "", basename, headerExtensions);
-      this->ParseForDBus(headerToProcess, qt4DBusInterfaces[*t]);
+      ParseForDBus(headerToProcess, qt4DBusInterfaces[*t]);
       }
     }
   for (std::vector<std::string>::const_iterator t = this->Qt5DBusTargets.begin();
@@ -2470,7 +2894,7 @@ bool cmQtAutoDBusXmlGenerator::RunAutoDBusCpp2Xml(cmMakefile* makefile)
                             GetFilenameWithoutLastExtension(absFilename.c_str());
       std::string headerToProcess = findMatchingHeader(
                               absPath, "", basename, headerExtensions);
-      this->ParseForDBus(headerToProcess, qt5DBusInterfaces[*t]);
+      ParseForDBus(headerToProcess, qt5DBusInterfaces[*t]);
       }
     }
   this->GenerateDBusXml(this->Qt4DbusCpp2XmlExecutable, qt4DBusInterfaces);
@@ -2540,47 +2964,6 @@ bool cmQtAutoDBusXmlGenerator::ReadAutoDBusInfoFile(cmMakefile* makefile,
     this->DBusTargetSources[*it] = makefile->GetSafeDefinition(("AM_DBUSCPP2XML_TARGET_SOURCES_" + *it).c_str());
     }
   return true;
-}
-
-void cmQtAutoDBusXmlGenerator::ParseForDBus(const std::string& absFilename,
-                          std::map<std::string, std::string>& dbusInterfaces)
-{
-  const std::string contentsString = ReadAll(absFilename);
-  if (contentsString.empty())
-    {
-    std::cerr << "AUTOGEN: warning: " << absFilename << ": file is empty\n"
-              << std::endl;
-    return;
-    }
-
-  std::map<std::string, std::string>::iterator it
-                                          = dbusInterfaces.find(absFilename);
-  if (it != dbusInterfaces.end() && it->second == std::string())
-    {
-    return;
-    }
-
-  cmsys::RegularExpression dbusInterfaceRegExp(
-              "Q_CLASSINFO.\"D-Bus Interface\",[ \t]+\"([^\"]+)\".");
-
-  std::string::size_type matchOffset = 0;
-  if ((strstr(contentsString.c_str(), "Q_CLASSINFO") != NULL)
-                                && (dbusInterfaceRegExp.find(contentsString)))
-    {
-    if (it != dbusInterfaces.end())
-      {
-      it->second = std::string();
-      return;
-      }
-    do
-      {
-      const std::string matchedInterface = dbusInterfaceRegExp.match(1);
-
-      dbusInterfaces[absFilename] = matchedInterface;
-
-      matchOffset += dbusInterfaceRegExp.end();
-      } while(dbusInterfaceRegExp.find(contentsString.c_str() + matchOffset));
-    }
 }
 
 bool cmQtAutoDBusXmlGenerator::GenerateDBusXml(const std::string &executable,

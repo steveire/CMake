@@ -35,6 +35,7 @@ private:
   void SetupAutoUicTarget(cmTarget const* target,
                         std::map<std::string, std::string> &configUicOptions);
   void SetupAutoRccTarget(cmTarget const* target);
+  void SetupAutoDBusTarget(cmTarget const* target);
 
   bool ReadAutogenInfoFile(cmMakefile* makefile,
                            const std::string& targetDirectory,
@@ -50,14 +51,18 @@ private:
                    const std::string& mocFileName);
   bool GenerateUi(const std::string& path, const std::string& uiFileName);
   bool GenerateQrc();
+  bool GenerateXml2Cpp();
+  bool GenerateXml2CppInterfaces(std::map<std::string, std::string> const& ifaces);
   void ParseCppFile(const std::string& absFilename,
                     const std::vector<std::string>& headerExtensions,
                     std::map<std::string, std::string>& includedMocs,
-                          std::map<std::string, std::string>& includedUis);
+                          std::map<std::string, std::string>& includedUis,
+                              std::map<std::string, std::string> &includedInterfaces);
   void StrictParseCppFile(const std::string& absFilename,
                           const std::vector<std::string>& headerExtensions,
                           std::map<std::string, std::string>& includedMocs,
-                          std::map<std::string, std::string>& includedUis);
+                          std::map<std::string, std::string>& includedUis,
+                              std::map<std::string, std::string> &includedInterfaces);
   void SearchHeadersForCppFile(const std::string& absFilename,
                               const std::vector<std::string>& headerExtensions,
                               std::set<std::string>& absHeaders);
@@ -74,6 +79,10 @@ private:
   void ParseForUic(const std::string& fileName,
                    std::map<std::string, std::string>& includedUis);
 
+  void ParseForDBusUse(const std::string& fileName,
+                       const std::string& contentsString,
+                       std::map<std::string, std::string>& includedUis);
+
   void Init();
 
   std::string Join(const std::vector<std::string>& lst, char separator);
@@ -89,6 +98,7 @@ private:
   std::string QtMajorVersion;
   std::string Sources;
   std::string RccSources;
+  std::string DBusXmlSources;
   std::string SkipMoc;
   std::string SkipUic;
   std::string Headers;
@@ -98,12 +108,14 @@ private:
   std::string MocExecutable;
   std::string UicExecutable;
   std::string RccExecutable;
+  std::string Xml2CppExecutable;
   std::string MocCompileDefinitionsStr;
   std::string MocIncludesStr;
   std::string MocOptionsStr;
   std::string ProjectBinaryDir;
   std::string ProjectSourceDir;
   std::string TargetName;
+  std::vector<std::string> AvailableDBusXmlSources;
 
   std::string CurrentCompileSettingsStr;
   std::string OldCompileSettingsStr;
@@ -112,6 +124,7 @@ private:
   std::list<std::string> MocIncludes;
   std::list<std::string> MocDefinitions;
   std::vector<std::string> MocOptions;
+  std::vector<std::string> DBusInterfaces;
   std::vector<std::string> UicTargetOptions;
   std::map<std::string, std::string> UicOptions;
   std::map<std::string, std::string> RccOptions;
@@ -138,8 +151,6 @@ private:
   bool RunAutoDBusCpp2Xml(cmMakefile* makefile);
   bool ReadAutoDBusInfoFile(cmMakefile* makefile,
                             const char* targetDirectory);
-  void ParseForDBus(const std::string& fileName,
-                    std::map<std::string, std::string>& dbusInterfaces);
   bool GenerateDBusXml(const std::string &executable,
                        const std::map<std::string, std::map<std::string, std::string> >& dbusFiles);
 
