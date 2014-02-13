@@ -548,6 +548,9 @@ void cmQtAutoGenerators::SetupAutoGenerateTarget(cmTarget const* target)
   std::map<std::string, std::string> configIncludes;
   std::map<std::string, std::string> configDefines;
   std::map<std::string, std::string> configUicOptions;
+  std::map<std::string, std::string> configSources;
+  std::map<std::string, std::string> configHeaders;
+  std::map<std::string, std::string> configRccFiles;
 
   std::string skipUic;
 
@@ -555,7 +558,7 @@ void cmQtAutoGenerators::SetupAutoGenerateTarget(cmTarget const* target)
       || target->GetPropertyAsBool("AUTOUIC")
       || target->GetPropertyAsBool("AUTORCC"))
     {
-    this->SetupSourceFiles(target, skipUic);
+    this->SetupSourceFiles(target, configSources, configHeaders, skipUic);
     }
   if (target->GetPropertyAsBool("AUTOMOC"))
     {
@@ -568,7 +571,7 @@ void cmQtAutoGenerators::SetupAutoGenerateTarget(cmTarget const* target)
     }
   if (target->GetPropertyAsBool("AUTORCC"))
     {
-    this->SetupAutoRccTarget(target);
+    this->SetupAutoRccTarget(target, configRccFiles);
     }
 
   const char* cmakeRoot = makefile->GetSafeDefinition("CMAKE_ROOT");
@@ -583,7 +586,10 @@ void cmQtAutoGenerators::SetupAutoGenerateTarget(cmTarget const* target)
 
   if (!configDefines.empty()
       || !configIncludes.empty()
-      || !configUicOptions.empty())
+      || !configUicOptions.empty()
+      || !configSources.empty()
+      || !configHeaders.empty()
+      || !configRccFiles.empty())
     {
     cmsys::ofstream infoFile(outputFile.c_str(), std::ios::app);
     if ( !infoFile )
@@ -624,10 +630,40 @@ void cmQtAutoGenerators::SetupAutoGenerateTarget(cmTarget const* target)
           " " << it->second << ")\n";
         }
       }
+    if (!configSources.empty())
+      {
+      for (std::map<std::string, std::string>::iterator
+            it = configSources.begin(), end = configSources.end();
+            it != end; ++it)
+        {
+        infoFile << "set(AM_SOURCES_" << it->first <<
+          " " << it->second << ")\n";
+        }
+      }
+    if (!configHeaders.empty())
+      {
+      for (std::map<std::string, std::string>::iterator
+            it = configHeaders.begin(), end = configHeaders.end();
+            it != end; ++it)
+        {
+        infoFile << "set(AM_HEADERS_" << it->first <<
+          " " << it->second << ")\n";
+        }
+      }
+    if (!configRccFiles.empty())
+      {
+      for (std::map<std::string, std::string>::iterator
+            it = configRccFiles.begin(), end = configRccFiles.end();
+            it != end; ++it)
+        {
+        infoFile << "set(AM_RCC_SOURCES_" << it->first <<
+          " " << it->second << ")\n";
+        }
+      }
     }
 }
 
-void ProcessSources(cmTarget const* target, std::string const&,
+void ProcessSources(cmTarget const* target, std::string const& config,
                     std::string& sources, std::string& headers,
                     std::string& skipUic, std::string& skipMocString,
                     std::set<std::string>& seenRccFiles)
@@ -638,7 +674,7 @@ void ProcessSources(cmTarget const* target, std::string const&,
   const char* sepHeaders = "";
 
   std::vector<cmSourceFile*> srcFiles;
-  target->GetConfigCommonSourceFiles(srcFiles);
+  target->GetSourceFiles(srcFiles, config);
 
   const char* skipMocSep = skipMocString.empty() ? "" : ";";
   const char* skipUicSep = skipUic.empty() ? "" : ";";
@@ -679,7 +715,7 @@ void ProcessSources(cmTarget const* target, std::string const&,
         makefile->AppendProperty("ADDITIONAL_MAKE_CLEAN_FILES",
                                 rcc_output_file.c_str(), false);
         makefile->GetOrCreateSource(rcc_output_file, true);
-        if (!seenRccFiles.insert(rcc_output_file).second)
+        if (seenRccFiles.insert(rcc_output_file).second)
           {
           newRccFiles.push_back(rcc_output_file);
           }
@@ -713,16 +749,27 @@ void ProcessSources(cmTarget const* target, std::string const&,
         }
       }
     }
+  cmGlobalGenerator* gg = makefile->GetLocalGenerator()->GetGlobalGenerator();
   for(std::vector<std::string>::const_iterator fileIt = newRccFiles.begin();
       fileIt != newRccFiles.end();
       ++fileIt)
     {
-    const_cast<cmTarget*>(target)->AddSource(*fileIt);
+    if (config.empty() || gg->IsMultiConfig())
+      {
+      const_cast<cmTarget*>(target)->AddSource(*fileIt);
+      }
+    else
+      {
+      const_cast<cmTarget*>(target)->AddSource("$<$<CONFIG:" + config + ">:"
+                                                + *fileIt + ">");
+      }
     }
 }
 
 void cmQtAutoGenerators::SetupSourceFiles(cmTarget const* target,
-                                          std::string& skipUic)
+                            std::map<std::string, std::string> &configSources,
+                            std::map<std::string, std::string> &configHeaders,
+                            std::string& skipUic)
 {
   cmMakefile* makefile = target->GetMakefile();
 
@@ -730,9 +777,12 @@ void cmQtAutoGenerators::SetupSourceFiles(cmTarget const* target,
   std::string headers;
   std::string skipMocString;
 
+  std::vector<std::string> configs;
+  const std::string& config = makefile->GetConfigurations(configs);
+
   std::set<std::string> seenRccFiles;
 
-  ProcessSources(target, "", sources, headers, skipUic, skipMocString,
+  ProcessSources(target, config, sources, headers, skipUic, skipMocString,
                  seenRccFiles);
 
   makefile->AddDefinition("_skip_moc",
@@ -741,6 +791,33 @@ void cmQtAutoGenerators::SetupSourceFiles(cmTarget const* target,
           cmLocalGenerator::EscapeForCMake(headers).c_str());
   makefile->AddDefinition("_cpp_files",
           cmLocalGenerator::EscapeForCMake(sources).c_str());
+
+  for (std::vector<std::string>::const_iterator li = configs.begin();
+       li != configs.end(); ++li)
+    {
+    std::string config_sources;
+    std::string config_headers;
+    ProcessSources(target, *li, config_sources, config_headers, skipUic,
+               skipMocString, seenRccFiles);
+    if (config_sources != sources)
+      {
+      configSources[*li] =
+                    cmLocalGenerator::EscapeForCMake(config_sources);
+      if(sources.empty())
+        {
+        sources = config_sources;
+        }
+      }
+    if (config_headers != headers)
+      {
+      configHeaders[*li] =
+            cmLocalGenerator::EscapeForCMake(config_headers);
+      if(headers.empty())
+        {
+        headers = config_headers;
+        }
+      }
+    }
 }
 
 void cmQtAutoGenerators::SetupAutoMocTarget(cmTarget const* target,
@@ -1030,7 +1107,7 @@ void MergeRccOptions(std::vector<std::string> &opts,
   opts.insert(opts.end(), extraOpts.begin(), extraOpts.end());
 }
 
-void ProcessRccFiles(cmTarget const* target, std::string const&,
+void ProcessRccFiles(cmTarget const* target, std::string const& config,
                      std::string& _rcc_files,
                      std::set<std::string>& seenRccFiles,
                      std::string& rccFileFiles, std::string& rccFileOptions)
@@ -1038,7 +1115,7 @@ void ProcessRccFiles(cmTarget const* target, std::string const&,
   cmMakefile* makefile = target->GetMakefile();
 
   std::vector<cmSourceFile*> srcFiles;
-  target->GetConfigCommonSourceFiles(srcFiles);
+  target->GetSourceFiles(srcFiles, config);
 
   std::string qrcInputs;
   const char* qrcInputsSep = "";
@@ -1136,7 +1213,8 @@ void ProcessRccFiles(cmTarget const* target, std::string const&,
     }
 }
 
-void cmQtAutoGenerators::SetupAutoRccTarget(cmTarget const* target)
+void cmQtAutoGenerators::SetupAutoRccTarget(cmTarget const* target,
+                          std::map<std::string, std::string> &configRccFiles)
 {
   std::set<std::string> seenRccFiles;
 
@@ -1148,7 +1226,10 @@ void cmQtAutoGenerators::SetupAutoRccTarget(cmTarget const* target)
 
   const char* qtVersion = makefile->GetDefinition("_target_qt_version");
 
-  ProcessRccFiles(target, "", _rcc_files, seenRccFiles,
+  std::vector<std::string> configs;
+  const std::string& config = makefile->GetConfigurations(configs);
+
+  ProcessRccFiles(target, config, _rcc_files, seenRccFiles,
                   rccFileFiles, rccFileOptions);
 
   makefile->AddDefinition("_rcc_files",
@@ -1161,6 +1242,25 @@ void cmQtAutoGenerators::SetupAutoRccTarget(cmTarget const* target)
 
   makefile->AddDefinition("_qt_rcc_executable",
                           this->GetRccExecutable(target).c_str());
+
+
+  for (std::vector<std::string>::const_iterator li = configs.begin();
+       li != configs.end(); ++li)
+    {
+    std::string config_rcc_files;
+    ProcessRccFiles(target, *li, config_rcc_files, seenRccFiles,
+               rccFileFiles, rccFileOptions);
+    if (config_rcc_files != _rcc_files)
+      {
+      configRccFiles[*li] =
+                    cmLocalGenerator::EscapeForCMake(config_rcc_files);
+      if(_rcc_files.empty())
+        {
+        _rcc_files = config_rcc_files;
+        }
+      }
+    }
+// WHat?
 }
 
 std::string cmQtAutoGenerators::GetRccExecutable(cmTarget const* target)
@@ -1275,14 +1375,22 @@ bool cmQtAutoGenerators::ReadAutogenInfoFile(cmMakefile* makefile,
     this->QtMajorVersion = makefile->GetSafeDefinition(
                                      "AM_Qt5Core_VERSION_MAJOR");
     }
-  this->Sources = makefile->GetSafeDefinition("AM_SOURCES");
-  {
-  std::string rccSources = makefile->GetSafeDefinition("AM_RCC_SOURCES");
-  cmSystemTools::ExpandListArgument(rccSources, this->RccSources);
-  }
+(??)  this->Sources = makefile->GetSafeDefinition("AM_SOURCES");
+(??)  this->RccSources = makefile->GetSafeDefinition("AM_RCC_SOURCES");
   this->SkipMoc = makefile->GetSafeDefinition("AM_SKIP_MOC");
   this->SkipUic = makefile->GetSafeDefinition("AM_SKIP_UIC");
-  this->Headers = makefile->GetSafeDefinition("AM_HEADERS");
+  {
+  std::string headersPropOrig = "AM_HEADERS";
+  std::string headersProp = headersPropOrig;
+  if(!config.empty())
+    {
+    headersProp += "_";
+    headersProp += config;
+    }
+  const char *headers = makefile->GetDefinition(headersProp);
+  this->Headers = headers ? headers
+                      : makefile->GetSafeDefinition(headersPropOrig);
+  }
   this->IncludeProjectDirsBefore = makefile->IsOn(
                                 "AM_CMAKE_INCLUDE_DIRECTORIES_PROJECT_BEFORE");
   this->Srcdir = makefile->GetSafeDefinition("AM_CMAKE_CURRENT_SOURCE_DIR");
