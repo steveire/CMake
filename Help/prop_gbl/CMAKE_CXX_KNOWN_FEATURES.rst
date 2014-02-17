@@ -315,3 +315,16 @@ The features known to this version of CMake are:
   per N2546_.
 
   .. _N2546: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2546.htm
+
++
++``gnu_cxx_strong_namespaces``
++  The GNU typeof extension.
++
++``gnu_cxx_bound_member_functions``
++  Bound member functions.
++
++``gnu_cxx_multiversioning``
++  http://gcc.gnu.org/wiki/FunctionMultiVersioning
++
++``gnu_cxx_template_instantiation``
++  http://gcc.gnu.org/onlinedocs/gcc/Template-Instantiation.html#Template-Instantiation
