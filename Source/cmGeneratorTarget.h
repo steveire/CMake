@@ -197,6 +197,12 @@ public:
   /** Whether this library has soname enabled and platform supports it.  */
   bool HasSOName(const std::string& config) const;
 
+  /** Get the name of the compiler pdb file for the target.  */
+  std::string GetCompilePDBName(const std::string& config="") const;
+
+  /** Get the path for the MSVC /Fd option for this target.  */
+  std::string GetCompilePDBPath(const std::string& config="") const;
+
   class TargetPropertyEntry {
     static cmLinkImplItem NoLinkImplItem;
   public:
