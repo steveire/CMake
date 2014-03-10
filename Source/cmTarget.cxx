@@ -155,20 +155,6 @@ public:
   typedef std::map<std::string, cmTarget::LinkClosure> LinkClosureMapType;
   LinkClosureMapType LinkClosureMap;
 
-  struct LinkImplClosure: public std::vector<cmTarget const*>
-  {
-    LinkImplClosure(): Done(false) {}
-    bool Done;
-  };
-  std::map<std::string, LinkImplClosure> LinkImplClosureMap;
-
-  struct CompatibleInterfaces: public cmTarget::CompatibleInterfaces
-  {
-    CompatibleInterfaces(): Done(false) {}
-    bool Done;
-  };
-  std::map<std::string, CompatibleInterfaces> CompatibleInterfacesMap;
-
   typedef std::map<std::string, std::vector<cmSourceFile*> >
                                                        SourceFilesMapType;
   SourceFilesMapType SourceFilesMap;
@@ -4858,87 +4844,6 @@ cmTarget::GetImportLinkInterface(const std::string& config,
     }
 
   return &iface;
-}
-
-//----------------------------------------------------------------------------
-void processILibs(const std::string& config,
-                  cmTarget const* headTarget,
-                  cmLinkItem const& item,
-                  std::vector<cmTarget const*>& tgts,
-                  std::set<cmTarget const*>& emitted)
-{
-  if (item.Target && emitted.insert(item.Target).second)
-    {
-    tgts.push_back(item.Target);
-    if(cmTarget::LinkInterfaceLibraries const* iface =
-       item.Target->GetLinkInterfaceLibraries(config, headTarget, true))
-      {
-      for(std::vector<cmLinkItem>::const_iterator
-            it = iface->Libraries.begin();
-          it != iface->Libraries.end(); ++it)
-        {
-        processILibs(config, headTarget, *it, tgts, emitted);
-        }
-      }
-    }
-}
-
-//----------------------------------------------------------------------------
-std::vector<cmTarget const*> const&
-cmTarget::GetLinkImplementationClosure(const std::string& config) const
-{
-  cmTargetInternals::LinkImplClosure& tgts =
-    this->Internal->LinkImplClosureMap[config];
-  if(!tgts.Done)
-    {
-    tgts.Done = true;
-    std::set<cmTarget const*> emitted;
-
-    cmTarget::LinkImplementationLibraries const* impl
-      = this->GetLinkImplementationLibraries(config);
-
-    for(std::vector<cmLinkImplItem>::const_iterator
-          it = impl->Libraries.begin();
-        it != impl->Libraries.end(); ++it)
-      {
-      processILibs(config, this, *it, tgts , emitted);
-      }
-    }
-  return tgts;
-}
-
-//----------------------------------------------------------------------------
-cmTarget::CompatibleInterfaces const&
-cmTarget::GetCompatibleInterfaces(std::string const& config) const
-{
-  cmTargetInternals::CompatibleInterfaces& compat =
-    this->Internal->CompatibleInterfacesMap[config];
-  if(!compat.Done)
-    {
-    compat.Done = true;
-    compat.PropsBool.insert("POSITION_INDEPENDENT_CODE");
-    compat.PropsString.insert("AUTOUIC_OPTIONS");
-    std::vector<cmTarget const*> const& deps =
-      this->GetLinkImplementationClosure(config);
-    for(std::vector<cmTarget const*>::const_iterator li = deps.begin();
-        li != deps.end(); ++li)
-      {
-#define CM_READ_COMPATIBLE_INTERFACE(X, x) \
-      if(const char* prop = (*li)->GetProperty("COMPATIBLE_INTERFACE_" #X)) \
-        { \
-        std::vector<std::string> props; \
-        cmSystemTools::ExpandListArgument(prop, props); \
-        std::copy(props.begin(), props.end(), \
-                  std::inserter(compat.Props##x, compat.Props##x.begin())); \
-        }
-      CM_READ_COMPATIBLE_INTERFACE(BOOL, Bool)
-      CM_READ_COMPATIBLE_INTERFACE(STRING, String)
-      CM_READ_COMPATIBLE_INTERFACE(NUMBER_MIN, NumberMin)
-      CM_READ_COMPATIBLE_INTERFACE(NUMBER_MAX, NumberMax)
-#undef CM_READ_COMPATIBLE_INTERFACE
-      }
-    }
-  return compat;
 }
 
 //----------------------------------------------------------------------------

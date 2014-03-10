@@ -140,6 +140,10 @@ public:
   cmComputeLinkInformation* GetLinkInformation(const std::string& config,
                                                cmTarget const* head = 0) const;
 
+  void GetTransitiveTargetClosure(const std::string& config,
+                                        cmTarget const* headTarget,
+                                        std::vector<cmTarget*> &libs) const;
+
   bool IsLinkInterfaceDependentBoolProperty(const std::string& p,
                                             const std::string& config) const;
   bool IsLinkInterfaceDependentStringProperty(const std::string& p,
@@ -260,6 +264,35 @@ private:
 
   cmGeneratorTarget(cmGeneratorTarget const&);
   void operator=(cmGeneratorTarget const&);
+
+  struct CompatibleInterfaces
+  {
+    std::set<std::string> PropsBool;
+    std::set<std::string> PropsString;
+    std::set<std::string> PropsNumberMax;
+    std::set<std::string> PropsNumberMin;
+  };
+  CompatibleInterfaces const&
+    GetCompatibleInterfaces(std::string const& config) const;
+
+  struct CompatibleInterfacesIntl: CompatibleInterfaces
+  {
+    CompatibleInterfacesIntl(): Done(false) {}
+    bool Done;
+  };
+  mutable std::map<std::string, CompatibleInterfacesIntl> CompatibleInterfacesMap;
+
+  struct LinkImplClosure: public std::vector<cmTarget const*>
+  {
+    LinkImplClosure(): Done(false) {}
+    bool Done;
+  };
+  mutable std::map<std::string, LinkImplClosure> LinkImplClosureMap;
+
+public:
+  std::vector<cmTarget const*> const&
+    GetLinkImplementationClosure(const std::string& config) const;
+
 };
 
 struct cmStrictTargetComparison {
