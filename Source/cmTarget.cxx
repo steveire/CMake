@@ -2763,39 +2763,6 @@ const char* cmTarget::ImportedGetLocation(const std::string& config) const
 }
 
 //----------------------------------------------------------------------------
-const char* cmTarget::GetLocationForBuild() const
-{
-  static std::string location;
-  if(this->IsImported())
-    {
-    location = this->ImportedGetFullPath("", false);
-    return location.c_str();
-    }
-
-  // Now handle the deprecated build-time configuration location.
-  location = this->GetDirectory();
-  const char* cfgid = this->Makefile->GetDefinition("CMAKE_CFG_INTDIR");
-  if(cfgid && strcmp(cfgid, ".") != 0)
-    {
-    location += "/";
-    location += cfgid;
-    }
-
-  if(this->IsAppBundleOnApple())
-    {
-    std::string macdir = this->BuildMacContentDirectory("", "", false);
-    if(!macdir.empty())
-      {
-      location += "/";
-      location += macdir;
-      }
-    }
-  location += "/";
-  location += this->GetFullName("", false);
-  return location.c_str();
-}
-
-//----------------------------------------------------------------------------
 void cmTarget::GetTargetVersion(int& major, int& minor) const
 {
   int patch;
