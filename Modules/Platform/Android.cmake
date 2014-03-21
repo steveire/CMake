@@ -20,9 +20,11 @@ endif()
 # Non-gui native executables are also permitted on Android.  Users wishing
 # to create such executables may use something like
 #   set_property(TARGET MyConsoleExe PROPERTY SUFFIX "")
+#   set_property(TARGET MyConsoleExe PROPERTY PREFIX "")
 #   set_property(TARGET MyConsoleExe PROPERTY POSITION_INDEPENDENT_CODE OFF)
 # to clear the suffix and -fPIE flag, if desired.
 # This possibly does not work with older Android versions:
 #  https://groups.google.com/forum/#!msg/android-security-discuss/B9BEdc_faRw/iMjpQqXMA1YJ
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_EXECUTABLE_SUFFIX .so)
+set(CMAKE_EXECUTABLE_PREFIX lib)
