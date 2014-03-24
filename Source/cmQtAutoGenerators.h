@@ -85,9 +85,6 @@ private:
   void MergeUicOptions(std::vector<std::string> &opts,
                        const std::vector<std::string> &fileOpts, bool isQt5);
 
-  void MergeRccOptions(std::vector<std::string> &opts,
-                       const std::vector<std::string> &fileOpts, bool isQt5);
-
   std::string GetRccExecutable(cmTarget const* target);
 
   std::string ListQt5RccInputs(cmSourceFile* sf, cmTarget const* target,

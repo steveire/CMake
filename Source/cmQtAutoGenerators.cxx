@@ -987,7 +987,7 @@ void cmQtAutoGenerators::SetupAutoUicTarget(cmTarget const* target,
     }
 }
 
-void cmQtAutoGenerators::MergeRccOptions(std::vector<std::string> &opts,
+void MergeRccOptions(std::vector<std::string> &opts,
                          const std::vector<std::string> &fileOpts,
                          bool isQt5)
 {
@@ -1081,7 +1081,7 @@ void cmQtAutoGenerators::SetupAutoRccTarget(cmTarget const* target)
           {
           std::vector<std::string> optsVec;
           cmSystemTools::ExpandListArgument(prop, optsVec);
-          this->MergeRccOptions(rccOptions, optsVec,
+          MergeRccOptions(rccOptions, optsVec,
                                 strcmp(qtVersion, "5") == 0);
           }
 
