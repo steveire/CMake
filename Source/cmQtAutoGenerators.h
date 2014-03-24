@@ -27,14 +27,14 @@ public:
 
   bool InitializeAutogenTarget(cmTarget* target);
   void SetupAutoGenerateTarget(cmTarget const* target);
-  void SetupSourceFiles(cmTarget const* target);
+  void SetupSourceFiles(cmTarget const* target, std::string& skipUic);
 
 private:
   void SetupAutoMocTarget(cmTarget const* target,
                           const std::string &autogenTargetName,
                           std::map<std::string, std::string> &configIncludes,
                           std::map<std::string, std::string> &configDefines);
-  void SetupAutoUicTarget(cmTarget const* target,
+  void SetupAutoUicTarget(cmTarget const* target, std::string const& skipUic,
                         std::map<std::string, std::string> &configUicOptions);
   void SetupAutoRccTarget(cmTarget const* target);
 

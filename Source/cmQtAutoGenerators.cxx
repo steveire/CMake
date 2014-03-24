@@ -549,11 +549,13 @@ void cmQtAutoGenerators::SetupAutoGenerateTarget(cmTarget const* target)
   std::map<std::string, std::string> configDefines;
   std::map<std::string, std::string> configUicOptions;
 
+  std::string skipUic;
+
   if (target->GetPropertyAsBool("AUTOMOC")
       || target->GetPropertyAsBool("AUTOUIC")
       || target->GetPropertyAsBool("AUTORCC"))
     {
-    this->SetupSourceFiles(target);
+    this->SetupSourceFiles(target, skipUic);
     }
   if (target->GetPropertyAsBool("AUTOMOC"))
     {
@@ -562,7 +564,7 @@ void cmQtAutoGenerators::SetupAutoGenerateTarget(cmTarget const* target)
     }
   if (target->GetPropertyAsBool("AUTOUIC"))
     {
-    this->SetupAutoUicTarget(target, configUicOptions);
+    this->SetupAutoUicTarget(target, skipUic, configUicOptions);
     }
   if (target->GetPropertyAsBool("AUTORCC"))
     {
@@ -625,7 +627,8 @@ void cmQtAutoGenerators::SetupAutoGenerateTarget(cmTarget const* target)
     }
 }
 
-void cmQtAutoGenerators::SetupSourceFiles(cmTarget const* target)
+void cmQtAutoGenerators::SetupSourceFiles(cmTarget const* target,
+                                          std::string& skipUic)
 {
   cmMakefile* makefile = target->GetMakefile();
 
@@ -656,8 +659,8 @@ void cmQtAutoGenerators::SetupSourceFiles(cmTarget const* target)
 
     if(cmSystemTools::IsOn(sf->GetPropertyForUser("SKIP_AUTOUIC")))
       {
-      this->SkipUic += skipUicSep;
-      this->SkipUic += absFile;
+      skipUic += skipUicSep;
+      skipUic += absFile;
       skipUicSep = ";";
       }
 
@@ -863,17 +866,18 @@ static void GetUicOpts(cmTarget const* target, const std::string& config,
 }
 
 void cmQtAutoGenerators::SetupAutoUicTarget(cmTarget const* target,
+                          std::string const& skipUic,
                           std::map<std::string, std::string> &configUicOptions)
 {
   cmMakefile *makefile = target->GetMakefile();
 
   std::set<std::string> skipped;
   std::vector<std::string> skipVec;
-  cmSystemTools::ExpandListArgument(this->SkipUic, skipVec);
+  cmSystemTools::ExpandListArgument(skipUic, skipVec);
   skipped.insert(skipVec.begin(), skipVec.end());
 
   makefile->AddDefinition("_skip_uic",
-          cmLocalGenerator::EscapeForCMake(this->SkipUic).c_str());
+          cmLocalGenerator::EscapeForCMake(skipUic).c_str());
 
   std::vector<cmSourceFile*> uiFilesWithOptions
                                         = makefile->GetQtUiFilesWithOptions();
