@@ -627,8 +627,10 @@ void cmQtAutoGenerators::SetupAutoGenerateTarget(cmTarget const* target)
     }
 }
 
-void cmQtAutoGenerators::SetupSourceFiles(cmTarget const* target,
-                                          std::string& skipUic)
+void ProcessSources(cmTarget const* target, std::string const&,
+                    std::string& sources, std::string& headers,
+                    std::string& skipUic, std::string& skipMocString,
+                    std::set<std::string>& seenRccFiles)
 {
   cmMakefile* makefile = target->GetMakefile();
 
@@ -638,12 +640,8 @@ void cmQtAutoGenerators::SetupSourceFiles(cmTarget const* target,
   std::vector<cmSourceFile*> srcFiles;
   target->GetConfigCommonSourceFiles(srcFiles);
 
-  const char *skipMocSep = "";
-  const char *skipUicSep = "";
-
-  std::string sources;
-  std::string headers;
-  std::string skipMocString;
+  const char* skipMocSep = skipMocString.empty() ? "" : ";";
+  const char* skipUicSep = skipUic.empty() ? "" : ";";
 
   std::vector<std::string> newRccFiles;
 
@@ -681,7 +679,10 @@ void cmQtAutoGenerators::SetupSourceFiles(cmTarget const* target,
         makefile->AppendProperty("ADDITIONAL_MAKE_CLEAN_FILES",
                                 rcc_output_file.c_str(), false);
         makefile->GetOrCreateSource(rcc_output_file, true);
-        newRccFiles.push_back(rcc_output_file);
+        if (!seenRccFiles.insert(rcc_output_file).second)
+          {
+          newRccFiles.push_back(rcc_output_file);
+          }
         }
       }
 
@@ -712,13 +713,27 @@ void cmQtAutoGenerators::SetupSourceFiles(cmTarget const* target,
         }
       }
     }
-
   for(std::vector<std::string>::const_iterator fileIt = newRccFiles.begin();
       fileIt != newRccFiles.end();
       ++fileIt)
     {
     const_cast<cmTarget*>(target)->AddSource(*fileIt);
     }
+}
+
+void cmQtAutoGenerators::SetupSourceFiles(cmTarget const* target,
+                                          std::string& skipUic)
+{
+  cmMakefile* makefile = target->GetMakefile();
+
+  std::string sources;
+  std::string headers;
+  std::string skipMocString;
+
+  std::set<std::string> seenRccFiles;
+
+  ProcessSources(target, "", sources, headers, skipUic, skipMocString,
+                 seenRccFiles);
 
   makefile->AddDefinition("_skip_moc",
           cmLocalGenerator::EscapeForCMake(skipMocString).c_str());
