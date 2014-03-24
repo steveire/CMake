@@ -1030,11 +1030,12 @@ void MergeRccOptions(std::vector<std::string> &opts,
   opts.insert(opts.end(), extraOpts.begin(), extraOpts.end());
 }
 
-void cmQtAutoGenerators::SetupAutoRccTarget(cmTarget const* target)
+void ProcessRccFiles(cmTarget const* target, std::string const&,
+                     std::string& _rcc_files,
+                     std::set<std::string>& seenRccFiles,
+                     std::string& rccFileFiles, std::string& rccFileOptions)
 {
-  std::string _rcc_files;
-  const char* sepRccFiles = "";
-  cmMakefile *makefile = target->GetMakefile();
+  cmMakefile* makefile = target->GetMakefile();
 
   std::vector<cmSourceFile*> srcFiles;
   target->GetConfigCommonSourceFiles(srcFiles);
@@ -1046,7 +1047,9 @@ void cmQtAutoGenerators::SetupAutoRccTarget(cmTarget const* target)
   std::string rccFileOptions;
   const char *optionSep = "";
 
-  const char *qtVersion = makefile->GetDefinition("_target_qt_version");
+//  const char* optionSep = rccFileFiles.empty() ? "" : ";";
+
+  const char* qtVersion = makefile->GetDefinition("_target_qt_version");
 
   std::vector<std::string> rccOptions;
   if (const char* opts = target->GetProperty("AUTORCC_OPTIONS"))
@@ -1069,6 +1072,11 @@ void cmQtAutoGenerators::SetupAutoRccTarget(cmTarget const* target)
       {
       std::string absFile = cmsys::SystemTools::GetRealPath(
                                                   sf->GetFullPath());
+      if (!seenRccFiles.insert(absFile).second)
+        {
+        continue;
+        }
+
       bool skip = cmSystemTools::IsOn(sf->GetPropertyForUser("SKIP_AUTORCC"));
 
       if (!skip)
@@ -1126,8 +1134,22 @@ void cmQtAutoGenerators::SetupAutoRccTarget(cmTarget const* target)
         }
       }
     }
-  makefile->AddDefinition("_qt_rcc_inputs_" + target->GetName(),
-                      cmLocalGenerator::EscapeForCMake(qrcInputs).c_str());
+}
+
+void cmQtAutoGenerators::SetupAutoRccTarget(cmTarget const* target)
+{
+  std::set<std::string> seenRccFiles;
+
+  std::string rccFileFiles;
+  std::string rccFileOptions;
+
+  std::string _rcc_files;
+  cmMakefile *makefile = target->GetMakefile();
+
+  const char* qtVersion = makefile->GetDefinition("_target_qt_version");
+
+  ProcessRccFiles(target, "", _rcc_files, seenRccFiles,
+                  rccFileFiles, rccFileOptions);
 
   makefile->AddDefinition("_rcc_files",
           cmLocalGenerator::EscapeForCMake(_rcc_files).c_str());
