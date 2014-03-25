@@ -463,6 +463,7 @@ private:
   F(cxx_alignas) \
   F(cxx_alignof) \
   F(cxx_attributes) \
+  F(cxx_attribute_deprecated) \
   F(cxx_auto_type) \
   F(cxx_constexpr) \
   F(cxx_decltype) \

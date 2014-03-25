@@ -74,3 +74,6 @@ set(_cmake_feature_test_cxx_extern_templates "${_cmake_oldestSupported} && __cpl
 set(_cmake_feature_test_cxx_func_identifier "${_cmake_oldestSupported} && __cplusplus >= 201103L")
 set(_cmake_feature_test_cxx_variadic_macros "${_cmake_oldestSupported} && __cplusplus >= 201103L")
 set(_cmake_feature_test_cxx_template_template_parameters "${_cmake_oldestSupported} && __cplusplus >= 199711L")
+
+set(_cmake_symbol_alternative_cxx_attribute_deprecated "__attribute__((__deprecated__))")
+set(_cmake_symbol_alternative_test_cxx_attribute_deprecated "(__GNUC__ * 100 + __GNUC_MINOR__) >= 402")

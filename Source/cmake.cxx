@@ -2306,6 +2306,15 @@ const char *cmake::GetProperty(const std::string& prop,
   FOR_EACH_CXX_DECL_FEATURE(PP_DECL_NAME)
 #undef PP_DECL_NAME
 
+  if (prop == "CMAKE_PP_DECL_cxx_attribute_deprecated")
+    {
+    return "DECL_CXX_DEPRECATED";
+    }
+  if (prop == "CMAKE_SYMBOL_DEFINE_cxx_attribute_deprecated")
+    {
+    return "[[deprecated]]";
+    }
+
   return this->Properties.GetPropertyValue(prop, scope, chain);
 }
 

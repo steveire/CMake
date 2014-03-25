@@ -42,6 +42,11 @@ The features known to this version of CMake are:
 
   .. _N2235: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2235.pdf
 
+``cxx_attribute_deprecated``
+  ``[[deprecated]]`` attribute, as defined in N3394_.
+
+.. _N3394: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3394.html
+
 ``cxx_decltype_incomplete_return_types``
   Decltype on incomplete return types, as defined in N3276_.
 
