@@ -224,9 +224,6 @@ macro(_test_compiler_hidden_visibility)
     check_cxx_compiler_flag(-fvisibility=hidden COMPILER_HAS_HIDDEN_VISIBILITY)
     check_cxx_compiler_flag(-fvisibility-inlines-hidden
       COMPILER_HAS_HIDDEN_INLINE_VISIBILITY)
-    option(USE_COMPILER_HIDDEN_VISIBILITY
-      "Use HIDDEN visibility support if available." ON)
-    mark_as_advanced(USE_COMPILER_HIDDEN_VISIBILITY)
   endif()
 endmacro()
 
@@ -381,6 +378,9 @@ function(GENERATE_EXPORT_HEADER TARGET_LIBRARY)
     return()
   endif()
   _test_compiler_hidden_visibility()
+  option(USE_COMPILER_HIDDEN_VISIBILITY
+    "Use HIDDEN visibility support if available." ON)
+  mark_as_advanced(USE_COMPILER_HIDDEN_VISIBILITY)
   _test_compiler_has_deprecated()
   _do_set_macro_values(${TARGET_LIBRARY})
   _do_generate_export_header(${TARGET_LIBRARY} ${ARGN})
