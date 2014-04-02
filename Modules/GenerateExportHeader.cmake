@@ -177,6 +177,8 @@
 # This function is deprecated.  Set the target properties
 # :prop_tgt:`CXX_VISIBILITY_PRESET <<LANG>_VISIBILITY_PRESET>` and
 # :prop_tgt:`VISIBILITY_INLINES_HIDDEN` instead.
+#
+# GEH_RUN_COMPILER_VISIBILITY_TEST
 
 #=============================================================================
 # Copyright 2011 Stephen Kelly <steveire@gmail.com>
@@ -377,7 +379,10 @@ function(GENERATE_EXPORT_HEADER TARGET_LIBRARY)
     message(WARNING "This macro can only be used with libraries")
     return()
   endif()
-  _test_compiler_hidden_visibility()
+  if(NOT CMAKE_MINIMUM_REQUIRED_VERSION VERSION_LESS 3.1 OR GEH_RUN_COMPILER_VISIBILITY_TEST)
+    _test_compiler_hidden_visibility()
+    message(DEPRECATION "The _test_compiler_hidden_visibility function is obsolete.")
+  endif()
   option(USE_COMPILER_HIDDEN_VISIBILITY
     "Use HIDDEN visibility support if available." ON)
   mark_as_advanced(USE_COMPILER_HIDDEN_VISIBILITY)
