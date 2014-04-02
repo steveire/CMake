@@ -230,6 +230,13 @@ macro(_test_compiler_hidden_visibility)
   endif()
 endmacro()
 
+function(_check_known_compiler_info)
+  include("${CMAKE_ROOT}/Modules/Compiler/${CMAKE_CXX_COMPILER_ID}-CXX-FeatureTests.cmake" OPTIONAL)
+  if (_cmake_symbol_alternative_cxx_attribute_deprecated)
+    set(COMPILER_RECORDED_DEPRECATED ${_cmake_symbol_alternative_cxx_attribute_deprecated} PARENT_SCOPE)
+  endif()
+endfunction()
+
 macro(_test_compiler_has_deprecated)
   if("${CMAKE_CXX_COMPILER_ID}" MATCHES Borland
       OR "${CMAKE_CXX_COMPILER_ID}" MATCHES HP
@@ -239,14 +246,17 @@ macro(_test_compiler_has_deprecated)
     set(COMPILER_HAS_DEPRECATED "" CACHE INTERNAL
       "Compiler support for a deprecated attribute")
   else()
-    _check_cxx_compiler_attribute("__attribute__((__deprecated__))"
-      COMPILER_HAS_DEPRECATED_ATTR)
-    if(COMPILER_HAS_DEPRECATED_ATTR)
-      set(COMPILER_HAS_DEPRECATED "${COMPILER_HAS_DEPRECATED_ATTR}"
-        CACHE INTERNAL "Compiler support for a deprecated attribute")
-    else()
-      _check_cxx_compiler_attribute("__declspec(deprecated)"
-        COMPILER_HAS_DEPRECATED)
+    _check_known_compiler_info()
+    if (NOT COMPILER_RECORDED_DEPRECATED)
+      _check_cxx_compiler_attribute("__attribute__((__deprecated__))"
+        COMPILER_HAS_DEPRECATED_ATTR)
+      if(COMPILER_HAS_DEPRECATED_ATTR)
+        set(COMPILER_HAS_DEPRECATED "${COMPILER_HAS_DEPRECATED_ATTR}"
+          CACHE INTERNAL "Compiler support for a deprecated attribute")
+      else()
+        _check_cxx_compiler_attribute("__declspec(deprecated)"
+          COMPILER_HAS_DEPRECATED)
+      endif()
     endif()
   endif()
 endmacro()
@@ -260,7 +270,9 @@ macro(_DO_SET_MACRO_VALUES TARGET_LIBRARY)
   set(DEFINE_IMPORT)
   set(DEFINE_NO_EXPORT)
 
-  if (COMPILER_HAS_DEPRECATED_ATTR)
+  if (COMPILER_RECORDED_DEPRECATED)
+    set(DEFINE_DEPRECATED ${COMPILER_RECORDED_DEPRECATED})
+  elseif (COMPILER_HAS_DEPRECATED_ATTR)
     set(DEFINE_DEPRECATED "__attribute__ ((__deprecated__))")
   elseif(COMPILER_HAS_DEPRECATED)
     set(DEFINE_DEPRECATED "__declspec(deprecated)")
