@@ -442,6 +442,7 @@ private:
   F(cxx_alignof) \
   F(cxx_attributes) \
   F(cxx_attribute_deprecated) \
+  F(cxx_auto_storage_class_specifier) \
   F(cxx_auto_type) \
   F(cxx_binary_literals) \
   F(cxx_constexpr) \

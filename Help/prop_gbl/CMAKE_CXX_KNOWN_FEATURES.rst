@@ -309,3 +309,9 @@ The features known to this version of CMake are:
 
 ``msvc_cxx_sealed``
   The MSVC sealed extension
+
+``cxx_auto_storage_class_specifier``
+  Auto storage class specifier.  This conflicts with any C++11 features as
+  per N2546_.
+
+  .. _N2546: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2546.htm

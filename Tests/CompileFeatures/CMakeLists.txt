@@ -12,7 +12,9 @@ if (NOT CMAKE_C_COMPILE_FEATURES AND NOT CMAKE_CXX_COMPILE_FEATURES)
 endif()
 
 macro(run_test feature lang)
-  if (";${CMAKE_${lang}_COMPILE_FEATURES};" MATCHES ${feature})
+  if (";${CMAKE_${lang}_COMPILE_FEATURES};" MATCHES ${feature}
+      # Incompatible with C++11, which will be enabled for the target.
+      AND NOT ${feature} STREQUAL cxx_auto_storage_class_specifier)
     add_library(test_${feature} OBJECT ${feature})
     set_property(TARGET test_${feature}
       PROPERTY COMPILE_FEATURES "${feature}"
@@ -30,6 +32,13 @@ get_property(cxx_features GLOBAL PROPERTY CMAKE_CXX_KNOWN_FEATURES)
 foreach(feature ${cxx_features})
   run_test(${feature} CXX)
 endforeach()
+
+if (";${CMAKE_CXX_COMPILE_FEATURES};" MATCHES cxx_auto_storage_class_specifier)
+  add_library(test_features_before_cxx11 OBJECT cxx_auto_storage_class_specifier.cpp)
+  set_property(TARGET test_features_before_cxx11
+    PROPERTY COMPILE_FEATURES "cxx_auto_storage_class_specifier"
+  )
+endif()
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang"
     AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 5.1)
