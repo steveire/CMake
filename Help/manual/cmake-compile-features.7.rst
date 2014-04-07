@@ -176,7 +176,9 @@ symbol, and compiler support determines what it is expanded to:
   };
 
 In this case, ``Foo_FINAL`` will expand to ``final`` if the
-compiler supports the keyword, or to empty otherwise.
+compiler supports the keyword, or to ``sealed`` if certain versions
+of ``MSVC`` are used which do not support ``final``, but use ``sealed``
+in the same position and with the same meaning, or to empty otherwise.
 
 In this use-case, the CMake code will wish to enable a particular language
 standard if available from the compiler. The :prop_tgt:`CXX_STANDARD`

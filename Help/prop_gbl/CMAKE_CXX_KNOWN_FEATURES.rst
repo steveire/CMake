@@ -306,3 +306,6 @@ The features known to this version of CMake are:
   The GNU typeof extension, as defined in the `GNU Typeof Documentation`_.
 
 .. _`GNU Typeof Documentation`: http://gcc.gnu.org/onlinedocs/gcc/Typeof.html#Typeof
+
+``msvc_cxx_sealed``
+  The MSVC sealed extension

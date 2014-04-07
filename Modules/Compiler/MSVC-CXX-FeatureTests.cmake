@@ -91,6 +91,9 @@ set(_cmake_feature_test_cxx_template_template_parameters "${MSVC_2010}")
 set(_cmake_feature_test_cxx_trailing_return_types "${MSVC_2010}")
 set(_cmake_feature_test_cxx_variadic_macros "${MSVC_2010}")
 
+# TODO: Supported since MSVC 1400
+set(_cmake_feature_test_msvc_cxx_sealed "${MSVC_2010}")
+
 # Currently unsupported:
 # set(_cmake_feature_test_cxx_relaxed_constexpr )
 # 'NSDMIs for aggregates'
