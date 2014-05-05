@@ -32,3 +32,4 @@ set(_cmake_feature_test_cxx_variadic_macros "${Clang29_CXX11}")
 # TODO: Should be supported forever?
 set(Clang_CXX98 "${_cmake_oldestSupported} && __cplusplus >= 199711L")
 set(_cmake_feature_test_cxx_template_template_parameters "${Clang_CXX98}")
+set(_cmake_feature_test_gnu_cxx_typeof "${_cmake_oldestSupported} && !defined(__STRICT_ANSI__)")

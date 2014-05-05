@@ -301,3 +301,8 @@ The features known to this version of CMake are:
 
 ``cxx_template_template_parameters``
   Template template parameters, as defined in ``ISO/IEC 14882:1998``.
+
+``gnu_cxx_typeof``
+  The GNU typeof extension, as defined in the `GNU Typeof Documentation`_.
+
+.. _`GNU Typeof Documentation`: http://gcc.gnu.org/onlinedocs/gcc/Typeof.html#Typeof

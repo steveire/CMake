@@ -55,7 +55,12 @@ feature.
 The exact compile flags and language standard are deliberately not part
 of the user interface for this use-case.  CMake will compute the
 appropriate compile flags to use by considering the features specified
-for each target.
+for each target.  For example, a target may require the ``cxx_constexpr``
+feature, and CMake will add the ``-std=c++11`` flag if using the GNU
+compiler. A target may require the ``gnu_cxx_typeof`` feature, a GNU extension
+which requires the ``-std=gnu++98`` flag. If the target additionally
+requires the ``cxx_constexpr`` feature, then the ``-std=gnu++11`` flag
+will be used instead of ``-std=c++11`` for that compiler.
 
 Such compile flags are added even if the compiler supports the
 particular feature without the flag. For example, the GNU compiler

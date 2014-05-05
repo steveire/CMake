@@ -492,6 +492,7 @@ private:
   F(cxx_user_literals) \
   F(cxx_variable_templates) \
   F(cxx_variadic_macros) \
-  F(cxx_variadic_templates)
+  F(cxx_variadic_templates) \
+  F(gnu_cxx_typeof)
 
 #endif

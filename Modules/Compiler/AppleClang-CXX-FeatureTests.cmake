@@ -50,3 +50,4 @@ set(_cmake_feature_test_cxx_variadic_macros "${AppleClang40_CXX11}")
 
 set(AppleClang_CXX98 "${_cmake_oldestSupported} && __cplusplus >= 199711L")
 set(_cmake_feature_test_cxx_template_template_parameters "${AppleClang_CXX98}")
+set(_cmake_feature_test_gnu_cxx_typeof "${_cmake_oldestSupported} && !defined(__STRICT_ANSI__)")

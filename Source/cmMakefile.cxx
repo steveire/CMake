@@ -5233,6 +5233,8 @@ bool cmMakefile::HaveCxxStandardAvailable(cmTarget const* target,
   bool needCxx98 = false;
   bool needCxx11 = false;
   bool needCxx14 = false;
+  bool needCxxExt = false;
+  bool needCExt = false;
   this->CheckNeededCxxLanguage(feature, needCxx98, needCxx11, needCxx14);
 
   const char *existingCxxStandard = target->GetProperty("CXX_STANDARD");
@@ -5468,6 +5470,23 @@ AddRequiredTargetCFeature(cmTarget *target, const std::string& feature) const
   else if (setC90)
     {
     target->SetProperty("C_STANDARD", "90");
+    }
+  bool existingCxxExt = target->GetPropertyAsBool("CXX_EXTENSIONS");
+  if (needCxxExt && !existingCxxExt)
+    {
+    target->SetProperty("CXX_EXTENSIONS", "1");
+    if (!target->GetProperty("CXX_STANDARD"))
+      {
+      target->SetProperty("CXX_STANDARD", "98");
+      }
+  bool existingCExt = target->GetPropertyAsBool("C_EXTENSIONS");
+  if (needCExt && !existingCExt)
+    {
+    target->SetProperty("C_EXTENSIONS", "1");
+    if (!target->GetProperty("C_STANDARD"))
+      {
+      target->SetProperty("C_STANDARD", "90");
+      }
     }
   return true;
 }

@@ -107,3 +107,4 @@ set(_cmake_feature_test_cxx_extern_templates "${_cmake_oldestSupported} && ${GNU
 set(_cmake_feature_test_cxx_func_identifier "${_cmake_oldestSupported} && ${GNU_CXX0X_DEFINED}")
 set(_cmake_feature_test_cxx_variadic_macros "${_cmake_oldestSupported} && ${GNU_CXX0X_DEFINED}")
 set(_cmake_feature_test_cxx_template_template_parameters "${_cmake_oldestSupported} && __cplusplus")
+set(_cmake_feature_test_gnu_cxx_typeof "${_cmake_oldestSupported} && !defined(__STRICT_ANSI__)")
