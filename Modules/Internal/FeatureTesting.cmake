@@ -53,6 +53,31 @@ macro(record_compiler_features lang compile_flags feature_list)
         endif()
       endforeach()
     endif()
+
+    set(stdlib_features move forward initializer_lists pod_pair numeric_limits shared_ptr is_assignable is_copy_assignable)
+    # In C++14, feature to check whether certain functions are constexpr.
+    file(APPEND "${CMAKE_BINARY_DIR}/CMakeFiles/stdlib_feature_tests.${lang_lc}" "
+#include <ciso686>
+#if defined(LIBCXX_VERSION)
+#  Ok
+#else
+#  include <cstddef>
+#if !defined(__GLIBCXX__)
+#  error SOMETHING WRONG.
+#endif
+#endif
+    ")
+    foreach(feature ${stdlib_features})
+      if (_cmake_feature_test_${feature})
+#         if (${_cmake_feature_test_${feature}} STREQUAL 1)
+#           set(_feature_condition "\"1\" ")
+#         else()
+          set(_feature_condition "#if _cmake_feature_test_${feature}\n\"1\"\n#else\n\"0\"\n#endif\n")
+#         endif()
+        file(APPEND "${CMAKE_BINARY_DIR}/CMakeFiles/stdlib_feature_tests.${lang_lc}" "\"${lang}_FEATURE:\"\n${_feature_condition}\"${feature}\\n\"\n")
+      endif()
+    endforeach()
+
   else()
     file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
       "Detecting ${lang} [${compile_flags}] compiler features failed to compile with the following output:\n${_output}\n${_copy_error}\n\n")
