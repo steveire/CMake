@@ -1,6 +1,3 @@
-CMake
-*****
-
 Introduction
 ============
 
