@@ -1109,20 +1109,17 @@ void cmQtAutoGenerators::SetupAutoRccTarget(cmTarget const* target)
         std::vector<std::string> depends;
 
         std::string entriesList;
-        if (!cmSystemTools::IsOn(sf->GetPropertyForUser("GENERATED")))
+        if (qtMajorVersion == "5")
           {
-          if (qtMajorVersion == "5")
-            {
-            entriesList = this->ListQt5RccInputs(sf, target, depends);
-            }
-          else
-            {
-            entriesList = this->ListQt4RccInputs(sf, depends);
-            }
-          if (entriesList.empty())
-            {
-            return;
-            }
+          entriesList = this->ListQt5RccInputs(sf, target, depends);
+          }
+        else
+          {
+          entriesList = this->ListQt4RccInputs(sf, depends);
+          }
+        if (entriesList.empty())
+          {
+          return;
           }
         qrcInputs += qrcInputsSep;
         qrcInputs += entriesList;

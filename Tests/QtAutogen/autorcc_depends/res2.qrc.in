@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file>@CMAKE_CURRENT_SOURCE_DIR@/src_file.txt</file>
+        <file>@CMAKE_CURRENT_BINARY_DIR@/generated.txt</file>
+    </qresource>
+</RCC>

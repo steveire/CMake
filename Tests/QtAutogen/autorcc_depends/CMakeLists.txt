@@ -24,4 +24,17 @@ add_executable(test_res1
 )
 target_link_libraries(test_res1 ${QT_CORE_TARGET})
 add_custom_command(TARGET test_res1 POST_BUILD COMMAND
-  ${CMAKE_COMMAND} -E echo "$<TARGET_FILE:test_res1>" > info_file.txt)
+  ${CMAKE_COMMAND} -E echo "$<TARGET_FILE:test_res1>\n$<TARGET_FILE:test_res2>\n" > info_file.txt)
+
+add_custom_command(OUTPUT generated.txt
+  COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/res2_input.txt" "${CMAKE_CURRENT_BINARY_DIR}/generated.txt"
+  DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/res2_input.txt"
+)
+
+configure_file(res2.qrc.in res2_gen.qrc)
+
+add_executable(test_res2
+  test_res2.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/res2_gen.qrc
+)
+target_link_libraries(test_res2 ${QT_CORE_TARGET})
