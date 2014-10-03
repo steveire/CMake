@@ -25,6 +25,11 @@ definitions used when compiling, and conditional include directories and
 more.  The conditions may be based on the build configuration, target
 properties, platform information or any other queryable information.
 
+Places they're used.  Examples, link to cmake-buildsystem.
+
+Don't forget ADDITIONAL_MAKE_CLEAN_FILES
+
+
 Logical Expressions
 ===================
 

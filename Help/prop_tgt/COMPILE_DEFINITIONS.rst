@@ -14,6 +14,8 @@ CMake will automatically drop some definitions that are not supported
 by the native build tool.  The VS6 IDE does not support definition
 values with spaces (but NMake does).
 
+Note where -D is needed/not/accepted/ignored/relevant.
+
 .. include:: /include/COMPILE_DEFINITIONS_DISCLAIMER.txt
 
 Contents of ``COMPILE_DEFINITIONS`` may use "generator expressions" with the
