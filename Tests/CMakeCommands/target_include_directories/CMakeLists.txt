@@ -98,3 +98,16 @@ get_target_property(_res imp INCLUDE_DIRECTORIES)
 if (_res)
   message(SEND_ERROR "include_directories populated the INCLUDE_DIRECTORIES target property")
 endif()
+
+
+add_library(lll bar.cpp)
+target_include_directories(lll SYSTEM INTERFACE /opt/kf5)
+
+add_library(tgt foo.cpp)
+target_include_directories(tgt SYSTEM PRIVATE /opt/gnome)
+target_link_libraries(tgt lll)
+
+file(GENERATE
+  OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/out.txt"
+  CONTENT "$<TARGET_PROPERTY:tgt,SYSTEM_INCLUDE_DIRECTORIES>\n"
+)

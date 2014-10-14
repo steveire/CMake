@@ -251,6 +251,7 @@ Properties on Targets
    /prop_tgt/STATIC_LIBRARY_FLAGS_CONFIG
    /prop_tgt/STATIC_LIBRARY_FLAGS
    /prop_tgt/SUFFIX
+   /prop_tgt/SYSTEM_INCLUDE_DIRECTORIES
    /prop_tgt/TYPE
    /prop_tgt/VERSION
    /prop_tgt/VISIBILITY_INLINES_HIDDEN

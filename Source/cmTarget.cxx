@@ -1798,6 +1798,16 @@ void cmTarget::SetProperty(const std::string& prop, const char* value)
     this->Internal->SourceEntries.push_back(
                           new cmTargetInternals::TargetPropertyEntry(cge));
     }
+  else if(prop == "SYSTEM_INCLUDE_DIRECTORIES")
+    {
+    // TODO: This property is not a genex.
+    cmListFileBacktrace lfbt = this->Makefile->GetBacktrace();
+    cmGeneratorExpression ge(&lfbt);
+    deleteAndClear(this->Internal->IncludeDirectoriesEntries);
+    cmsys::auto_ptr<cmCompiledGeneratorExpression> cge = ge.Parse(value);
+    this->Internal->IncludeDirectoriesEntries.push_back(
+                          new cmTargetInternals::TargetPropertyEntry(cge));
+    }
   else
     {
     this->Properties.SetProperty(prop, value);
@@ -1885,6 +1895,14 @@ void cmTarget::AppendProperty(const std::string& prop, const char* value,
       cmsys::auto_ptr<cmCompiledGeneratorExpression> cge = ge.Parse(value);
       this->Internal->SourceEntries.push_back(
                             new cmTargetInternals::TargetPropertyEntry(cge));
+    }
+  else if(prop == "SYSTEM_INCLUDE_DIRECTORIES")
+    {
+    // TODO: Genex
+    cmListFileBacktrace lfbt = this->Makefile->GetBacktrace();
+    cmGeneratorExpression ge(&lfbt);
+    this->Internal->IncludeDirectoriesEntries.push_back(
+              new cmTargetInternals::TargetPropertyEntry(ge.Parse(value)));
     }
   else
     {
@@ -2991,6 +3009,7 @@ const char *cmTarget::GetProperty(const std::string& prop,
   MAKE_STATIC_PROP(BINARY_DIR);
   MAKE_STATIC_PROP(SOURCE_DIR);
   MAKE_STATIC_PROP(SOURCES);
+  MAKE_STATIC_PROP(SYSTEM_INCLUDE_DIRECTORIES);
 #undef MAKE_STATIC_PROP
   if(specialProps.empty())
     {
@@ -3005,6 +3024,7 @@ const char *cmTarget::GetProperty(const std::string& prop,
     specialProps.insert(propBINARY_DIR);
     specialProps.insert(propSOURCE_DIR);
     specialProps.insert(propSOURCES);
+    specialProps.insert(propSYSTEM_INCLUDE_DIRECTORIES);
     }
   if(specialProps.count(prop))
     {
@@ -3188,6 +3208,17 @@ const char *cmTarget::GetProperty(const std::string& prop,
           }
         }
       this->Properties.SetProperty("SOURCES", ss.str().c_str());
+      }
+    else if(prop == propSYSTEM_INCLUDE_DIRECTORIES)
+      {
+      if (this->Internal->IncludeDirectoriesEntries.empty())
+        {
+        return 0;
+        }
+
+      static std::string output;
+      MakePropertyList(output, this->Internal->IncludeDirectoriesEntries);
+      return output.c_str();
       }
     }
 
