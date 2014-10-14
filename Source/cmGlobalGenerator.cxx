@@ -1233,12 +1233,17 @@ bool cmGlobalGenerator::Compute()
 
 #ifdef CMAKE_BUILD_WITH_CMAKE
   // Iterate through all targets and set up automoc for those which have
-  // the AUTOMOC, AUTOUIC or AUTORCC property set
+  // the AUTOMOC, AUTOUIC or AUTORCC property set.
+  // Must be before any attempt to determine the link language (genex
+  // evaluation).
+  // See commit 79568f95ab920158fdcb857c9b99592ad5300a4e.
   AutogensType autogens;
   this->CreateQtAutoGeneratorsTargets(autogens);
 #endif
 
   unsigned int i;
+
+  //8e82773eb4e2bb8d135479410393532021d3b85b
 
   for (i = 0; i < this->LocalGenerators.size(); ++i)
     {
@@ -1252,8 +1257,20 @@ bool cmGlobalGenerator::Compute()
     }
 
   this->InitGeneratorTargets();
+  // Create per-target generator information.
+  // This must be done before tracing dependencies.
+  // Does this need to be done after anything?
+  // See commit 4b245580913e02ba577d6eb7825866300d364b53
+  // this->CreateGeneratorTargets();
 
+  // This must be called after the generator targets are created.
 #ifdef CMAKE_BUILD_WITH_CMAKE
+
+  // Does this need to be called after the generator targets are created? Yes,
+  // because it calls GetLinkInterfaceDependentStringProperty
+  // Needs to be called before TraceDependencies because it adds custom
+  // commands. However, if needed could it be moved? We know a lot about the
+  // particular custom commands.
   for (AutogensType::iterator it = autogens.begin(); it != autogens.end();
        ++it)
     {
@@ -1294,11 +1311,16 @@ void cmGlobalGenerator::Generate()
     this->LocalGenerators[i]->GenerateTargetManifest();
     }
 
+  // Must be after CreateGeneratorTargets because the gen targets must exist?
+  // Future proofing only? See commit 5de63265e3a22d9a8aa5ad437a5030ccfcbcd02d
+  // And so that generated file language is accounted for. Must be before
+  // ComputeTargetDepends so that all files are present.
   this->ProcessEvaluationFiles();
 
   // Compute the inter-target dependencies.
   if(!this->ComputeTargetDepends())
     {
+    // 6bea84353c76d392a9da11557ab888fa18ea1955
     return;
     }
 
