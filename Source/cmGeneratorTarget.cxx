@@ -700,7 +700,7 @@ cmGeneratorTarget::GetCompilePDBName(const std::string& config) const
 std::string
 cmGeneratorTarget::GetCompilePDBPath(const std::string& config) const
 {
-  std::string dir = this->Target->GetCompilePDBDirectory(config);
+  std::string dir = this->GetCompilePDBDirectory(config);
   std::string name = this->GetCompilePDBName(config);
   if(dir.empty() && !name.empty())
     {
@@ -1441,6 +1441,16 @@ bool cmGeneratorTarget::HaveBuildTreeRPATH(const std::string& config) const
     return !impl->Libraries.empty();
     }
   return false;
+}
+
+//----------------------------------------------------------------------------
+std::string cmGeneratorTarget::GetCompilePDBDirectory(const std::string& config) const
+{
+  if(cmTarget::CompileInfo const* info = this->Target->GetCompileInfo(config))
+    {
+    return info->CompilePdbDir;
+    }
+  return "";
 }
 
 //----------------------------------------------------------------------------

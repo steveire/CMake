@@ -228,12 +228,6 @@ public:
       pdb output directory is given.  */
   std::string GetPDBDirectory(const std::string& config) const;
 
-  /** Get the directory in which to place the target compiler .pdb file.
-      If the configuration name is given then the generator will add its
-      subdirectory for that configuration.  Otherwise just the canonical
-      compiler pdb output directory is given.  */
-  std::string GetCompilePDBDirectory(const std::string& config = "") const;
-
   const char* ImportedGetLocation(const std::string& config) const;
 
   /** Get the target major and minor version numbers interpreted from
@@ -499,7 +493,11 @@ private:
                          ImportInfo& info) const;
 
   // Cache target compile paths for each configuration.
-  struct CompileInfo;
+  struct CompileInfo
+  {
+    std::string CompilePdbDir;
+  };
+
   CompileInfo const* GetCompileInfo(const std::string& config) const;
 
   std::string ProcessSourceItemCMP0049(const std::string& s);
