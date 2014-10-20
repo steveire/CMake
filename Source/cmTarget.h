@@ -447,15 +447,6 @@ private:
   mutable std::map<std::string, std::string> MaxLanguageStandards;
   bool BuildInterfaceIncludesAppended;
 
-  // Cache target output paths for each configuration.
-  struct OutputInfo
-  {
-    std::string OutDir;
-    std::string ImpDir;
-    std::string PdbDir;
-  };
-
-  OutputInfo const* GetOutputInfo(const std::string& config) const;
   bool
   ComputeOutputDir(const std::string& config,
                    bool implib, std::string& out) const;

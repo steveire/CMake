@@ -361,6 +361,16 @@ public:
   std::vector<cmSourceFile*> const*
   GetSourceDepends(cmSourceFile const* sf) const;
 
+  // Cache target output paths for each configuration.
+  struct OutputInfo
+  {
+    std::string OutDir;
+    std::string ImpDir;
+    std::string PdbDir;
+  };
+
+  OutputInfo const* GetOutputInfo(const std::string& config) const;
+
   /** Get the name of the pdb file for the target.  */
   std::string GetPDBName(const std::string& config="") const;
 

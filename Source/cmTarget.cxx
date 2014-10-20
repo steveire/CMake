@@ -1934,51 +1934,6 @@ bool cmTarget::HaveWellDefinedOutputFiles() const
 }
 
 //----------------------------------------------------------------------------
-cmTarget::OutputInfo const* cmTarget::GetOutputInfo(
-    const std::string& config) const
-{
-  // There is no output information for imported targets.
-  if(this->IsImported())
-    {
-    return 0;
-    }
-
-  // Only libraries and executables have well-defined output files.
-  if(!this->HaveWellDefinedOutputFiles())
-    {
-    std::string msg = "cmTarget::GetOutputInfo called for ";
-    msg += this->GetName();
-    msg += " which has type ";
-    msg += cmTarget::GetTargetTypeName(this->GetType());
-    this->GetMakefile()->IssueMessage(cmake::INTERNAL_ERROR, msg);
-    return 0;
-    }
-
-  // Lookup/compute/cache the output information for this configuration.
-  std::string config_upper;
-  if(!config.empty())
-    {
-    config_upper = cmSystemTools::UpperCase(config);
-    }
-  typedef cmTargetInternals::OutputInfoMapType OutputInfoMapType;
-  OutputInfoMapType::const_iterator i =
-    this->Internal->OutputInfoMap.find(config_upper);
-  if(i == this->Internal->OutputInfoMap.end())
-    {
-    OutputInfo info;
-    this->ComputeOutputDir(config, false, info.OutDir);
-    this->ComputeOutputDir(config, true, info.ImpDir);
-    if(!this->ComputePDBOutputDir("PDB", config, info.PdbDir))
-      {
-      info.PdbDir = info.OutDir;
-      }
-    OutputInfoMapType::value_type entry(config_upper, info);
-    i = this->Internal->OutputInfoMap.insert(entry).first;
-    }
-  return &i->second;
-}
-
-//----------------------------------------------------------------------------
 std::string cmTarget::GetPDBDirectory(const std::string& config) const
 {
   if(OutputInfo const* info = this->GetOutputInfo(config))
