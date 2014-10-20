@@ -321,6 +321,14 @@ public:
   std::string GetDirectory(const std::string& config = "",
                            bool implib = false) const;
 
+  // Compute the set of languages compiled by the target.  This is
+  // computed every time it is called because the languages can change
+  // when source file properties are changed and we do not have enough
+  // information to forward these property changes to the targets
+  // until we have per-target object file properties.
+  void GetLanguages(std::set<std::string>& languages,
+                    std::string const& config) const;
+
   void ComputeLinkInterface(const std::string& config,
                             OptionalLinkInterface& iface) const;
 

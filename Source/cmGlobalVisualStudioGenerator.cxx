@@ -822,7 +822,11 @@ cmGlobalVisualStudioGenerator::TargetIsFortranOnly(cmTarget const& target)
     return false;
     }
   }
-  target.GetLanguages(languages, "");
+    cmGeneratorTarget *gtgt = target.GetMakefile()->GetLocalGenerator()
+                                    ->GetGlobalGenerator()
+                                    ->GetGeneratorTarget(&target);
+
+  gtgt->GetLanguages(languages, "");
   if(languages.size() == 1)
     {
     if(*languages.begin() == "Fortran")

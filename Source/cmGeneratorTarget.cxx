@@ -1419,7 +1419,7 @@ cmGeneratorTarget::ComputeLinkImplementationLanguages(
   // This target needs runtime libraries for its source languages.
   std::set<std::string> languages;
   // Get languages used in our source files.
-  this->Target->GetLanguages(languages, config);
+  this->GetLanguages(languages, config);
   // Copy the set of langauges to the link implementation.
   for(std::set<std::string>::iterator li = languages.begin();
       li != languages.end(); ++li)
@@ -3590,6 +3590,43 @@ std::string cmGeneratorTarget::GetDirectory(const std::string& config,
     return implib? info->ImpDir : info->OutDir;
     }
   return "";
+}
+
+//----------------------------------------------------------------------------
+void cmGeneratorTarget::GetLanguages(std::set<std::string>& languages,
+                            const std::string& config) const
+{
+  std::vector<cmSourceFile*> sourceFiles;
+  this->Target->GetSourceFiles(sourceFiles, config);
+  for(std::vector<cmSourceFile*>::const_iterator
+        i = sourceFiles.begin(); i != sourceFiles.end(); ++i)
+    {
+    const std::string& lang = (*i)->GetLanguage();
+    if(!lang.empty())
+      {
+      languages.insert(lang);
+      }
+    }
+
+  std::vector<cmGeneratorTarget*> objectLibraries;
+  std::vector<cmSourceFile const*> externalObjects;
+    {
+    this->GetExternalObjects(externalObjects, config);
+    for(std::vector<cmSourceFile const*>::const_iterator
+          i = externalObjects.begin(); i != externalObjects.end(); ++i)
+      {
+      std::string objLib = (*i)->GetObjectLibrary();
+      if (cmGeneratorTarget* tgt = this->Makefile->FindGeneratorTargetToUse(objLib))
+        {
+        objectLibraries.push_back(tgt);
+        }
+      }
+    }
+  for(std::vector<cmGeneratorTarget*>::const_iterator
+      i = objectLibraries.begin(); i != objectLibraries.end(); ++i)
+    {
+    (*i)->GetLanguages(languages, config);
+    }
 }
 
 //----------------------------------------------------------------------------
