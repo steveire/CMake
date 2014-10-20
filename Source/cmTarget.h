@@ -481,13 +481,6 @@ private:
   void ComputeImportInfo(std::string const& desired_config,
                          ImportInfo& info) const;
 
-  // Cache target compile paths for each configuration.
-  struct CompileInfo
-  {
-    std::string CompilePdbDir;
-  };
-
-  CompileInfo const* GetCompileInfo(const std::string& config) const;
 
   std::string ProcessSourceItemCMP0049(const std::string& s);
 
