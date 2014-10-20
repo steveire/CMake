@@ -413,6 +413,16 @@ public:
     cmLinkImplItem const& LinkImplItem;
   };
 
+  bool
+  ComputeOutputDir(const std::string& config,
+                   bool implib, std::string& out) const;
+  bool ComputePDBOutputDir(const std::string& kind, const std::string& config,
+                           std::string& out) const;
+
+  /** Return whether this target uses the default value for its output
+      directory.  */
+  bool UsesDefaultOutputDir(const std::string& config, bool implib) const;
+
   /**
    * Flags for a given source file as used in this target. Typically assigned
    * via SET_TARGET_PROPERTIES when the property is a list of source files.

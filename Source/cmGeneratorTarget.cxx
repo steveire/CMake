@@ -1549,9 +1549,9 @@ cmGeneratorTarget::OutputInfo const* cmGeneratorTarget::GetOutputInfo(
   if(i == this->OutputInfoMap.end())
     {
     OutputInfo info;
-    this->Target->ComputeOutputDir(config, false, info.OutDir);
-    this->Target->ComputeOutputDir(config, true, info.ImpDir);
-    if(!this->Target->ComputePDBOutputDir("PDB", config, info.PdbDir))
+    this->ComputeOutputDir(config, false, info.OutDir);
+    this->ComputeOutputDir(config, true, info.ImpDir);
+    if(!this->ComputePDBOutputDir("PDB", config, info.PdbDir))
       {
       info.PdbDir = info.OutDir;
       }
@@ -1683,7 +1683,7 @@ cmGeneratorTarget::CompileInfo const* cmGeneratorTarget::GetCompileInfo(
   if(i == this->CompileInfoMap.end())
     {
     CompileInfo info;
-    this->Target->ComputePDBOutputDir("COMPILE_PDB", config, info.CompilePdbDir);
+    this->ComputePDBOutputDir("COMPILE_PDB", config, info.CompilePdbDir);
     CompileInfoMapType::value_type entry(config_upper, info);
     i = this->CompileInfoMap.insert(entry).first;
     }
@@ -3770,6 +3770,157 @@ void cmGeneratorTarget::GetLanguages(std::set<std::string>& languages,
     {
     (*i)->GetLanguages(languages, config);
     }
+}
+
+//----------------------------------------------------------------------------
+bool cmGeneratorTarget::ComputeOutputDir(const std::string& config,
+                                bool implib, std::string& out) const
+{
+  bool usesDefaultOutputDir = false;
+  std::string conf = config;
+
+  // Look for a target property defining the target output directory
+  // based on the target type.
+  std::string targetTypeName = this->Target->GetOutputTargetType(implib);
+  const char* propertyName = 0;
+  std::string propertyNameStr = targetTypeName;
+  if(!propertyNameStr.empty())
+    {
+    propertyNameStr += "_OUTPUT_DIRECTORY";
+    propertyName = propertyNameStr.c_str();
+    }
+
+  // Check for a per-configuration output directory target property.
+  std::string configUpper = cmSystemTools::UpperCase(conf);
+  const char* configProp = 0;
+  std::string configPropStr = targetTypeName;
+  if(!configPropStr.empty())
+    {
+    configPropStr += "_OUTPUT_DIRECTORY_";
+    configPropStr += configUpper;
+    configProp = configPropStr.c_str();
+    }
+
+  // Select an output directory.
+  if(const char* config_outdir = this->GetProperty(configProp))
+    {
+    // Use the user-specified per-configuration output directory.
+    out = config_outdir;
+
+    // Skip per-configuration subdirectory.
+    conf = "";
+    }
+  else if(const char* outdir = this->GetProperty(propertyName))
+    {
+    // Use the user-specified output directory.
+    out = outdir;
+    }
+  else if(this->Target->GetType() == cmTarget::EXECUTABLE)
+    {
+    // Lookup the output path for executables.
+    out = this->Makefile->GetSafeDefinition("EXECUTABLE_OUTPUT_PATH");
+    }
+  else if(this->Target->GetType() == cmTarget::STATIC_LIBRARY ||
+          this->Target->GetType() == cmTarget::SHARED_LIBRARY ||
+          this->Target->GetType() == cmTarget::MODULE_LIBRARY)
+    {
+    // Lookup the output path for libraries.
+    out = this->Makefile->GetSafeDefinition("LIBRARY_OUTPUT_PATH");
+    }
+  if(out.empty())
+    {
+    // Default to the current output directory.
+    usesDefaultOutputDir = true;
+    out = ".";
+    }
+
+  // Convert the output path to a full path in case it is
+  // specified as a relative path.  Treat a relative path as
+  // relative to the current output directory for this makefile.
+  out = (cmSystemTools::CollapseFullPath
+         (out, this->Makefile->GetStartOutputDirectory()));
+
+  // The generator may add the configuration's subdirectory.
+  if(!conf.empty())
+    {
+    const char *platforms = this->Makefile->GetDefinition(
+      "CMAKE_XCODE_EFFECTIVE_PLATFORMS");
+    std::string suffix =
+      usesDefaultOutputDir && platforms ? "$(EFFECTIVE_PLATFORM_NAME)" : "";
+    this->Makefile->GetLocalGenerator()->GetGlobalGenerator()->
+      AppendDirectoryForConfig("/", conf, suffix, out);
+    }
+
+  return usesDefaultOutputDir;
+}
+
+//----------------------------------------------------------------------------
+bool cmGeneratorTarget::ComputePDBOutputDir(const std::string& kind,
+                                   const std::string& config,
+                                   std::string& out) const
+{
+  // Look for a target property defining the target output directory
+  // based on the target type.
+  const char* propertyName = 0;
+  std::string propertyNameStr = kind;
+  if(!propertyNameStr.empty())
+    {
+    propertyNameStr += "_OUTPUT_DIRECTORY";
+    propertyName = propertyNameStr.c_str();
+    }
+  std::string conf = config;
+
+  // Check for a per-configuration output directory target property.
+  std::string configUpper = cmSystemTools::UpperCase(conf);
+  const char* configProp = 0;
+  std::string configPropStr = kind;
+  if(!configPropStr.empty())
+    {
+    configPropStr += "_OUTPUT_DIRECTORY_";
+    configPropStr += configUpper;
+    configProp = configPropStr.c_str();
+    }
+
+  // Select an output directory.
+  if(const char* config_outdir = this->GetProperty(configProp))
+    {
+    // Use the user-specified per-configuration output directory.
+    out = config_outdir;
+
+    // Skip per-configuration subdirectory.
+    conf = "";
+    }
+  else if(const char* outdir = this->GetProperty(propertyName))
+    {
+    // Use the user-specified output directory.
+    out = outdir;
+    }
+  if(out.empty())
+    {
+    return false;
+    }
+
+  // Convert the output path to a full path in case it is
+  // specified as a relative path.  Treat a relative path as
+  // relative to the current output directory for this makefile.
+  out = (cmSystemTools::CollapseFullPath
+         (out, this->Makefile->GetStartOutputDirectory()));
+
+  // The generator may add the configuration's subdirectory.
+  if(!conf.empty())
+    {
+    this->Makefile->GetLocalGenerator()->GetGlobalGenerator()->
+      AppendDirectoryForConfig("/", conf, "", out);
+    }
+  return true;
+}
+
+//----------------------------------------------------------------------------
+bool cmGeneratorTarget::UsesDefaultOutputDir(const std::string& config,
+                                    bool implib) const
+{
+  std::string dir;
+  return this->ComputeOutputDir(config, implib, dir);
 }
 
 //----------------------------------------------------------------------------

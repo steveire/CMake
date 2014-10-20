@@ -291,10 +291,6 @@ public:
   /** Get a build-tree directory in which to place target support files.  */
   std::string GetSupportDirectory() const;
 
-  /** Return whether this target uses the default value for its output
-      directory.  */
-  bool UsesDefaultOutputDir(const std::string& config, bool implib) const;
-
   /** @return whether this target have a well defined output file name. */
   bool HaveWellDefinedOutputFiles() const;
 
@@ -440,12 +436,6 @@ private:
   mutable bool DebugCompileFeaturesDone;
   mutable std::map<std::string, std::string> MaxLanguageStandards;
   bool BuildInterfaceIncludesAppended;
-
-  bool
-  ComputeOutputDir(const std::string& config,
-                   bool implib, std::string& out) const;
-  bool ComputePDBOutputDir(const std::string& kind, const std::string& config,
-                           std::string& out) const;
 
   // Cache import information from properties for each configuration.
   struct ImportInfo
