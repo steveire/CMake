@@ -222,13 +222,6 @@ public:
       the link dependencies of this target.  */
   std::string CheckCMP0004(std::string const& item) const;
 
-  /** Get the directory in which this target will be built.  If the
-      configuration name is given then the generator will add its
-      subdirectory for that configuration.  Otherwise just the canonical
-      output directory is given.  */
-  std::string GetDirectory(const std::string& config = "",
-                           bool implib = false) const;
-
   /** Get the directory in which this targets .pdb files will be placed.
       If the configuration name is given then the generator will add its
       subdirectory for that configuration.  Otherwise just the canonical
@@ -480,7 +473,13 @@ private:
   bool BuildInterfaceIncludesAppended;
 
   // Cache target output paths for each configuration.
-  struct OutputInfo;
+  struct OutputInfo
+  {
+    std::string OutDir;
+    std::string ImpDir;
+    std::string PdbDir;
+  };
+
   OutputInfo const* GetOutputInfo(const std::string& config) const;
   bool
   ComputeOutputDir(const std::string& config,

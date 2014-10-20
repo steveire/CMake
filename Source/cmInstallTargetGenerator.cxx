@@ -77,7 +77,7 @@ void cmInstallTargetGenerator::GenerateScriptForConfig(std::ostream& os,
     }
   else
     {
-    fromDirConfig = this->Target->GetDirectory(config, this->ImportLibrary);
+    fromDirConfig = this->GeneratorTarget->GetDirectory(config, this->ImportLibrary);
     fromDirConfig += "/";
     }
   std::string toDir = this->GetInstallDestination();

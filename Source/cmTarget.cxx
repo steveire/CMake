@@ -53,14 +53,6 @@ const char* cmTarget::GetTargetTypeName(TargetType targetType)
 }
 
 //----------------------------------------------------------------------------
-struct cmTarget::OutputInfo
-{
-  std::string OutDir;
-  std::string ImpDir;
-  std::string PdbDir;
-};
-
-//----------------------------------------------------------------------------
 struct cmTarget::CompileInfo
 {
   std::string CompilePdbDir;
@@ -2032,25 +2024,6 @@ cmTarget::CompileInfo const* cmTarget::GetCompileInfo(
     i = this->Internal->CompileInfoMap.insert(entry).first;
     }
   return &i->second;
-}
-
-//----------------------------------------------------------------------------
-std::string cmTarget::GetDirectory(const std::string& config,
-                                   bool implib) const
-{
-  if (this->IsImported())
-    {
-    // Return the directory from which the target is imported.
-    return
-      cmSystemTools::GetFilenamePath(
-      this->ImportedGetFullPath(config, implib));
-    }
-  else if(OutputInfo const* info = this->GetOutputInfo(config))
-    {
-    // Return the directory in which the target will be built.
-    return implib? info->ImpDir : info->OutDir;
-    }
-  return "";
 }
 
 //----------------------------------------------------------------------------
