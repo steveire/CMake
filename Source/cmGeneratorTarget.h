@@ -374,6 +374,15 @@ public:
   /** Get the name of the pdb file for the target.  */
   std::string GetPDBName(const std::string& config="") const;
 
+  typedef std::map<std::string, OutputInfo> OutputInfoMapType;
+  mutable OutputInfoMapType OutputInfoMap;
+
+  /** Get the directory in which this targets .pdb files will be placed.
+      If the configuration name is given then the generator will add its
+      subdirectory for that configuration.  Otherwise just the canonical
+      pdb output directory is given.  */
+  std::string GetPDBDirectory(const std::string& config) const;
+
   /** Whether this library has soname enabled and platform supports it.  */
   bool HasSOName(const std::string& config) const;
 
@@ -384,8 +393,8 @@ public:
 
   CompileInfo const* GetCompileInfo(const std::string& config) const;
 
-  typedef std::map<std::string, cmTarget::CompileInfo> CompileInfoMapType;
-  CompileInfoMapType CompileInfoMap;
+  typedef std::map<std::string, CompileInfo> CompileInfoMapType;
+  mutable CompileInfoMapType CompileInfoMap;
 
   /** Get the name of the compiler pdb file for the target.  */
   std::string GetCompilePDBName(const std::string& config="") const;

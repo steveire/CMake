@@ -71,9 +71,6 @@ public:
   // The backtrace when the target was created.
   cmListFileBacktrace Backtrace;
 
-  typedef std::map<std::string, cmTarget::OutputInfo> OutputInfoMapType;
-  OutputInfoMapType OutputInfoMap;
-
   typedef std::map<std::string, cmTarget::ImportInfo> ImportInfoMapType;
   ImportInfoMapType ImportInfoMap;
 
@@ -1931,17 +1928,6 @@ bool cmTarget::HaveWellDefinedOutputFiles() const
     this->GetType() == cmTarget::SHARED_LIBRARY ||
     this->GetType() == cmTarget::MODULE_LIBRARY ||
     this->GetType() == cmTarget::EXECUTABLE;
-}
-
-//----------------------------------------------------------------------------
-std::string cmTarget::GetPDBDirectory(const std::string& config) const
-{
-  if(OutputInfo const* info = this->GetOutputInfo(config))
-    {
-    // Return the directory in which the target will be built.
-    return info->PdbDir;
-    }
-  return "";
 }
 
 //----------------------------------------------------------------------------

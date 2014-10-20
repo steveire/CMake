@@ -704,7 +704,7 @@ cmGeneratorTarget::GetCompilePDBPath(const std::string& config) const
   std::string name = this->GetCompilePDBName(config);
   if(dir.empty() && !name.empty())
     {
-    dir = this->Target->GetPDBDirectory(config);
+    dir = this->GetPDBDirectory(config);
     }
   if(!dir.empty())
     {
@@ -1446,7 +1446,7 @@ bool cmGeneratorTarget::HaveBuildTreeRPATH(const std::string& config) const
 //----------------------------------------------------------------------------
 std::string cmGeneratorTarget::GetCompilePDBDirectory(const std::string& config) const
 {
-  if(cmTarget::CompileInfo const* info = this->GetCompileInfo(config))
+  if(CompileInfo const* info = this->GetCompileInfo(config))
     {
     return info->CompilePdbDir;
     }
@@ -1533,7 +1533,7 @@ cmGeneratorTarget::OutputInfo const* cmGeneratorTarget::GetOutputInfo(
     std::string msg = "cmTarget::GetOutputInfo called for ";
     msg += this->GetName();
     msg += " which has type ";
-    msg += cmTarget::GetTargetTypeName(this->GetType());
+    msg += cmTarget::GetTargetTypeName(this->Target->GetType());
     this->GetMakefile()->IssueMessage(cmake::INTERNAL_ERROR, msg);
     return 0;
     }
@@ -1551,7 +1551,7 @@ cmGeneratorTarget::OutputInfo const* cmGeneratorTarget::GetOutputInfo(
     OutputInfo info;
     this->Target->ComputeOutputDir(config, false, info.OutDir);
     this->Target->ComputeOutputDir(config, true, info.ImpDir);
-    if(!this->ComputePDBOutputDir("PDB", config, info.PdbDir))
+    if(!this->Target->ComputePDBOutputDir("PDB", config, info.PdbDir))
       {
       info.PdbDir = info.OutDir;
       }
@@ -1610,7 +1610,7 @@ void cmGeneratorTarget::GetTargetVersion(bool soversion,
   minor = 0;
   patch = 0;
 
-  assert(this->GetType() != INTERFACE_LIBRARY);
+  assert(this->Target->GetType() != cmTarget::INTERFACE_LIBRARY);
 
   // Look for a VERSION or SOVERSION property.
   const char* prop = soversion? "SOVERSION" : "VERSION";
@@ -1662,12 +1662,12 @@ cmGeneratorTarget::CompileInfo const* cmGeneratorTarget::GetCompileInfo(
     return 0;
     }
 
-  if(this->GetType() > cmTarget::OBJECT_LIBRARY)
+  if(this->Target->GetType() > cmTarget::OBJECT_LIBRARY)
     {
     std::string msg = "cmTarget::GetCompileInfo called for ";
     msg += this->GetName();
     msg += " which has type ";
-    msg += cmTarget::GetTargetTypeName(this->GetType());
+    msg += cmTarget::GetTargetTypeName(this->Target->GetType());
     this->GetMakefile()->IssueMessage(cmake::INTERNAL_ERROR, msg);
     return 0;
     }
@@ -1950,6 +1950,17 @@ cmGeneratorTarget::ReportPropertyOrigin(const std::string &p,
   areport += "\"):\n" + report;
 
   this->Makefile->GetCMakeInstance()->IssueMessage(cmake::LOG, areport);
+}
+
+//----------------------------------------------------------------------------
+std::string cmGeneratorTarget::GetPDBDirectory(const std::string& config) const
+{
+  if(OutputInfo const* info = this->GetOutputInfo(config))
+    {
+    // Return the directory in which the target will be built.
+    return info->PdbDir;
+    }
+  return "";
 }
 
 //----------------------------------------------------------------------------
@@ -3716,7 +3727,7 @@ std::string cmGeneratorTarget::GetDirectory(const std::string& config,
       cmSystemTools::GetFilenamePath(
       this->Target->ImportedGetFullPath(config, implib));
     }
-  else if(cmTarget::OutputInfo const* info = this->Target->GetOutputInfo(config))
+  else if(OutputInfo const* info = this->GetOutputInfo(config))
     {
     // Return the directory in which the target will be built.
     return implib? info->ImpDir : info->OutDir;
