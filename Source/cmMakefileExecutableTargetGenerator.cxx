@@ -375,7 +375,7 @@ void cmMakefileExecutableTargetGenerator::WriteExecutableRule(bool relink)
   cmOStringStream minorStream;
   int major;
   int minor;
-  this->Target->GetTargetVersion(major, minor);
+  this->GeneratorTarget->GetTargetVersion(major, minor);
   majorStream << major;
   minorStream << minor;
   targetVersionMajor = majorStream.str();

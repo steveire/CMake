@@ -230,17 +230,6 @@ public:
 
   const char* ImportedGetLocation(const std::string& config) const;
 
-  /** Get the target major and minor version numbers interpreted from
-      the VERSION property.  Version 0 is returned if the property is
-      not set or cannot be parsed.  */
-  void GetTargetVersion(int& major, int& minor) const;
-
-  /** Get the target major, minor, and patch version numbers
-      interpreted from the VERSION or SOVERSION property.  Version 0
-      is returned if the property is not set or cannot be parsed.  */
-  void
-  GetTargetVersion(bool soversion, int& major, int& minor, int& patch) const;
-
   /** Test for special case of a third-party shared library that has
       no soname at all.  */
   bool IsImportedSharedLibWithoutSOName(const std::string& config) const;

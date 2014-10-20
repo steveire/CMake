@@ -346,6 +346,17 @@ public:
   void LookupLinkItems(std::vector<std::string> const& names,
                        std::vector<cmLinkItem>& items) const;
 
+  /** Get the target major and minor version numbers interpreted from
+      the VERSION property.  Version 0 is returned if the property is
+      not set or cannot be parsed.  */
+  void GetTargetVersion(int& major, int& minor) const;
+
+  /** Get the target major, minor, and patch version numbers
+      interpreted from the VERSION or SOVERSION property.  Version 0
+      is returned if the property is not set or cannot be parsed.  */
+  void
+  GetTargetVersion(bool soversion, int& major, int& minor, int& patch) const;
+
   /** Get sources that must be built before the given source.  */
   std::vector<cmSourceFile*> const*
   GetSourceDepends(cmSourceFile const* sf) const;
