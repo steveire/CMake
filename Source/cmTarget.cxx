@@ -6343,13 +6343,17 @@ cmTargetInternals::ComputeLinkImplementationLibraries(
                        le->Backtrace, evaluated != le->Value));
       }
 
-    std::set<std::string> const& seenProps = cge->GetSeenTargetProperties();
-    for (std::set<std::string>::const_iterator it = seenProps.begin();
-        it != seenProps.end(); ++it)
-      {
-      if (!thisTarget->GetProperty(*it))
+    std::map<cmTarget const*, std::set<std::string> > const& ppp = cge->GetSeenTargetProperties();
+    std::map<cmTarget const*, std::set<std::string> >::const_iterator i = ppp.find(thisTarget);
+    if (i != ppp.end()) {
+      std::set<std::string> const& seenProps = i->second;
+      for (std::set<std::string>::const_iterator it = seenProps.begin();
+          it != seenProps.end(); ++it)
         {
-        thisTarget->LinkImplicitNullProperties.insert(*it);
+        if (!thisTarget->GetProperty(*it))
+          {
+          thisTarget->LinkImplicitNullProperties.insert(*it);
+          }
         }
       }
     cge->GetMaxLanguageStandard(thisTarget, thisTarget->MaxLanguageStandards);

@@ -94,7 +94,8 @@ public:
   std::set<cmTarget*> const& GetTargets() const
     { return this->DependTargets; }
 
-  std::set<std::string> const& GetSeenTargetProperties() const
+  std::map<cmTarget const*, std::set<std::string> >
+  const& GetSeenTargetProperties() const
     { return this->SeenTargetProperties; }
 
   std::set<cmTarget const*> const& GetAllTargetsSeen() const
@@ -156,7 +157,8 @@ private:
 
   mutable std::set<cmTarget*> DependTargets;
   mutable std::set<cmTarget const*> AllTargetsSeen;
-  mutable std::set<std::string> SeenTargetProperties;
+  mutable std::map<cmTarget const*, std::set<std::string> >
+                                                        SeenTargetProperties;
   mutable std::map<cmTarget const*, std::map<std::string, std::string> >
                                                           MaxLanguageStandard;
   mutable std::string Output;

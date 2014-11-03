@@ -3239,14 +3239,12 @@ static const struct TargetPropertyNode : public cmGeneratorExpressionNode
       context->AllTargets.insert(target);
       }
 
-    if (target == context->HeadTarget)
-      {
-      // Keep track of the properties seen while processing.
-      // The evaluation of the LINK_LIBRARIES generator expressions
-      // will check this to ensure that properties have one consistent
-      // value for all evaluations.
-      context->SeenTargetProperties.insert(propertyName);
-      }
+    // Keep track of the properties seen while processing.
+    // The evaluation of the LINK_LIBRARIES generator expressions
+    // will check this to ensure that properties have one consistent
+    // value for all evaluations.
+    context->SeenTargetProperties[target].insert(propertyName);
+
     if (propertyName == "SOURCES")
       {
       context->SourceSensitiveTargets.insert(target);
