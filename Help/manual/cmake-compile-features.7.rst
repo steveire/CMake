@@ -97,6 +97,11 @@ that because most compilers enable extensions by default, this could
 expose cross-platform bugs in user code or in the headers of third-party
 dependencies.
 
+If the compile feature
+extension is known to CMake, such as ``gnu_cxx_typeof``, specifying the
+extension in :command:`target_compile_features` has a similar effect requires the
+CXX_EXTENSIONS.
+
 If the compiler in use is newer than the :manual:`cmake(1)` in use, the
 compiler may support features which are not recorded as supported by
 CMake.  In such cases, if the version of CMake generally
