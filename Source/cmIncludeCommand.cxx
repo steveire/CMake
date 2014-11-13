@@ -72,6 +72,7 @@ bool cmIncludeCommand
 
   if(fname.empty())
     {
+    // Should have policy.
     this->Makefile->IssueMessage(cmake::AUTHOR_WARNING,
                                  "include() given empty file name (ignored).");
     return true;
