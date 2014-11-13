@@ -97,6 +97,29 @@ that because most compilers enable extensions by default, this could
 expose cross-platform bugs in user code or in the headers of third-party
 dependencies.
 
+If the compiler in use is newer than the :manual:`cmake(1)` in use, the
+compiler may support features which are not recorded as supported by
+CMake.  In such cases, if the version of CMake generally
+supports the feature, it is possible to extend the
+:variable:`CMAKE_CXX_COMPILE_FEATURES` variable to allow use of the compiler
+feature. For example:
+
+.. code-block:: cmake
+
+  cmake_minimum_required(VERSION 3.2)
+
+  if (NOT MSVC_VERSION VERSION_LESS 1900
+      # CMake 3.3 records support for this feature. Add it temporarily
+      # as a workaround here.
+      AND CMAKE_VERSION VERSION_LESS 3.3)
+    list(APPEND CMAKE_CXX_COMPILE_FEATURES cxx_some_known_feature)
+  endif()
+
+  add_library(some_lib some_lib.cpp)
+  target_compile_features(some_lib PRIVATE
+    cxx_some_known_feature) # No error with MSVC 1900 and CMake 3.2.
+
+
 Optional Compile Features
 =========================
 
