@@ -3482,6 +3482,10 @@ void cmTarget::ExpandLinkItems(std::string const& prop,
     {
     dagChecker.SetTransitivePropertiesOnly();
     }
+  cmGeneratorExpressionDAGChecker linkDagChecker(lfbt,
+                                                this->GetName(),
+                                                "LINK_LIBRARIES", 0, 0);
+
   std::vector<std::string> libs;
   cmsys::auto_ptr<cmCompiledGeneratorExpression> cge = ge.Parse(value);
   cmSystemTools::ExpandListArgument(cge->Evaluate(
@@ -3489,7 +3493,7 @@ void cmTarget::ExpandLinkItems(std::string const& prop,
                                       config,
                                       false,
                                       headTarget,
-                                      this, &dagChecker), libs);
+                                      this, &linkDagChecker), libs);
   this->LookupLinkItems(libs, items);
   hadHeadSensitiveCondition = cge->GetHadHeadSensitiveCondition();
 }
