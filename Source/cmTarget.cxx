@@ -735,6 +735,7 @@ void cmTarget::GetSourceFiles(std::vector<std::string> &files,
                               const std::string& config) const
 {
   assert(this->GetType() != INTERFACE_LIBRARY);
+  // Test head?
 
   if (!this->Makefile->IsConfigured())
     {
@@ -5212,6 +5213,7 @@ cmTarget::GetObjectLibrariesCMP0026(std::vector<cmTarget*>& objlibs) const
   // there is no cmGeneratorTarget at configure-time, so search the SOURCES
   // for TARGET_OBJECTS instead for backwards compatibility with OLD
   // behavior of CMP0024 and CMP0026 only.
+// Broken?
   typedef cmTargetInternals::TargetPropertyEntry
                               TargetPropertyEntry;
   for(std::vector<TargetPropertyEntry*>::const_iterator
