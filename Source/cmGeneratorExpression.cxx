@@ -103,13 +103,9 @@ const char* cmCompiledGeneratorExpression::EvaluateWithContext(
     for(std::map<cmTarget const*, std::set<std::string> >::const_iterator
           p = context.SeenTargetProperties.begin();
           p != context.SeenTargetProperties.end(); ++p)
-      {
-      for(std::set<std::string>::const_iterator
-            e = p->second.begin();
-            e != p->second.end(); ++e)
-        {
-        this->SeenTargetProperties[p->first].insert(*e);
-        }
+      {  
+      this->SeenTargetProperties[p->first].insert(p->second.begin(),
+                                                  p->second.end());
       }
     if (context.HadError)
       {
