@@ -6,6 +6,17 @@ set(_cmake_oldestSupported "((__clang_major__ * 100) + __clang_minor__) >= 304")
 
 include("${CMAKE_CURRENT_LIST_DIR}/Clang-CXX-TestableFeatures.cmake")
 
+# TODO: check SD6 macros?
+# cxx_fold_expressions
+# cxx_terse_static_assert
+# cxx_template_template_typename
+# cxx_nested_namespace_definitions
+# cxx_enum_and_namespace_attributes
+# cxx_u8_literals
+# cxx_const_eval_for_non_type_template_params
+#_cxx_new_rules_for_auto_with_braced_init_lists
+
+
 set(Clang34_CXX14 "((__clang_major__ * 100) + __clang_minor__) >= 304 && __cplusplus > 201103L")
 # http://llvm.org/bugs/show_bug.cgi?id=19242
 set(_cmake_feature_test_cxx_attribute_deprecated "${Clang34_CXX14}")
