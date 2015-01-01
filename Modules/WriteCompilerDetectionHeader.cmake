@@ -599,6 +599,8 @@ function(write_compiler_detection_header
 #    define ${def_value} __thread
 #  elif ${prefix_arg}_COMPILER_IS_MSVC
 #    define ${def_value} __declspec(thread)
+#  elif defined(__HP)
+#    define ${def_value} __declspec(__thread)
 #  else
 // ${def_value} not defined for this configuration.
 #  endif
