@@ -1890,13 +1890,7 @@ static void cmCLI_ExpandListUnique(const char* str,
 {
   std::vector<std::string> tmp;
   cmSystemTools::ExpandListArgument(str, tmp);
-  for(std::vector<std::string>::iterator i = tmp.begin(); i != tmp.end(); ++i)
-    {
-    if(emitted.insert(*i).second)
-      {
-      out.push_back(*i);
-      }
-    }
+  cmCopyIf(tmp.begin(), tmp.end(), out.end(), cmEmitFilter(emitted));
 }
 
 //----------------------------------------------------------------------------

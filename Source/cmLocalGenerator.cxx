@@ -1230,14 +1230,8 @@ void cmLocalGenerator::GetIncludeDirectories(std::vector<std::string>& dirs,
     }
 
   // Construct the final ordered include directory list.
-  for(std::vector<std::string>::const_iterator i = includes.begin();
-      i != includes.end(); ++i)
-    {
-    if(emitted.insert(*i).second)
-      {
-      dirs.push_back(*i);
-      }
-    }
+  cmCopyIf(includes.begin(), includes.end(),
+           dirs.end(), cmEmitFilter(emitted));
 
   for(std::vector<std::string>::const_iterator i = implicitDirs.begin();
       i != implicitDirs.end(); ++i)
