@@ -20,12 +20,16 @@
 #define MOTOROLA_SREC_MAX_LINE_LENGTH (2+2+8+(256*2)+2)
 
 // might go to SystemTools ?
-static bool cm_IsHexChar(char c)
+struct cm_IsHexChar
 {
-  return (((c >= '0') && (c <= '9'))
-         || ((c >= 'a') && (c <= 'f'))
-         || ((c >= 'A') && (c <= 'F')));
-}
+  typedef char argument_type;
+  bool operator()(char c) const
+  {
+    return (((c >= '0') && (c <= '9'))
+          || ((c >= 'a') && (c <= 'f'))
+          || ((c >= 'A') && (c <= 'F')));
+  }
+};
 
 static unsigned int ChompStrlen(const char* line)
 {
@@ -203,12 +207,11 @@ cmHexFileConverter::FileType cmHexFileConverter::DetermineFileType(
     return Binary;
     }
 
-  for (unsigned int i = 1; i < slen; i++)
+  if (std::find_if(buf + 1,
+                   buf + slen,
+                   std::not1(cm_IsHexChar())) != buf + slen)
     {
-    if (!cm_IsHexChar(buf[i]))
-      {
-      return Binary;
-      }
+    return Binary;
     }
   return type;
 }
