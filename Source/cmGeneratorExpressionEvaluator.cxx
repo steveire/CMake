@@ -3018,6 +3018,7 @@ static const struct JoinNode : public cmGeneratorExpressionNode
                        cmGeneratorExpressionDAGChecker *) const
   {
     std::vector<std::string> list;
+    // Can this be made more algorithmic? With something like an istream?
     cmSystemTools::ExpandListArgument(parameters.front(), list);
     return cmJoin(list, parameters[1]);
   }

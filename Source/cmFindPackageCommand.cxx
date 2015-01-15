@@ -1869,6 +1869,7 @@ private:
         {
         continue;
         }
+      // copy_if
       for(std::vector<std::string>::const_iterator ni = this->Names.begin();
           ni != this->Names.end(); ++ni)
         {

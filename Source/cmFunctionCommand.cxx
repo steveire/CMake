@@ -155,6 +155,23 @@ bool cmFunctionHelperCommand::InvokeInitialPass
   return true;
 }
 
+template<typename T>
+class StaticIter
+{
+  T const& assign;
+public:
+  explicit StaticIter(T const& assign_): assign(assign_) {}
+  cmListFileArgument operator()(cmListFileArgument& arg) const {
+    arg.FilePath = assign;
+    return arg;
+  }
+};
+
+template<typename T>
+StaticIter<T> cmMakeStatic(T const& t) {
+  return StaticIter<T>(t);
+}
+
 bool cmFunctionFunctionBlocker::
 IsFunctionBlocked(const cmListFileFunction& lff, cmMakefile &mf,
                   cmExecutionStatus &)

@@ -31,6 +31,8 @@ bool cmWriteFileCommand
   bool overwrite = true;
   i++;
 
+  // Add policy? Behavior is odd.
+  // find_if
   for(;i != args.end(); ++i)
     {
     if ( *i == "APPEND" )

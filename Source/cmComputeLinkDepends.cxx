@@ -667,6 +667,7 @@ void cmComputeLinkDepends::InferDependencies()
     // Intersect the sets for this item.
     DependSetList::const_iterator i = sets->begin();
     DependSet common = *i;
+    // Review
     for(++i; i != sets->end(); ++i)
       {
       DependSet intersection;

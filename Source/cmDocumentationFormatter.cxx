@@ -205,12 +205,8 @@ void cmDocumentationFormatter
       {
       os << "  " << op->Name;
       this->TextIndent = "                                 ";
-      int align = static_cast<int>(strlen(this->TextIndent))-4;
-      for(int i = static_cast<int>(op->Name.size()); i < align; ++i)
-        {
-        os << " ";
-        }
-      if (op->Name.size() > strlen(this->TextIndent)-4 )
+      os << std::string(strlen(this->TextIndent) - 4 - op->Name.size(), " ");
+      if (op->Name.size() > strlen(this->TextIndent) - 4)
         {
         os << "\n";
         os.write(this->TextIndent, strlen(this->TextIndent)-2);

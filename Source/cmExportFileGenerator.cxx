@@ -1157,16 +1157,13 @@ void cmExportFileGenerator::GenerateMissingTargetsCheckCode(std::ostream& os,
   os << "# Make sure the targets which have been exported in some other \n"
         "# export set exist.\n"
         "unset(${CMAKE_FIND_PACKAGE_NAME}_NOT_FOUND_MESSAGE_targets)\n"
-        "foreach(_target ";
+        "foreach(_target \"";
+
   std::set<std::string> emitted;
-  for(unsigned int i=0; i<missingTargets.size(); ++i)
-    {
-    if (emitted.insert(missingTargets[i]).second)
-      {
-      os << "\"" << missingTargets[i] <<  "\" ";
-      }
-    }
-  os << ")\n"
+  cmJoin(missingTargets.begin(), missingTargets.end(),
+         os, "\" \"", FilterEmitted<std::string>(emitted));
+
+  os << "\")\n"
         "  if(NOT TARGET \"${_target}\" )\n"
         "    set(${CMAKE_FIND_PACKAGE_NAME}_NOT_FOUND_MESSAGE_targets \""
         "${${CMAKE_FIND_PACKAGE_NAME}_NOT_FOUND_MESSAGE_targets} ${_target}\")"

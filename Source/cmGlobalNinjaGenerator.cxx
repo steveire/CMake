@@ -318,10 +318,14 @@ cmGlobalNinjaGenerator::WriteCustomCommandBuild(const std::string& command,
     {
     //we need to track every dependency that comes in, since we are trying
     //to find dependencies that are side effects of build commands
-    for(cmNinjaDeps::const_iterator i = deps.begin(); i != deps.end(); ++i)
-      {
-      this->CombinedCustomCommandExplicitDependencies.insert(EncodePath(*i));
-      }
+  std::transform(deps.begin(), deps.end(),
+            std::inserter(this->CombinedCustomCommandExplicitDependencies,
+                      this->CombinedCustomCommandExplicitDependencies.begin()),
+            EncodePath);
+//   for(cmNinjaDeps::const_iterator i = deps.begin(); i != deps.end(); ++i)
+//     {
+//     this->CombinedCustomCommandExplicitDependencies.insert( EncodePath(*i) );
+//     }
     }
 }
 

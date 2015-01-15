@@ -44,6 +44,19 @@ bool cmSetTargetPropertiesCommand
     else
       {
       numFiles++;
+      if (this->Makefile->IsAlias(*j))
+        {
+        this->SetError("can not be used on an ALIAS target.");
+        return false;
+        }
+
+      if(cmTarget* target = mf->FindTargetToUse(*j))
+        {
+        std::string message = "Can not find target to add properties to: ";
+        message += *j;
+        this->SetError(message);
+        return false;
+        }
       }
     }
   if(propertyPairs.empty())
@@ -57,19 +70,15 @@ bool cmSetTargetPropertiesCommand
   int i;
   for(i = 0; i < numFiles; ++i)
     {
-    if (this->Makefile->IsAlias(args[i]))
+    cmTarget* target = mf->FindTargetToUse(args[i]);
+
+    // now loop through all the props and set them
+    unsigned int k;
+    for (k = 0; k < propertyPairs.size(); k = k + 2)
       {
-      this->SetError("can not be used on an ALIAS target.");
-      return false;
-      }
-    bool ret = cmSetTargetPropertiesCommand::SetOneTarget
-      (args[i],propertyPairs,this->Makefile);
-    if (!ret)
-      {
-      std::string message = "Can not find target to add properties to: ";
-      message += args[i];
-      this->SetError(message);
-      return false;
+      target->SetProperty(propertyPairs[k],
+                          propertyPairs[k+1].c_str());
+      target->CheckProperty(propertyPairs[k], mf);
       }
     }
   return true;
@@ -80,21 +89,5 @@ bool cmSetTargetPropertiesCommand
                std::vector<std::string> &propertyPairs,
                cmMakefile *mf)
 {
-  if(cmTarget* target = mf->FindTargetToUse(tname))
-    {
-    // now loop through all the props and set them
-    unsigned int k;
-    for (k = 0; k < propertyPairs.size(); k = k + 2)
-      {
-      target->SetProperty(propertyPairs[k],
-                          propertyPairs[k+1].c_str());
-      target->CheckProperty(propertyPairs[k], mf);
-      }
-    }
-  // if file is not already in the makefile, then add it
-  else
-    {
-    return false;
-    }
   return true;
 }

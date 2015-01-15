@@ -1233,6 +1233,7 @@ void cmLocalGenerator::GetIncludeDirectories(std::vector<std::string>& dirs,
   cmCopyIf(includes.begin(), includes.end(),
            dirs.end(), cmEmitFilter(emitted));
 
+  // Finder struct?
   for(std::vector<std::string>::const_iterator i = implicitDirs.begin();
       i != implicitDirs.end(); ++i)
     {

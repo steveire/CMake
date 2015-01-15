@@ -507,6 +507,10 @@ void cmDependsC::SetupTransforms()
     // Construct the regular expression to match lines to be
     // transformed.
     std::string xform = "^([ \t]*#[ \t]*(include|import)[ \t]*)(";
+  // Again, need transform?
+//     std::ostringstream xf_os;
+//     cmJoin(this->TransformRules.begin(), this->TransformRules.end(),
+//            xf_os, "|");
     const char* sep = "";
     for(TransformRulesType::const_iterator tri = this->TransformRules.begin();
         tri != this->TransformRules.end(); ++tri)

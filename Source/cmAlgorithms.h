@@ -369,4 +369,115 @@ std::reverse_iterator<Iter> cmMakeReverseIterator(Iter it)
   return std::reverse_iterator<Iter>(it);
 }
 
+template<typename Range>
+void cmJoin(Range range, std::ostream& os, const char* delimiter)
+{
+  if (r.empty())
+    {
+    return std::string();
+    }
+  typedef typename Range::value_type ValueType;
+  typedef typename Range::const_iterator InputIt;
+  InputIt first = r.begin();
+  InputIt last = r.end();
+  --last;
+  std::copy(first, last,
+      std::ostream_iterator<ValueType>(os, delimiter));
+
+  os << *last;
+
+  return os.str();
+}
+
+template<typename Range>
+std::string cmJoin(Range const& r, std::ostream& os, std::string delimiter)
+{
+  return cmJoin(r, os, delimiter.c_str());
+};
+
+namespace ContainerAlgorithms {
+
+template<typename T>
+class FilterEmitted
+{
+  mutable std::set<T> set_;
+public:
+  typedef T argument_type;
+  FilterEmitted(std::set<T> &set)
+    : set_(set)
+  {
+
+  }
+
+  bool operator()(T const& s) const
+  {
+    return set_.insert(s).second;
+  }
+};
+
+template<typename T>
+class Joiner
+    : public std::iterator<std::output_iterator_tag, void, void, void, void>
+{
+  std::ostream& os_;
+  const std::string delimiter_;
+public:
+  Joiner(std::ostream& os, std::string delimiter)
+    : os_(os), delimiter_(delimiter)
+  {
+
+  }
+  Joiner operator=(T t) {
+    os_ << delimiter_ << t;
+    return *this;
+  }
+  Joiner& operator*()     {return *this;}
+  Joiner& operator++()    {return *this;}
+  Joiner& operator++(int) {return *this;}
+};
+
+}
+
+template<typename T>
+ContainerAlgorithms::FilterEmitted<T> cmEmitFilter(std::set<T> &set)
+{
+  return ContainerAlgorithms::FilterEmitted<T>(set);
+}
+
+template<typename Range>
+ContainerAlgorithms::ReverseRange<Range> cmRangeReverser(Range const& r)
+{
+  return ContainerAlgorithms::Range<Range>(r.rbegin(), r.end());
+}
+
+template<class InputIt, class OutputIt, class UnaryPredicate>
+OutputIt cmCopyIf(InputIt first, InputIt last,
+                 OutputIt out, UnaryPredicate pred)
+{
+    return std::remove_copy_if(first, last, out, std::not1(pred));
+}
+
+template<class Range, class UnaryPredicate>
+std::string cmJoin(Range range,
+                   std::ostream& os, const char* delimiter,
+                   UnaryPredicate pred)
+{
+  typedef typename Range::const_iterator InputIt;
+  InputIt first = r.begin();
+  InputIt last = r.end();
+  for ( ; first != last && !pred(*first); ++first)
+    {
+    }
+  if (first == last)
+    {
+    return std::string();
+    }
+  os << *first;
+  ++first;
+  typedef typename Range::value_type ValueType;
+  return cmCopyIf(first, last,
+                  std::ostream_iterator<ValueType>(os, delimiter),
+                  pred);
+}
+
 #endif

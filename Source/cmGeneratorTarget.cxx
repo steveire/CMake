@@ -670,6 +670,7 @@ cmGeneratorTarget::UseObjectLibraries(std::vector<std::string>& objs,
       it = objectFiles.begin(); it != objectFiles.end(); ++it)
     {
     std::string objLib = (*it)->GetObjectLibrary();
+  // This common?
     if (cmTarget* tgt = this->Makefile->FindTargetToUse(objLib))
       {
       objectLibraries.push_back(tgt);

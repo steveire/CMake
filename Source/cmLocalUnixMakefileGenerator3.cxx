@@ -1964,6 +1964,7 @@ void cmLocalUnixMakefileGenerator3::ClearDependencies(cmMakefile* mf,
       l != files.end(); ++l)
     {
     std::string dir = cmSystemTools::GetFilenamePath(*l);
+  // Transform first and re-use memory?
 
     // Clear the implicit dependency makefile.
     std::string dependFile = dir + "/depend.make";
@@ -2094,12 +2095,8 @@ void cmLocalUnixMakefileGenerator3
     {
     cmakefileStream
       << "set(CMAKE_INCLUDE_TRANSFORMS\n";
-    for(std::vector<std::string>::const_iterator tri = transformRules.begin();
-        tri != transformRules.end(); ++tri)
-      {
-      cmakefileStream << "  "
-          << cmOutputConverter::EscapeForCMake(*tri) << "\n";
-      }
+    cmJoinTransform(transformRules, cmakefileStream, "\n  ",
+                    cmLocalGenerator::EscapeForCMake);
     cmakefileStream
       << "  )\n";
     }

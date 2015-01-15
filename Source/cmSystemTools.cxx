@@ -647,6 +647,7 @@ bool cmSystemTools::RunSingleCommand(std::vector<std::string>const& command,
                                      double timeout )
 {
   std::vector<const char*> argv;
+  argv.reserve(command.size() + 1);
   for(std::vector<std::string>::const_iterator a = command.begin();
       a != command.end(); ++a)
     {
@@ -1273,6 +1274,7 @@ cmSystemTools::FileFormat cmSystemTools::GetFileFormat(const char* cext)
 
 bool cmSystemTools::Split(const char* s, std::vector<std::string>& l)
 {
+  // Audit callers.
   std::vector<std::string> temp;
   bool res = Superclass::Split(s, temp);
   l.insert(l.end(), temp.begin(), temp.end());
@@ -1367,6 +1369,7 @@ std::string cmSystemTools::CollapseCombinedPath(std::string const& dir,
     }
 
   std::vector<std::string>::iterator i = fileComponents.begin()+1;
+  // Looks like algorithm.
   while(i != fileComponents.end() && *i == ".." && dirComponents.size() > 1)
     {
     ++i; // Remove ".." file component.

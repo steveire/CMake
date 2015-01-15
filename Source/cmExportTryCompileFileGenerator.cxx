@@ -108,6 +108,7 @@ cmExportTryCompileFileGenerator::PopulateProperties(cmTarget const* target,
       for(std::vector<std::string>::const_iterator li = depends.begin();
           li != depends.end(); ++li)
         {
+        // This common?
         cmTarget *tgt = target->GetMakefile()->FindTargetToUse(*li);
         if(tgt && emitted.insert(tgt).second)
           {

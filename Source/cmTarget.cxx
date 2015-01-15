@@ -3038,6 +3038,7 @@ const char *cmTarget::GetProperty(const std::string& prop,
 
       static std::string output;
       output = "";
+    // Transform
       std::string sep;
       for (std::vector<cmValueWithOrigin>::const_iterator
           it = this->Internal->LinkImplementationPropertyEntries.begin(),
