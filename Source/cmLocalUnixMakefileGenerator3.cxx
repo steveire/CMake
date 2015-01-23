@@ -2234,14 +2234,7 @@ cmLocalUnixMakefileGenerator3::ConvertToQuotedOutputPath(const char* p,
     if(!cmSystemTools::GetForceUnixPaths())
       {
       slash = "\\";
-      for(std::string::iterator i = components[0].begin();
-          i != components[0].end(); ++i)
-        {
-        if(*i == '/')
-          {
-          *i = '\\';
-          }
-        }
+      std::replace(components[0].begin(), components[0].end(), '/', '\\');
       }
 #endif
 
