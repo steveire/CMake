@@ -462,6 +462,7 @@ void cmExportFileGenerator::PopulateIncludeDirectoriesInterface(
     "depend on the configuration, policy values or the link interface are "
     "not supported.  Consider using target_include_directories instead.";
     mf->IssueMessage(cmake::FATAL_ERROR, e.str());
+    // http://thread.gmane.org/gmane.comp.programming.tools.cmake.devel/7554/focus=7625
     return;
     }
 
