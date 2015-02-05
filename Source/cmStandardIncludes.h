@@ -51,7 +51,6 @@
 #include <string>
 #include <iterator>
 #include <algorithm>
-#include <functional>
 #include <map>
 #include <set>
 
