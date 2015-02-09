@@ -489,13 +489,13 @@ cmExportInstallFileGenerator
       ++expIt)
     {
     const cmExportSet* exportSet = expIt->second;
-    std::vector<cmTargetExport*> const* targets =
-                                                 exportSet->GetTargetExports();
+    std::vector<cmTargetExport*> const& targets =
+                                                *exportSet->GetTargetExports();
 
     bool containsTarget = false;
-    for(unsigned int i=0; i<targets->size(); i++)
+    for(unsigned int i=0; i<targets.size(); i++)
       {
-      if (name == (*targets)[i]->Target->GetName())
+      if (name == targets[i]->Target->GetName())
         {
         containsTarget = true;
         break;
@@ -504,11 +504,11 @@ cmExportInstallFileGenerator
 
     if (containsTarget)
       {
-      std::vector<cmInstallExportGenerator const*> const* installs =
-                                                 exportSet->GetInstallations();
-      for(unsigned int i=0; i<installs->size(); i++)
+      std::vector<cmInstallExportGenerator const*> const& installs =
+                                                *exportSet->GetInstallations();
+      for(unsigned int i=0; installs.size(); ++i)
         {
-        namespaces.push_back((*installs)[i]->GetNamespace());
+        namespaces.push_back(installs[i]->GetNamespace());
         }
       }
     }
