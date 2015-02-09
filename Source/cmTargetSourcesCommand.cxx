@@ -44,6 +44,7 @@ void cmTargetSourcesCommand
 std::string cmTargetSourcesCommand
 ::Join(const std::vector<std::string> &content)
 {
+  // TODO: Add prefix?
   return cmJoin(content, ";");
 }
 
