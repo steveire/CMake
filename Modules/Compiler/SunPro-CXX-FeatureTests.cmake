@@ -49,4 +49,9 @@ set(_cmake_feature_test_cxx_extern_templates "${SolarisStudio124_CXX11}")
 set(_cmake_feature_test_cxx_func_identifier "${SolarisStudio124_CXX11}")
 set(_cmake_feature_test_cxx_variadic_macros "${SolarisStudio124_CXX11}")
 
-set(_cmake_feature_test_cxx_template_template_parameters "${_cmake_oldestSupported} && __cplusplus")
+set(_cmake_feature_test_cxx_template_template_parameters "${_cmake_oldestSupported} && __cplusplus >= 199711L")
+
+# Currently unsupported.
+# set(_cmake_feature_test_cxx_user_literals)
+# set(_cmake_feature_test_cxx_reference_qualified_functions)
+# set(_cmake_feature_test_cxx_decltype_incomplete_return_types)
