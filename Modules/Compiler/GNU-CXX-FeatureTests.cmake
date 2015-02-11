@@ -79,6 +79,10 @@ set(_cmake_feature_test_cxx_auto_type "${GNU44_CXX11}")
 set(_cmake_feature_test_cxx_defaulted_functions "${GNU44_CXX11}")
 set(_cmake_feature_test_cxx_deleted_functions "${GNU44_CXX11}")
 set(_cmake_feature_test_cxx_generalized_initializers "${GNU44_CXX11}")
+# Note: If GNU 4.3 is ever supported, consider adding cxx_inline_namespaces
+# backward compatibility using strong namespaces to
+# WriteCompilerDetectionHeader.
+# https://gcc.gnu.org/onlinedocs/gcc/Namespace-Association.html#Namespace-Association
 set(_cmake_feature_test_cxx_inline_namespaces "${GNU44_CXX11}")
 set(_cmake_feature_test_cxx_sizeof_member "${GNU44_CXX11}")
 set(_cmake_feature_test_cxx_strong_enums "${GNU44_CXX11}")
