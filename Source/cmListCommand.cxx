@@ -173,6 +173,80 @@ bool cmListCommand::HandleLengthCommand(std::vector<std::string> const& args)
   return true;
 }
 
+template<typename Range>
+bool parseItems(Range const& args,
+                std::vector<size_t>& items,
+                size_t nitem)
+{
+  for (typename Range::const_iterator it = args.begin();
+       it != args.end(); ++it)
+    {
+    int item = atoi(it->c_str());
+    if ( item < 0 )
+      {
+      item = (int)nitem + item;
+      }
+    if ( item < 0 || nitem <= (size_t)item )
+      {
+      return false;
+      }
+    items.push_back(static_cast<size_t>(item));
+    }
+  return true;
+}
+
+#ifdef Q_COMPILER_RVALUE_REFS
+#define cmMove std::move
+#else
+#define cmMove
+#endif
+
+template<typename Range>
+typename Range::const_iterator cmRemoveN(Range r, size_t n)
+{
+  typename Range::const_iterator writer = r.begin();
+  typename Range::const_iterator reader = writer + n;
+  typename Range::const_iterator end = r.end();
+
+  for ( ; reader != end; ++writer, ++reader)
+    {
+    *writer = cmMove(*reader);
+    }
+  return writer;
+}
+
+template<typename Range, typename InputRange>
+typename Range::const_iterator cmRemoveMany(Range r, InputRange const& rem)
+{
+  typename InputRange::const_iterator remIt = rem.begin();
+
+  typename Range::iterator writer = r.begin() + *remIt;
+  ++remIt;
+  size_t remCount = 1;
+  for ( ; writer != r.end() && remIt != rem.end(); ++remCount, ++remIt)
+    {
+    writer = cmRemoveN(cmRange(writer, r.begin() + *remIt), remCount);
+    }
+  writer = cmRemoveN(writer, r.end(), remCount);
+  return writer;
+}
+
+template<typename Range, typename InputRange>
+typename Range::const_iterator cmGetMany(Range r, InputRange const& get)
+{
+  typename InputRange::const_iterator getIt = get.begin();
+
+  typename Range::iterator writer = r.begin() + *getIt;
+  ++getIt;
+  size_t remCount = 1;
+  for ( ; writer != r.end() && remIt != rem.end(); ++remCount, ++remIt)
+    {
+    writer = cmRemoveN(cmRange(writer, r.begin() + *remIt), remCount);
+    }
+  writer = cmRemoveN(writer, r.end(), remCount);
+  return writer;
+}
+
 //----------------------------------------------------------------------------
 bool cmListCommand::HandleGetCommand(std::vector<std::string> const& args)
 {
@@ -202,26 +276,23 @@ bool cmListCommand::HandleGetCommand(std::vector<std::string> const& args)
   size_t cc;
   const char* sep = "";
   size_t nitem = varArgsExpanded.size();
-  for ( cc = 2; cc < args.size()-1; cc ++ )
+  std::vector<size_t> toGet;
+  if (!parseItems(cmRange(args).advance(2).retreat(1), toGet, nitem))
     {
-    int item = atoi(args[cc].c_str());
-    value += sep;
-    sep = ";";
-    if ( item < 0 )
-      {
-      item = (int)nitem + item;
-      }
-    if ( item < 0 || nitem <= (size_t)item )
-      {
-      std::ostringstream str;
-      str << "index: " << item << " out of range (-"
-          << nitem << ", "
-          << nitem - 1 << ")";
-      this->SetError(str.str());
-      return false;
-      }
-    value += varArgsExpanded[item];
+    std::ostringstream str;
+    str << "index: " << item << " out of range (-"
+        << nitem << ", "
+        << nitem - 1 << ")";
+    this->SetError(str.str());
+    return false;
     }
+  std::sort(toGet.begin(), toGet.end());
+  std::unique(toGet.begin(), toGet.end());
+
+//   for ()
+//     {
+//     value += varArgsExpanded[item];
+//     }
 
   this->Makefile->AddDefinition(variableName, value.c_str());
   return true;
@@ -484,23 +555,15 @@ bool cmListCommand::HandleRemoveAtCommand(
   size_t cc;
   std::vector<size_t> removed;
   size_t nitem = varArgsExpanded.size();
-  for ( cc = 2; cc < args.size(); ++ cc )
+  size_t nitem = varArgsExpanded.size();
+  if (!parseItems(cmRange(args).advance(2), removed, nitem))
     {
-    int item = atoi(args[cc].c_str());
-    if ( item < 0 )
-      {
-      item = (int)nitem + item;
-      }
-    if ( item < 0 || nitem <= (size_t)item )
-      {
-      std::ostringstream str;
-      str << "index: " << item << " out of range (-"
-          << nitem << ", "
-          << nitem - 1 << ")";
-      this->SetError(str.str());
-      return false;
-      }
-    removed.push_back(static_cast<size_t>(item));
+    std::ostringstream str;
+    str << "index: " << item << " out of range (-"
+        << nitem << ", "
+        << nitem - 1 << ")";
+    this->SetError(str.str());
+    return false;
     }
 
   std::sort(removed.begin(), removed.end());
