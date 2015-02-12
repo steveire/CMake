@@ -3304,7 +3304,11 @@ public:
       item.Target->GetLinkInterface(this->Config, this->HeadTarget);
     if(!iface) { return; }
 
-    this->Languages.insert(iface->Languages.begin(), iface->Languages.end());
+    for(std::vector<std::string>::const_iterator
+          li = iface->Languages.begin(); li != iface->Languages.end(); ++li)
+      {
+      this->Languages.insert(*li);
+      }
 
     for(std::vector<cmLinkItem>::const_iterator
           li = iface->Libraries.begin(); li != iface->Libraries.end(); ++li)
