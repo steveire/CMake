@@ -90,16 +90,6 @@ bool cmTargetLinkLibrariesCommand
     return true;
     }
 
-  if(this->Target->GetType() == cmTarget::OBJECT_LIBRARY)
-    {
-    std::ostringstream e;
-    e << "Object library target \"" << args[0] << "\" "
-      << "may not link to anything.";
-    this->Makefile->IssueMessage(cmake::FATAL_ERROR, e.str());
-    cmSystemTools::SetFatalErrorOccured();
-    return true;
-    }
-
   if (this->Target->GetType() == cmTarget::UTILITY)
     {
     std::ostringstream e;

@@ -1,5 +1,15 @@
 include(RunCMake)
 
+function (run_object_lib_build name)
+  set(RunCMake_TEST_NO_CLEAN 1)
+  run_cmake(${name})
+  set(RunCMake_TEST_BINARY_DIR ${RunCMake_BINARY_DIR}/${name}-build)
+  run_cmake_command(${name}-build ${CMAKE_COMMAND} --build .)
+endfunction ()
+
+run_object_lib_build(LinkObjLHSShared)
+run_object_lib_build(LinkObjLHSStatic)
+
 run_cmake(BadSourceExpression1)
 run_cmake(BadSourceExpression2)
 run_cmake(BadSourceExpression3)
@@ -8,7 +18,6 @@ run_cmake(BadObjSource2)
 run_cmake(Export)
 run_cmake(Import)
 run_cmake(Install)
-run_cmake(LinkObjLHS)
 run_cmake(LinkObjRHS1)
 run_cmake(LinkObjRHS2)
 run_cmake(MissingSource)
