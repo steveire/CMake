@@ -1529,8 +1529,9 @@ void cmMakefile::AddLinkLibraryForTarget(const std::string& target,
         e << "Target \"" << lib << "\" of type "
           << cmTarget::GetTargetTypeName(tgt->GetType())
           << " may not be linked into another target.  "
-          << "One may link only to STATIC or SHARED libraries, or "
-          << "to executables with the ENABLE_EXPORTS property set.";
+          << "One may link only to STATIC, SHARED, OBJECT, or "
+          << "INTERFACE libraries, or to executables with "
+          << "the ENABLE_EXPORTS property set.";
         this->IssueMessage(cmake::FATAL_ERROR, e.str());
         }
       }
