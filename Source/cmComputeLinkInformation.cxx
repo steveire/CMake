@@ -638,7 +638,8 @@ void cmComputeLinkInformation::AddItem(std::string const& item,
         (this->UseImportLibrary &&
          (impexe || tgt->GetType() == cmTarget::SHARED_LIBRARY));
 
-      if(tgt->GetType() == cmTarget::INTERFACE_LIBRARY)
+      if(tgt->GetType() == cmTarget::INTERFACE_LIBRARY ||
+         tgt->GetType() == cmTarget::OBJECT_LIBRARY)
         {
         this->Items.push_back(Item(std::string(), true, tgt));
         return;

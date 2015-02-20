@@ -577,6 +577,7 @@ bool cmTarget::IsLinkable() const
   return (this->GetType() == cmTarget::STATIC_LIBRARY ||
           this->GetType() == cmTarget::SHARED_LIBRARY ||
           this->GetType() == cmTarget::MODULE_LIBRARY ||
+          this->GetType() == cmTarget::OBJECT_LIBRARY ||
           this->GetType() == cmTarget::UNKNOWN_LIBRARY ||
           this->GetType() == cmTarget::INTERFACE_LIBRARY ||
           this->IsExecutableWithExports());
@@ -1311,7 +1312,8 @@ void cmTarget::AddLinkLibrary(cmMakefile& mf,
   }
 
   if (cmGeneratorExpression::Find(lib) != std::string::npos
-      || (tgt && tgt->GetType() == INTERFACE_LIBRARY)
+      || (tgt && (tgt->GetType() == INTERFACE_LIBRARY ||
+                  tgt->GetType() == OBJECT_LIBRARY))
       || (target == lib ))
     {
     return;
@@ -6408,19 +6410,6 @@ cmTarget const* cmTarget::FindTargetToLink(std::string const& name) const
   if(tgt && tgt->GetType() == cmTarget::EXECUTABLE &&
      !tgt->IsExecutableWithExports())
     {
-    tgt = 0;
-    }
-
-  if(tgt && tgt->GetType() == cmTarget::OBJECT_LIBRARY)
-    {
-    std::ostringstream e;
-    e << "Target \"" << this->GetName() << "\" links to "
-      "OBJECT library \"" << tgt->GetName() << "\" but this is not "
-      "allowed.  "
-      "One may link only to STATIC or SHARED libraries, or to executables "
-      "with the ENABLE_EXPORTS property set.";
-    cmake* cm = this->Makefile->GetCMakeInstance();
-    cm->IssueMessage(cmake::FATAL_ERROR, e.str(), this->GetBacktrace());
     tgt = 0;
     }
 

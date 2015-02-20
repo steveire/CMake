@@ -1521,6 +1521,7 @@ void cmMakefile::AddLinkLibraryForTarget(const std::string& target,
       // if it is not a static or shared library then you can not link to it
       if(!((tgt->GetType() == cmTarget::STATIC_LIBRARY) ||
            (tgt->GetType() == cmTarget::SHARED_LIBRARY) ||
+           (tgt->GetType() == cmTarget::OBJECT_LIBRARY) ||
            (tgt->GetType() == cmTarget::INTERFACE_LIBRARY) ||
            tgt->IsExecutableWithExports()))
         {

@@ -1934,7 +1934,8 @@ void cmLocalGenerator::OutputLinkLibraries(std::string& linkLibraries,
   ItemVector const& items = cli.GetItems();
   for(ItemVector::const_iterator li = items.begin(); li != items.end(); ++li)
     {
-    if(li->Target && li->Target->GetType() == cmTarget::INTERFACE_LIBRARY)
+    if(li->Target && (li->Target->GetType() == cmTarget::INTERFACE_LIBRARY ||
+                      li->Target->GetType() == cmTarget::OBJECT_LIBRARY))
       {
       continue;
       }
