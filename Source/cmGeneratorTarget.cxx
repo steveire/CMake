@@ -18,7 +18,6 @@
 #include "cmSourceFile.h"
 #include "cmGeneratorExpression.h"
 #include "cmGeneratorExpressionDAGChecker.h"
-#include "cmComputeLinkInformation.h"
 #include "cmCustomCommandGenerator.h"
 
 #include <queue>
