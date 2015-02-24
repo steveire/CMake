@@ -2034,11 +2034,7 @@ cmGeneratorExpressionNode* GetNode(const std::string &identifier)
     }
 
   std::vector<std::string> eachArgs;
-  for(std::vector<std::string>::const_iterator i = parameters.begin() + 2;
-      i != parameters.end(); ++i)
-    {
-    eachArgs.push_back(*i);
-    }
+  eachArgs.insert(eachArgs.end(), parameters.begin() + 2, parameters.end());
 
   std::string sep;
   std::string result;
