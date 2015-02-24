@@ -5988,6 +5988,7 @@ cmTarget::GetCompatibleInterfaces(std::string const& config) const
     compat.Done = true;
     compat.PropsBool.insert("POSITION_INDEPENDENT_CODE");
     compat.PropsString.insert("AUTOUIC_OPTIONS");
+    compat.PropsExclusiveList.insert("LINKED_OBJECT_LIBRARIES");
     std::vector<cmTarget const*> const& deps =
       this->GetLinkImplementationClosure(config);
     for(std::vector<cmTarget const*>::const_iterator li = deps.begin();
@@ -6432,8 +6433,16 @@ cmTargetInternals::ComputeLinkImplementationLibraries(
         }
 
       // The entry is meant for this configuration.
+      cmTarget const* tgtToLink = thisTarget->FindTargetToLink(name);
+      if (tgtToLink->GetType() == cmTarget::OBJECT_LIBRARY)
+        {
+        const_cast<cmTarget*>(thisTarget)->AppendProperty(
+          "INTERFACE_LINKED_OBJECT_LIBRARIES", name.c_str());
+        const_cast<cmTarget*>(thisTarget)->AppendProperty(
+          "LINKED_OBJECT_LIBRARIES", name.c_str());
+        }
       impl.Libraries.push_back(
-        cmLinkImplItem(name, thisTarget->FindTargetToLink(name),
+        cmLinkImplItem(name, tgtToLink,
                        le->Backtrace, evaluated != le->Value));
       }
 
@@ -6467,6 +6476,9 @@ cmTargetInternals::ComputeLinkImplementationLibraries(
         cmLinkItem(name, thisTarget->FindTargetToLink(name)));
       }
     }
+  // Ensure consistent.
+  thisTarget->GetLinkInterfaceDependentExclusiveListProperty(
+      "LINKED_OBJECT_LIBRARIES", config);
 }
 
 //----------------------------------------------------------------------------
