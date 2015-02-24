@@ -309,6 +309,7 @@ public:
     std::set<std::string> PropsString;
     std::set<std::string> PropsNumberMax;
     std::set<std::string> PropsNumberMin;
+    std::set<std::string> PropsExclusiveList;
   };
   CompatibleInterfaces const&
     GetCompatibleInterfaces(std::string const& config) const;
@@ -592,6 +593,8 @@ public:
                          const std::string& config) const;
   bool IsLinkInterfaceDependentNumberMaxProperty(const std::string &p,
                          const std::string& config) const;
+  bool IsLinkInterfaceDependentExclusiveListProperty(const std::string &p,
+                         const std::string& config) const;
 
   bool GetLinkInterfaceDependentBoolProperty(const std::string &p,
                                              const std::string& config) const;
@@ -602,6 +605,8 @@ public:
                          const std::string& config) const;
   const char *GetLinkInterfaceDependentNumberMaxProperty(const std::string &p,
                          const std::string& config) const;
+  std::string GetLinkInterfaceDependentExclusiveListProperty(
+                      const std::string &p, const std::string& config) const;
 
   std::string GetDebugGeneratorExpressions(const std::string &value,
                                   cmTarget::LinkLibraryType llt) const;

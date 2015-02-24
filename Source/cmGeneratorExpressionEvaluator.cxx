@@ -1164,6 +1164,14 @@ static const struct TargetPropertyNode : public cmGeneratorExpressionNode
                                                 context->Config);
         return propContent ? propContent : "";
         }
+      if (target->IsLinkInterfaceDependentExclusiveListProperty(propertyName,
+                                                         context->Config))
+        {
+        context->HadContextSensitiveCondition = true;
+        return target->GetLinkInterfaceDependentExclusiveListProperty(
+                                                propertyName,
+                                                context->Config);
+        }
 
       return linkedTargetsContent;
       }
@@ -1190,6 +1198,14 @@ static const struct TargetPropertyNode : public cmGeneratorExpressionNode
                                                 propertyName,
                                                 context->Config);
         return propContent ? propContent : "";
+        }
+      if (target->IsLinkInterfaceDependentExclusiveListProperty(propertyName,
+                                                        context->Config))
+        {
+        context->HadContextSensitiveCondition = true;
+        return target->GetLinkInterfaceDependentExclusiveListProperty(
+                                                propertyName,
+                                                context->Config);
         }
       }
     if(!interfacePropertyName.empty())

@@ -4730,12 +4730,22 @@ const char *getTypedProperty<const char *>(cmTarget const* tgt,
   return tgt->GetProperty(prop);
 }
 
+//----------------------------------------------------------------------------
+template<>
+std::string getTypedProperty<std::string>(cmTarget const* tgt,
+                                          const std::string& prop)
+{
+  const char* propValue = tgt->GetProperty(prop);
+  return propValue ? propValue : std::string();
+}
+
 enum CompatibleType
 {
   BoolType,
   StringType,
   NumberMinType,
-  NumberMaxType
+  NumberMaxType,
+  ExclusiveListType
 };
 
 //----------------------------------------------------------------------------
@@ -4749,6 +4759,38 @@ template<>
 std::pair<bool, bool> consistentProperty(bool lhs, bool rhs, CompatibleType)
 {
   return std::make_pair(lhs == rhs, lhs);
+}
+
+//----------------------------------------------------------------------------
+std::vector<std::string> getList(std::string s)
+{
+  std::vector<std::string> strings;
+  cmSystemTools::ExpandListArgument(s.c_str(), strings);
+  std::sort(strings.begin(), strings.end());
+  strings.erase(std::unique(strings.begin(), strings.end()), strings.end());
+  return strings;
+}
+
+//----------------------------------------------------------------------------
+template<>
+std::pair<bool, std::string> consistentProperty(std::string lhs,
+                                                std::string rhs,
+                                                CompatibleType t)
+{
+  assert(t == ExclusiveListType);
+  std::vector<std::string> strings = getList(lhs);
+  std::vector<std::string> rStrings = getList(rhs);
+
+  std::vector<std::string>::size_type existingSize = strings.size();
+
+  strings.insert(strings.end(), rStrings.begin(), rStrings.end());
+  std::inplace_merge(strings.begin(),
+                     strings.begin() + existingSize,
+                     strings.end());
+  strings.erase(std::unique(strings.begin(), strings.end()), strings.end());
+
+  return std::make_pair(existingSize + rStrings.size() == strings.size(),
+                        cmJoin(strings, ";"));
 }
 
 //----------------------------------------------------------------------------
@@ -4821,6 +4863,10 @@ std::pair<bool, const char*> consistentProperty(const char *lhs,
   case NumberMinType:
   case NumberMaxType:
     return consistentNumberProperty(lhs, rhs, t);
+  case ExclusiveListType:
+    assert(0 &&
+        "consistentProperty for strings called with ExclusiveListType");
+    return std::pair<bool, const char*>(false, null_ptr);
   }
   assert(0 && "Unreachable!");
   return std::pair<bool, const char*>(false, null_ptr);
@@ -4838,6 +4884,11 @@ const char* impliedValue<const char*>(const char*)
 {
   return "";
 }
+template<>
+std::string impliedValue<std::string>(std::string)
+{
+  return std::string();
+}
 
 
 template<typename PropertyType>
@@ -4851,6 +4902,12 @@ template<>
 std::string valueAsString<const char*>(const char* value)
 {
   return value ? value : "(unset)";
+}
+
+template<>
+std::string valueAsString<std::string>(std::string value)
+{
+  return value;
 }
 
 //----------------------------------------------------------------------------
@@ -4906,6 +4963,8 @@ std::string compatibilityType(CompatibleType t)
       return "Numeric maximum compatibility";
     case NumberMinType:
       return "Numeric minimum compatibility";
+    case ExclusiveListType:
+      return "Exclusive list compatibility";
     }
   assert(0 && "Unreachable!");
   return "";
@@ -4918,6 +4977,7 @@ std::string compatibilityAgree(CompatibleType t, bool dominant)
     {
     case BoolType:
     case StringType:
+    case ExclusiveListType:
       return dominant ? "(Disagree)\n" : "(Agree)\n";
     case NumberMaxType:
     case NumberMinType:
@@ -5158,6 +5218,19 @@ const char * cmTarget::GetLinkInterfaceDependentNumberMaxProperty(
 }
 
 //----------------------------------------------------------------------------
+std::string cmTarget::GetLinkInterfaceDependentExclusiveListProperty(
+                                              const std::string &p,
+                                              const std::string& config) const
+{
+  std::string output = checkInterfacePropertyCompatibility<std::string>(this,
+                                                        p,
+                                                        config,
+                                                        "empty",
+                                                        ExclusiveListType, 0);
+  return output;
+}
+
+//----------------------------------------------------------------------------
 bool cmTarget::IsLinkInterfaceDependentBoolProperty(const std::string &p,
                                            const std::string& config) const
 {
@@ -5203,6 +5276,18 @@ bool cmTarget::IsLinkInterfaceDependentNumberMaxProperty(const std::string &p,
     return false;
     }
   return this->GetCompatibleInterfaces(config).PropsNumberMax.count(p) > 0;
+}
+
+//----------------------------------------------------------------------------
+bool cmTarget::IsLinkInterfaceDependentExclusiveListProperty(
+                        const std::string &p, const std::string& config) const
+{
+  if (this->TargetTypeValue == OBJECT_LIBRARY
+      || this->TargetTypeValue == INTERFACE_LIBRARY)
+    {
+    return false;
+    }
+  return this->GetCompatibleInterfaces(config).PropsExclusiveList.count(p) > 0;
 }
 
 //----------------------------------------------------------------------------
@@ -5919,6 +6004,7 @@ cmTarget::GetCompatibleInterfaces(std::string const& config) const
       CM_READ_COMPATIBLE_INTERFACE(STRING, String)
       CM_READ_COMPATIBLE_INTERFACE(NUMBER_MIN, NumberMin)
       CM_READ_COMPATIBLE_INTERFACE(NUMBER_MAX, NumberMax)
+      CM_READ_COMPATIBLE_INTERFACE(EXCLUSIVE_LIST, ExclusiveList)
 #undef CM_READ_COMPATIBLE_INTERFACE
       }
     }
@@ -6477,23 +6563,23 @@ std::string cmTarget::CheckCMP0004(std::string const& item) const
 }
 
 template<typename PropertyType>
-PropertyType getLinkInterfaceDependentProperty(cmTarget const* tgt,
+void getLinkInterfaceDependentProperty(cmTarget const* tgt,
                                                const std::string& prop,
                                                const std::string& config,
                                                CompatibleType,
                                                PropertyType *);
 
 template<>
-bool getLinkInterfaceDependentProperty(cmTarget const* tgt,
+void getLinkInterfaceDependentProperty(cmTarget const* tgt,
                                        const std::string& prop,
                                        const std::string& config,
                                        CompatibleType, bool *)
 {
-  return tgt->GetLinkInterfaceDependentBoolProperty(prop, config);
+  tgt->GetLinkInterfaceDependentBoolProperty(prop, config);
 }
 
 template<>
-const char * getLinkInterfaceDependentProperty(cmTarget const* tgt,
+void getLinkInterfaceDependentProperty(cmTarget const* tgt,
                                                const std::string& prop,
                                                const std::string& config,
                                                CompatibleType t,
@@ -6503,16 +6589,21 @@ const char * getLinkInterfaceDependentProperty(cmTarget const* tgt,
   {
   case BoolType:
     assert(0 && "String compatibility check function called for boolean");
-    return 0;
+    return;
   case StringType:
-    return tgt->GetLinkInterfaceDependentStringProperty(prop, config);
+    tgt->GetLinkInterfaceDependentStringProperty(prop, config);
+    return;
   case NumberMinType:
-    return tgt->GetLinkInterfaceDependentNumberMinProperty(prop, config);
+    tgt->GetLinkInterfaceDependentNumberMinProperty(prop, config);
+    return;
   case NumberMaxType:
-    return tgt->GetLinkInterfaceDependentNumberMaxProperty(prop, config);
+    tgt->GetLinkInterfaceDependentNumberMaxProperty(prop, config);
+    return;
+  case ExclusiveListType:
+    tgt->GetLinkInterfaceDependentExclusiveListProperty(prop, config);
+    return;
   }
   assert(0 && "Unreachable!");
-  return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -6622,6 +6713,8 @@ void cmTarget::CheckPropertyCompatibility(cmComputeLinkInformation *info,
   static std::string strNumMin = "COMPATIBLE_INTERFACE_NUMBER_MIN";
   std::set<std::string> emittedMaxNumbers;
   static std::string strNumMax = "COMPATIBLE_INTERFACE_NUMBER_MAX";
+  std::set<std::string> emittedExclusiveLists;
+  static std::string strExlLst = "COMPATIBLE_INTERFACE_EXCLUSIVE_LIST";
 
   for(cmComputeLinkInformation::ItemVector::const_iterator li =
       deps.begin();
@@ -6663,6 +6756,15 @@ void cmTarget::CheckPropertyCompatibility(cmComputeLinkInformation *info,
       {
       return;
       }
+    const char* xxx = li->Target->GetProperty(strExlLst);
+    checkPropertyConsistency<const char *>(this, li->Target,
+                                strExlLst,
+                                emittedExclusiveLists, config,
+                                ExclusiveListType, 0);
+    if (cmSystemTools::GetErrorOccuredFlag())
+      {
+      return;
+      }
     }
 
   std::string prop = intersect(emittedBools,
@@ -6693,6 +6795,11 @@ void cmTarget::CheckPropertyCompatibility(cmComputeLinkInformation *info,
     if (i != emittedMaxNumbers.end())
       {
       props.push_back(strNumMax);
+      }
+    i = emittedExclusiveLists.find(prop);
+    if (i != emittedExclusiveLists.end())
+      {
+      props.push_back(strExlLst);
       }
     std::sort(props.begin(), props.end());
 
