@@ -92,11 +92,31 @@ std::string GeneratorExpressionContent::ProcessArbitraryContent(
   return result;
 }
 
+struct CountStacker
+{
+  CountStacker(cmGeneratorExpressionContext *context)
+    : Context(context)
+  {
+    ++this->Context->Counter;
+  }
+  uint Count() const {
+    return this->Context->Counter;
+  }
+  ~CountStacker()
+  {
+    --this->Context->Counter;
+  }
+
+private:
+  cmGeneratorExpressionContext *Context;
+};
+
 //----------------------------------------------------------------------------
 std::string GeneratorExpressionContent::Evaluate(
                             cmGeneratorExpressionContext *context,
                             cmGeneratorExpressionDAGChecker *dagChecker) const
 {
+  CountStacker countStacker(context);
   std::string identifier;
   {
   std::vector<cmGeneratorExpressionEvaluator*>::const_iterator it
@@ -112,6 +132,28 @@ std::string GeneratorExpressionContent::Evaluate(
       }
     }
   }
+
+  if (countStacker.Count() == context->ExcludeLevel)
+    {
+    if (this->ParamChildren.size() != 1
+        || this->ParamChildren.front().size() != 1)
+      {
+      return std::string();
+      }
+    ++context->ExcludeLevel;
+    cmGeneratorExpressionEvaluator::Type type =
+        this->ParamChildren.front().front()->GetType();
+    if (identifier == "1" && type == GeneratorExpressionContent::Text
+        && !context->HadExcludedExpression)
+      {
+      identifier = "0";
+      }
+    else if (identifier == "0")
+      {
+      context->HadExcludedExpression = true;
+      identifier = "1";
+      }
+    }
 
   const cmGeneratorExpressionNode *node =
       cmGeneratorExpressionNode::GetNode(identifier);

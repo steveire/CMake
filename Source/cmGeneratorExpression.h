@@ -84,7 +84,18 @@ public:
                        cmTarget const* currentTarget = 0,
                        cmGeneratorExpressionDAGChecker *dagChecker = 0,
                        std::string const& language = std::string()) const;
+  const char* EvaluateExcluded(cmMakefile* mf, const std::string& config,
+                       bool quiet = false,
+                       cmTarget const* headTarget = 0,
+                       cmTarget const* currentTarget = 0,
+                       cmGeneratorExpressionDAGChecker *dagChecker = 0,
+                       std::string const& language = std::string()) const;
   const char* Evaluate(cmMakefile* mf, const std::string& config,
+                       bool quiet,
+                       cmTarget const* headTarget,
+                       cmGeneratorExpressionDAGChecker *dagChecker,
+                       std::string const& language = std::string()) const;
+  const char* EvaluateExcluded(cmMakefile* mf, const std::string& config,
                        bool quiet,
                        cmTarget const* headTarget,
                        cmGeneratorExpressionDAGChecker *dagChecker,

@@ -25,10 +25,13 @@ cmGeneratorExpressionContext::cmGeneratorExpressionContext(
     Language(language),
     HeadTarget(headTarget),
     CurrentTarget(currentTarget),
+    Counter(0),
+    ExcludeLevel(0),
     Quiet(quiet),
     HadError(false),
     HadContextSensitiveCondition(false),
     HadHeadSensitiveCondition(false),
-    EvaluateForBuildsystem(evaluateForBuildsystem)
+    EvaluateForBuildsystem(evaluateForBuildsystem),
+    HadExcludedExpression(false)
 {
 }

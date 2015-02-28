@@ -65,6 +65,22 @@ const char *cmCompiledGeneratorExpression::Evaluate(
 }
 
 //----------------------------------------------------------------------------
+const char *cmCompiledGeneratorExpression::EvaluateExcluded(
+  cmMakefile* mf, const std::string& config, bool quiet,
+  cmTarget const* headTarget,
+  cmGeneratorExpressionDAGChecker *dagChecker,
+  std::string const& language) const
+{
+  return this->EvaluateExcluded(mf,
+                        config,
+                        quiet,
+                        headTarget,
+                        headTarget,
+                        dagChecker,
+                        language);
+}
+
+//----------------------------------------------------------------------------
 const char *cmCompiledGeneratorExpression::Evaluate(
   cmMakefile* mf, const std::string& config, bool quiet,
   cmTarget const* headTarget,
@@ -76,6 +92,23 @@ const char *cmCompiledGeneratorExpression::Evaluate(
                                   currentTarget ? currentTarget : headTarget,
                                   this->EvaluateForBuildsystem,
                                   this->Backtrace, language);
+
+  return this->EvaluateWithContext(context, dagChecker);
+}
+
+//----------------------------------------------------------------------------
+const char *cmCompiledGeneratorExpression::EvaluateExcluded(
+  cmMakefile* mf, const std::string& config, bool quiet,
+  cmTarget const* headTarget,
+  cmTarget const* currentTarget,
+  cmGeneratorExpressionDAGChecker *dagChecker,
+  std::string const& language) const
+{
+  cmGeneratorExpressionContext context(mf, config, quiet, headTarget,
+                                  currentTarget ? currentTarget : headTarget,
+                                  this->EvaluateForBuildsystem,
+                                  this->Backtrace, language);
+  context.ExcludeLevel = 1;
 
   return this->EvaluateWithContext(context, dagChecker);
 }

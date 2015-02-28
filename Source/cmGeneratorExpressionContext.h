@@ -44,11 +44,14 @@ struct cmGeneratorExpressionContext
   cmTarget const* HeadTarget; // The target whose property is being evaluated.
   cmTarget const* CurrentTarget; // The dependent of HeadTarget which appears
                                  // directly or indirectly in the property.
+  uint Counter;
+  uint ExcludeLevel;
   bool Quiet;
   bool HadError;
   bool HadContextSensitiveCondition;
   bool HadHeadSensitiveCondition;
   bool EvaluateForBuildsystem;
+  bool HadExcludedExpression;
 };
 
 #endif
