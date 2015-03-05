@@ -165,6 +165,8 @@ public:
    */
   void GetSourceFiles(std::vector<cmSourceFile*> &files,
                       const std::string& config) const;
+  void GetExcludedSourceFiles(std::vector<const cmSourceFile*> &files,
+                      const std::string& config) const;
   bool GetConfigCommonSourceFiles(std::vector<cmSourceFile*>& files) const;
 
   /**

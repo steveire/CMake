@@ -622,6 +622,68 @@ bool cmTarget::IsBundleOnApple() const
 }
 
 //----------------------------------------------------------------------------
+static std::vector<std::string> processExcludedSources(cmTarget const* tgt,
+      const std::vector<cmTargetInternals::TargetPropertyEntry*> &entries,
+      cmGeneratorExpressionDAGChecker *dagChecker,
+      std::string const& config)
+{
+  cmMakefile *mf = tgt->GetMakefile();
+
+  std::vector<std::string> entrySources;
+
+  for(std::vector<cmTargetInternals::TargetPropertyEntry*>::const_iterator
+      it = entries.begin(), end = entries.end(); it != end; ++it)
+    {
+    cmLinkImplItem const& item = (*it)->LinkImplItem;
+    std::string const& targetName = item;
+    std::vector<std::string> parts;
+    cmGeneratorExpression::Split((*it)->ge->GetInput(), parts);
+    for(std::vector<std::string>::iterator i = parts.begin();
+        i != parts.end(); ++i)
+      {
+      std::vector<unsigned> allGenexes = cmGeneratorExpression::FindAll(*i);
+      if(allGenexes.size() != 2
+          || allGenexes.front() != 0 || allGenexes.back() != i->size())
+        {
+        continue;
+        }
+      cmListFileBacktrace bt = (*it)->ge->GetBacktrace();
+      cmGeneratorExpression ge(&bt);
+      cmsys::auto_ptr<cmCompiledGeneratorExpression> cge = ge.Parse(*i);
+      cmSystemTools::ExpandListArgument(cge->EvaluateExcluded(mf,
+                                                              config,
+                                                              false,
+                                                              tgt,
+                                                              tgt,
+                                                              dagChecker),
+                                        entrySources);
+      }
+    }
+
+  std::vector<size_t> skipped;
+  for(std::vector<std::string>::iterator i = entrySources.begin();
+      i != entrySources.end(); ++i)
+    {
+    std::string& src = *i;
+    cmSourceFile* sf = mf->GetOrCreateSource(src);
+    std::string e;
+    std::string fullPath = sf->GetFullPath(&e);
+    if(fullPath.empty() || !cmSystemTools::FileExists(fullPath.c_str()))
+      {
+      skipped.push_back(std::distance(entrySources.begin(), i));
+      continue;
+      }
+    src = fullPath;
+    }
+  std::vector<std::string>::const_iterator newEnd
+      = cmRemoveIndices(entrySources, skipped);
+  std::vector<std::string>::const_iterator entrySourcesEnd
+      = entrySources.end();
+  entrySources.erase(newEnd, entrySourcesEnd);
+  return entrySources;
+}
+
+//----------------------------------------------------------------------------
 static bool processSources(cmTarget const* tgt,
       const std::vector<cmTargetInternals::TargetPropertyEntry*> &entries,
       std::vector<std::string> &srcs,
@@ -807,6 +869,44 @@ void cmTarget::GetSourceFiles(std::vector<std::string> &files,
     }
 
   deleteAndClear(linkInterfaceSourcesEntries);
+}
+
+void cmTarget::GetExcludedSourceFiles(std::vector<const cmSourceFile*> &files,
+                                      const std::string& config) const
+{
+  cmGeneratorExpressionDAGChecker dagChecker(this->GetName(),
+                                             "SOURCES", 0, 0);
+
+  std::vector<std::string> srcs = processExcludedSources(this,
+                 this->Internal->SourceEntries,
+                 &dagChecker,
+                 config);
+
+  std::vector<cmTargetInternals::TargetPropertyEntry*>
+    linkInterfaceSourcesEntries;
+
+  this->Internal->AddInterfaceEntries(
+    this, config, "INTERFACE_SOURCES",
+    linkInterfaceSourcesEntries);
+
+  std::vector<std::string> ifaceSrcs = processExcludedSources(this,
+    linkInterfaceSourcesEntries,
+                            &dagChecker,
+                            config);
+
+  deleteAndClear(linkInterfaceSourcesEntries);
+
+  srcs.insert(srcs.end(), ifaceSrcs.begin(), ifaceSrcs.end());
+
+  std::vector<std::string>::const_iterator srcsEnd = cmRemoveDuplicates(srcs);
+  std::vector<std::string>::const_iterator i = srcs.begin();
+
+  files.reserve(std::distance(i, srcsEnd));
+  for( ; i != srcsEnd; ++i)
+    {
+    cmSourceFile* sf = this->Makefile->GetOrCreateSource(*i);
+    files.push_back(sf);
+    }
 }
 
 //----------------------------------------------------------------------------
