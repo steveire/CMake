@@ -63,6 +63,7 @@ public:
                     std::vector<std::string> &output);
 
   static std::string::size_type Find(const std::string &input);
+  static std::vector<unsigned> FindAll(const std::string &input);
 
   static bool IsValidTargetName(const std::string &input);
 

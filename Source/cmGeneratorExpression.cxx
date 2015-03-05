@@ -193,6 +193,50 @@ std::string cmGeneratorExpression::StripEmptyListElements(
 }
 
 //----------------------------------------------------------------------------
+std::vector<unsigned> cmGeneratorExpression::FindAll(const std::string &input)
+{
+  std::vector<unsigned> pairs;
+  std::string::size_type pos = 0;
+  std::string::size_type lastPos = pos;
+  unsigned nestingLevel = 0;
+  while((pos = input.find("$<", lastPos)) != input.npos)
+    {
+    pos += 2;
+    nestingLevel = 1;
+
+    const char *c = input.c_str() + pos;
+    const char * const cStart = c;
+    for ( ; *c; ++c)
+      {
+      if(c[0] == '$' && c[1] == '<')
+        {
+        ++nestingLevel;
+        ++c;
+        continue;
+        }
+      if(c[0] == '>')
+        {
+        --nestingLevel;
+        if (nestingLevel == 0)
+          {
+          break;
+          }
+        }
+      }
+    const std::string::size_type traversed = (c - cStart) + 1;
+    const std::string::size_type needleStart = pos - 2;
+    pos += traversed;
+    lastPos = pos;
+    if (nestingLevel == 0)
+      {
+      pairs.push_back(needleStart);
+      pairs.push_back(pos);
+      }
+    }
+  return pairs;
+}
+
+//----------------------------------------------------------------------------
 static std::string stripAllGeneratorExpressions(const std::string &input)
 {
   std::string result;
