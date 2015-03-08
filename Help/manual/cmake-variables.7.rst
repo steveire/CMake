@@ -40,6 +40,7 @@ Variables that Provide Information
    /variable/CMAKE_GENERATOR
    /variable/CMAKE_GENERATOR_PLATFORM
    /variable/CMAKE_GENERATOR_TOOLSET
+   /variable/CMAKE_GENERATE_METADATA
    /variable/CMAKE_HOME_DIRECTORY
    /variable/CMAKE_IMPORT_LIBRARY_PREFIX
    /variable/CMAKE_IMPORT_LIBRARY_SUFFIX

@@ -1,0 +1,2 @@
+
+#define STATIC_PRIVATE_H

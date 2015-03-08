@@ -1,0 +1,2 @@
+
+#define SHARED_PUBLIC_H

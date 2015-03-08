@@ -2504,6 +2504,20 @@ ${CMake_BINARY_DIR}/bin/cmake -DDIR=dev -P ${CMake_SOURCE_DIR}/Utilities/Release
   ADD_TEST_MACRO(CMakeCommands.target_compile_definitions target_compile_definitions)
   ADD_TEST_MACRO(CMakeCommands.target_compile_options target_compile_options)
 
+  set(metadata_command ${CMAKE_COMMAND} -E echo dummy)
+  find_package(PythonInterp)
+  if ((CMAKE_CXX_COMPILER_ID STREQUAL "Clang"
+        OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+      AND PYTHON_EXECUTABLE)
+    set(metadata_command
+      ${PYTHON_EXECUTABLE}
+        "${CMAKE_CURRENT_SOURCE_DIR}/test_metadata.py"
+        "${CMAKE_CXX_COMPILER}"
+        "${CMake_SOURCE_DIR}/Tests/Metadata"
+    )
+  endif()
+  ADD_TEST_MACRO(Metadata ${metadata_command})
+
   configure_file(
     "${CMake_SOURCE_DIR}/Tests/CTestTestCrash/test.cmake.in"
     "${CMake_BINARY_DIR}/Tests/CTestTestCrash/test.cmake"

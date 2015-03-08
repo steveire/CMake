@@ -1,0 +1,2 @@
+
+int obj_dep();
