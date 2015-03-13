@@ -2506,16 +2506,17 @@ ${CMake_BINARY_DIR}/bin/cmake -DDIR=dev -P ${CMake_SOURCE_DIR}/Utilities/Release
 
   set(metadata_command ${CMAKE_COMMAND} -E echo dummy)
   find_package(PythonInterp)
-  if ((CMAKE_CXX_COMPILER_ID STREQUAL "Clang"
-        OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
-      AND PYTHON_EXECUTABLE)
+  if (PYTHON_EXECUTABLE)
     set(metadata_command
       ${PYTHON_EXECUTABLE}
         "${CMAKE_CURRENT_SOURCE_DIR}/test_metadata.py"
         "${CMAKE_CXX_COMPILER}"
         "${CMake_SOURCE_DIR}/Tests/Metadata"
+        "${CMake_BINARY_DIR}/Tests/Metadata"
+        "${CMAKE_CXX_COMPILER_ID}"
     )
   endif()
+  set(Metadata_BUILD_OPTIONS -DCMAKE_GENERATE_METADATA=3.3)
   ADD_TEST_MACRO(Metadata ${metadata_command})
 
   configure_file(

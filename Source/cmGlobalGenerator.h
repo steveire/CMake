@@ -265,6 +265,18 @@ public:
 
   void AddTarget(cmTarget* t);
 
+  // All targets in the entire project.
+#if defined(CMAKE_BUILD_WITH_CMAKE)
+  typedef cmsys::hash_map<std::string, cmTarget*> TargetMap;
+#else
+  typedef std::map<std::string,cmTarget *> TargetMap;
+#endif
+
+  TargetMap const& GetTotalTargets() const
+  {
+    return this->TotalTargets;
+  }
+
   static bool IsReservedTarget(std::string const& name);
 
   virtual const char* GetAllTargetName()         const { return "ALL_BUILD"; }
@@ -420,12 +432,6 @@ protected:
   // This is computed just before local generators generate.
   cmTargetManifest TargetManifest;
 
-  // All targets in the entire project.
-#if defined(CMAKE_BUILD_WITH_CMAKE)
-  typedef cmsys::hash_map<std::string, cmTarget*> TargetMap;
-#else
-  typedef std::map<std::string,cmTarget *> TargetMap;
-#endif
   TargetMap TotalTargets;
   TargetMap AliasTargets;
   TargetMap ImportedTargets;

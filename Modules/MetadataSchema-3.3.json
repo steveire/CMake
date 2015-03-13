@@ -1,0 +1,358 @@
+{
+  "generator" : {
+    "type" : "String",
+    "availability": "Unconditional",
+    "constraint" : {
+      "property" : "Value",
+      "operation": "in",
+      "value": ["Unix Makefiles", "Ninja", "Xcode"]
+    }
+  },
+  "platform" :  {
+    "type" : "String",
+    "availability": "Unconditional",
+    "constraint" : {
+      "property" : "Value",
+      "operation": "in",
+      "value": ["Linux", "Windows", "Darwin"]
+    }
+  },
+  "sourceDir" :  {
+    "type" : "String",
+    "availability": "Unconditional"
+  },
+  "cxx_compiler" :  {
+    "type" : "Path",
+    "availability": "Optional"
+  },
+  "cxx_compiler_id" :  {
+    "type" : "String",
+    "availability": "Optional",
+    "constraint": {
+      "property" : "Value",
+      "operation": "in",
+      "value": ["GNU", "Clang", "AppleClang", "MSVC"]
+    }
+  },
+  "cxx_compiler_version" :  {
+    "type" : "String",
+    "availability": "Optional"
+  },
+  "c_compiler" :  {
+    "type" : "Path",
+    "availability": "Optional"
+  },
+  "c_compiler_id" :  {
+    "type" : "String",
+    "availability": "Optional",
+    "constraint": {
+      "property" : "Value",
+      "operation": "in",
+      "value": ["GNU", "Clang", "AppleClang", "MSVC"]
+    }
+  },
+  "c_compiler_version" :  {
+    "type" : "String",
+    "availability": "Optional"
+  },
+  "targets" : {
+    "type": "Array",
+    "arrayType" : "Object",
+    "availability" : "Optional"
+  },
+  "targets.name" : {
+    "type" : "String",
+    "availability": "Unconditional"
+  },
+  "targets.type" : {
+    "type" : "String",
+    "availability" : "Unconditional",
+    "constraint" : {
+      "property" : "Value",
+      "operation": "in",
+      "value": ["EXECUTABLE", "EXECUTABLE_WITH_EXPORTS", "STATIC_LIBRARY", "SHARED_LIBRARY",
+                "MODULE_LIBRARY", "OBJECT_LIBRARY", "UTILITY",
+                "GLOBAL_TARGET"]
+    }
+  },
+  "targets.backtrace" : {
+    "type" : "Array",
+    "arrayType" : "Object",
+    "availability" : "Conditional",
+    "condition" : {
+      "property" : "type",
+      "operation": "in",
+      "value": ["EXECUTABLE", "EXECUTABLE_WITH_EXPORTS", "STATIC_LIBRARY", "SHARED_LIBRARY",
+                "MODULE_LIBRARY", "OBJECT_LIBRARY"]
+    }
+  },
+  "targets.backtrace.path" : {
+    "type" : "Path",
+    "availability" : "Unconditional"
+  },
+  "targets.backtrace.line" : {
+    "type" : "String",
+    "availability" : "Unconditional"
+  },
+  "targets.target_file" : {
+    "type" : "Path",
+    "availability" : "OptionalConditional",
+    "condition" : {
+      "property" : "type",
+      "operation": "in",
+      "value": ["EXECUTABLE", "EXECUTABLE_WITH_EXPORTS", "STATIC_LIBRARY", "SHARED_LIBRARY",
+                "MODULE_LIBRARY"]
+    }
+  },
+  "targets.target_linker_file" : {
+    "type" : "Path",
+    "availability" : "Conditional",
+    "condition" : {
+      "property" : "type",
+      "operation": "in",
+      "value": ["EXECUTABLE_WITH_EXPORTS", "SHARED_LIBRARY"]
+    }
+  },
+  "targets.target_soname_file" : {
+    "type" : "Path",
+    "availability" : "Conditional",
+    "condition" : {
+      "property" : "type",
+      "operation": "is",
+      "value": "SHARED_LIBRARY"
+    }
+  },
+  "targets.object_sources_cxx" : {
+    "type" : "Array",
+    "arrayType" : "Path",
+    "availability" : "OptionalConditional",
+    "condition" : {
+      "property" : "type",
+      "operation": "in",
+      "value": ["EXECUTABLE", "EXECUTABLE_WITH_EXPORTS", "STATIC_LIBRARY", "SHARED_LIBRARY",
+                "MODULE_LIBRARY", "OBJECT_LIBRARY"]
+    }
+  },
+  "targets.object_sources_c" : {
+    "type" : "Array",
+    "arrayType" : "Path",
+    "availability" : "OptionalConditional",
+    "condition" : {
+      "property" : "type",
+      "operation": "in",
+      "value": ["EXECUTABLE", "EXECUTABLE_WITH_EXPORTS", "STATIC_LIBRARY", "SHARED_LIBRARY",
+                "MODULE_LIBRARY", "OBJECT_LIBRARY"]
+    }
+  },
+  "targets.object_sources" : {
+    "type" : "Array",
+    "arrayType" : "Path",
+    "availability" : "OptionalConditional",
+    "condition" : {
+      "property" : "type",
+      "operation": "in",
+      "value": ["EXECUTABLE", "EXECUTABLE_WITH_EXPORTS", "STATIC_LIBRARY", "SHARED_LIBRARY",
+                "MODULE_LIBRARY", "OBJECT_LIBRARY"]
+    }
+  },
+  "targets.generated_object_sources_cxx" : {
+    "type" : "Array",
+    "arrayType" : "Path",
+    "availability" : "OptionalConditional",
+    "condition" : {
+      "property" : "type",
+      "operation": "in",
+      "value": ["EXECUTABLE", "EXECUTABLE_WITH_EXPORTS", "STATIC_LIBRARY", "SHARED_LIBRARY",
+                "MODULE_LIBRARY", "OBJECT_LIBRARY"]
+    }
+  },
+  "targets.generated_object_sources_c" : {
+    "type" : "Array",
+    "arrayType" : "Path",
+    "availability" : "OptionalConditional",
+    "condition" : {
+      "property" : "type",
+      "operation": "in",
+      "value": ["EXECUTABLE", "EXECUTABLE_WITH_EXPORTS", "STATIC_LIBRARY", "SHARED_LIBRARY",
+                "MODULE_LIBRARY", "OBJECT_LIBRARY"]
+    }
+  },
+  "targets.generated_object_sources" : {
+    "type" : "Array",
+    "arrayType" : "Path",
+    "availability" : "OptionalConditional",
+    "condition" : {
+      "property" : "type",
+      "operation": "in",
+      "value": ["EXECUTABLE", "EXECUTABLE_WITH_EXPORTS", "STATIC_LIBRARY", "SHARED_LIBRARY",
+                "MODULE_LIBRARY", "OBJECT_LIBRARY"]
+    }
+  },
+  "targets.header_sources" : {
+    "type" : "Array",
+    "arrayType" : "Path",
+    "availability" : "OptionalConditional",
+    "condition" : {
+      "property" : "type",
+      "operation": "in",
+      "value": ["EXECUTABLE", "EXECUTABLE_WITH_EXPORTS", "STATIC_LIBRARY", "SHARED_LIBRARY",
+                "MODULE_LIBRARY", "OBJECT_LIBRARY"]
+    }
+  },
+  "targets.generated_header_sources" : {
+    "type" : "Array",
+    "arrayType" : "Path",
+    "availability" : "OptionalConditional",
+    "condition" : {
+      "property" : "type",
+      "operation": "in",
+      "value": ["EXECUTABLE", "EXECUTABLE_WITH_EXPORTS", "STATIC_LIBRARY", "SHARED_LIBRARY",
+                "MODULE_LIBRARY", "OBJECT_LIBRARY"]
+    }
+  },
+  "targets.extra_sources" : {
+    "type" : "Array",
+    "arrayType" : "Path",
+    "availability" : "OptionalConditional",
+    "condition" : {
+      "property" : "type",
+      "operation": "in",
+      "value": ["EXECUTABLE", "EXECUTABLE_WITH_EXPORTS", "STATIC_LIBRARY", "SHARED_LIBRARY",
+                "MODULE_LIBRARY", "OBJECT_LIBRARY"]
+    }
+  },
+  "targets.generated_extra_sources" : {
+    "type" : "Array",
+    "arrayType" : "Path",
+    "availability" : "OptionalConditional",
+    "condition" : {
+      "property" : "type",
+      "operation": "in",
+      "value": ["EXECUTABLE", "EXECUTABLE_WITH_EXPORTS", "STATIC_LIBRARY", "SHARED_LIBRARY",
+                "MODULE_LIBRARY", "OBJECT_LIBRARY"]
+    }
+  },
+  "targets.excluded_sources" : {
+    "type" : "Array",
+    "arrayType" : "Path",
+    "availability" : "OptionalConditional",
+    "condition" : {
+      "property" : "type",
+      "operation": "in",
+      "value": ["EXECUTABLE", "EXECUTABLE_WITH_EXPORTS", "STATIC_LIBRARY", "SHARED_LIBRARY",
+                "MODULE_LIBRARY", "OBJECT_LIBRARY"]
+    }
+  },
+  "targets.compile_options_cxx" : {
+    "type": "Array",
+    "arrayType" : "String",
+    "availability" : "OptionalConditional",
+    "condition": {
+      "property" : "type",
+      "operation" : "in",
+      "value": ["EXECUTABLE", "EXECUTABLE_WITH_EXPORTS", "STATIC_LIBRARY", "SHARED_LIBRARY",
+                "MODULE_LIBRARY", "OBJECT_LIBRARY"]
+    }
+  },
+  "targets.compile_options_c" : {
+    "type": "Array",
+    "arrayType" : "String",
+    "availability" : "OptionalConditional",
+    "condition": {
+      "property" : "type",
+      "operation" : "in",
+      "value": ["EXECUTABLE", "EXECUTABLE_WITH_EXPORTS", "STATIC_LIBRARY", "SHARED_LIBRARY",
+                "MODULE_LIBRARY", "OBJECT_LIBRARY"]
+    }
+  },
+  "targets.compile_options" : {
+    "type": "Array",
+    "arrayType" : "String",
+    "availability" : "OptionalConditional",
+    "condition": {
+      "property" : "type",
+      "operation" : "in",
+      "value": ["EXECUTABLE", "EXECUTABLE_WITH_EXPORTS", "STATIC_LIBRARY", "SHARED_LIBRARY",
+                "MODULE_LIBRARY", "OBJECT_LIBRARY"]
+    }
+  },
+  "targets.compile_definitions_cxx" : {
+    "type": "Array",
+    "arrayType" : "String",
+    "availability" : "OptionalConditional",
+    "condition": {
+      "property" : "type",
+      "operation" : "in",
+      "value": ["EXECUTABLE", "EXECUTABLE_WITH_EXPORTS", "STATIC_LIBRARY", "SHARED_LIBRARY",
+                "MODULE_LIBRARY", "OBJECT_LIBRARY"]
+    }
+  },
+  "targets.compile_definitions_c" : {
+    "type": "Array",
+    "arrayType" : "String",
+    "availability" : "OptionalConditional",
+    "condition": {
+      "property" : "type",
+      "operation" : "in",
+      "value": ["EXECUTABLE", "EXECUTABLE_WITH_EXPORTS", "STATIC_LIBRARY", "SHARED_LIBRARY",
+                "MODULE_LIBRARY", "OBJECT_LIBRARY"]
+    }
+  },
+  "targets.compile_definitions" : {
+    "type": "Array",
+    "arrayType" : "String",
+    "availability" : "OptionalConditional",
+    "condition": {
+      "property" : "type",
+      "operation" : "in",
+      "value": ["EXECUTABLE", "EXECUTABLE_WITH_EXPORTS", "STATIC_LIBRARY", "SHARED_LIBRARY",
+                "MODULE_LIBRARY", "OBJECT_LIBRARY"]
+    }
+  },
+  "targets.include_directories_cxx" : {
+    "type": "Array",
+    "arrayType" : "Path",
+    "availability" : "OptionalConditional",
+    "condition": {
+      "property" : "type",
+      "operation" : "in",
+      "value": ["EXECUTABLE", "EXECUTABLE_WITH_EXPORTS", "STATIC_LIBRARY", "SHARED_LIBRARY",
+                "MODULE_LIBRARY", "OBJECT_LIBRARY"]
+    }
+  },
+  "targets.include_directories_c" : {
+    "type": "Array",
+    "arrayType" : "Path",
+    "availability" : "OptionalConditional",
+    "condition": {
+      "property" : "type",
+      "operation" : "in",
+      "value": ["EXECUTABLE", "EXECUTABLE_WITH_EXPORTS", "STATIC_LIBRARY", "SHARED_LIBRARY",
+                "MODULE_LIBRARY", "OBJECT_LIBRARY"]
+    }
+  },
+  "targets.include_directories" : {
+    "type": "Array",
+    "arrayType" : "Path",
+    "availability" : "OptionalConditional",
+    "condition": {
+      "property" : "type",
+      "operation" : "in",
+      "value": ["EXECUTABLE", "EXECUTABLE_WITH_EXPORTS", "STATIC_LIBRARY", "SHARED_LIBRARY",
+                "MODULE_LIBRARY", "OBJECT_LIBRARY"]
+    }
+  },
+  "sources" : {
+    "type": "Array",
+    "arrayType" : "Object",
+    "availability" : "Optional"
+  },
+  "sources.path" : {
+    "type" : "Path",
+    "availability": "Unconditional"
+  },
+  "sources.compile_definitions" : {
+    "type" : "String",
+    "availability": "Unconditional"
+  }
+}

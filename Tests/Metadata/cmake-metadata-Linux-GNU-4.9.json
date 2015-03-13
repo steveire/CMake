@@ -1,0 +1,419 @@
+
+{
+	"c_compiler" : "/usr/lib/ccache/cc",
+	"c_compiler_id" : "GNU",
+	"c_compiler_version" : "4.9.1",
+	"cxx_compiler" : "/usr/lib/ccache/c++",
+	"cxx_compiler_id" : "GNU",
+	"cxx_compiler_version" : "4.9.1",
+	"generator" : "Unix Makefiles",
+	"platform" : "Linux",
+	"sourceDir" : "/home/stephen/dev/src/cmake/Tests/Metadata",
+	"sources" : 
+	{
+		"/home/stephen/dev/src/cmake/Tests/Metadata/main.cpp" : 
+		{
+			"compile_definitions" : [ "THIS_IS_THE_MAIN_FILE_DEF" ],
+			"compile_flags" : "-DTHIS_IS_THE_MAIN_FILE",
+			"path" : "/home/stephen/dev/src/cmake/Tests/Metadata/main.cpp"
+		}
+	},
+	"targets" : 
+	{
+		"function_one" : 
+		{
+			"backtrace" : 
+			[
+				
+				{
+					"line" : "157",
+					"path" : "/home/stephen/dev/src/cmake/Tests/Metadata/CMakeLists.txt"
+				},
+				
+				{
+					"line" : "161",
+					"path" : "/home/stephen/dev/src/cmake/Tests/Metadata/CMakeLists.txt"
+				}
+			],
+			"compile_definitions" : [ "DEFINE_function_one" ],
+			"compile_options" : "-std=gnu++14",
+			"include_directories" : 
+			[
+				"/home/stephen/dev/build/qtbase/cmake/Tests/Metadata",
+				"/home/stephen/dev/src/cmake/Tests/Metadata"
+			],
+			"name" : "function_one",
+			"object_sources_cxx" : [ "/home/stephen/dev/src/cmake/Tests/Metadata/function_one.cpp" ],
+			"target_file" : "/home/stephen/dev/build/qtbase/cmake/Tests/Metadata/function_one",
+			"type" : "EXECUTABLE"
+		},
+		"function_three" : 
+		{
+			"backtrace" : 
+			[
+				
+				{
+					"line" : "157",
+					"path" : "/home/stephen/dev/src/cmake/Tests/Metadata/CMakeLists.txt"
+				},
+				
+				{
+					"line" : "163",
+					"path" : "/home/stephen/dev/src/cmake/Tests/Metadata/CMakeLists.txt"
+				}
+			],
+			"compile_definitions" : [ "DEFINE_function_three" ],
+			"compile_options" : "-std=gnu++14",
+			"include_directories" : 
+			[
+				"/home/stephen/dev/build/qtbase/cmake/Tests/Metadata",
+				"/home/stephen/dev/src/cmake/Tests/Metadata"
+			],
+			"name" : "function_three",
+			"object_sources_cxx" : [ "/home/stephen/dev/src/cmake/Tests/Metadata/function_three.cpp" ],
+			"target_file" : "/home/stephen/dev/build/qtbase/cmake/Tests/Metadata/function_three",
+			"type" : "EXECUTABLE"
+		},
+		"function_two" : 
+		{
+			"backtrace" : 
+			[
+				
+				{
+					"line" : "157",
+					"path" : "/home/stephen/dev/src/cmake/Tests/Metadata/CMakeLists.txt"
+				},
+				
+				{
+					"line" : "162",
+					"path" : "/home/stephen/dev/src/cmake/Tests/Metadata/CMakeLists.txt"
+				}
+			],
+			"compile_definitions" : [ "DEFINE_function_two" ],
+			"compile_options" : "-std=gnu++14",
+			"include_directories" : 
+			[
+				"/home/stephen/dev/build/qtbase/cmake/Tests/Metadata",
+				"/home/stephen/dev/src/cmake/Tests/Metadata"
+			],
+			"name" : "function_two",
+			"object_sources_cxx" : [ "/home/stephen/dev/src/cmake/Tests/Metadata/function_two.cpp" ],
+			"target_file" : "/home/stephen/dev/build/qtbase/cmake/Tests/Metadata/function_two",
+			"type" : "EXECUTABLE"
+		},
+		"loop_one" : 
+		{
+			"backtrace" : 
+			[
+				
+				{
+					"line" : "143",
+					"path" : "/home/stephen/dev/src/cmake/Tests/Metadata/CMakeLists.txt"
+				}
+			],
+			"compile_definitions" : [ "DEFINE_loop_one" ],
+			"compile_options" : "-std=gnu++14",
+			"include_directories" : 
+			[
+				"/home/stephen/dev/build/qtbase/cmake/Tests/Metadata",
+				"/home/stephen/dev/src/cmake/Tests/Metadata"
+			],
+			"name" : "loop_one",
+			"object_sources_cxx" : [ "/home/stephen/dev/src/cmake/Tests/Metadata/loop_one.cpp" ],
+			"target_file" : "/home/stephen/dev/build/qtbase/cmake/Tests/Metadata/loop_one",
+			"type" : "EXECUTABLE"
+		},
+		"loop_three" : 
+		{
+			"backtrace" : 
+			[
+				
+				{
+					"line" : "143",
+					"path" : "/home/stephen/dev/src/cmake/Tests/Metadata/CMakeLists.txt"
+				}
+			],
+			"compile_definitions" : [ "DEFINE_loop_three" ],
+			"compile_options" : "-std=gnu++14",
+			"include_directories" : 
+			[
+				"/home/stephen/dev/build/qtbase/cmake/Tests/Metadata",
+				"/home/stephen/dev/src/cmake/Tests/Metadata"
+			],
+			"name" : "loop_three",
+			"object_sources_cxx" : [ "/home/stephen/dev/src/cmake/Tests/Metadata/loop_three.cpp" ],
+			"target_file" : "/home/stephen/dev/build/qtbase/cmake/Tests/Metadata/loop_three",
+			"type" : "EXECUTABLE"
+		},
+		"loop_two" : 
+		{
+			"backtrace" : 
+			[
+				
+				{
+					"line" : "143",
+					"path" : "/home/stephen/dev/src/cmake/Tests/Metadata/CMakeLists.txt"
+				}
+			],
+			"compile_definitions" : [ "DEFINE_loop_two" ],
+			"compile_options" : "-std=gnu++14",
+			"include_directories" : 
+			[
+				"/home/stephen/dev/build/qtbase/cmake/Tests/Metadata",
+				"/home/stephen/dev/src/cmake/Tests/Metadata"
+			],
+			"name" : "loop_two",
+			"object_sources_cxx" : [ "/home/stephen/dev/src/cmake/Tests/Metadata/loop_two.cpp" ],
+			"target_file" : "/home/stephen/dev/build/qtbase/cmake/Tests/Metadata/loop_two",
+			"type" : "EXECUTABLE"
+		},
+		"macro_one" : 
+		{
+			"backtrace" : 
+			[
+				
+				{
+					"line" : "148",
+					"path" : "/home/stephen/dev/src/cmake/Tests/Metadata/CMakeLists.txt"
+				},
+				
+				{
+					"line" : "152",
+					"path" : "/home/stephen/dev/src/cmake/Tests/Metadata/CMakeLists.txt"
+				}
+			],
+			"compile_definitions" : [ "DEFINE_macro_one" ],
+			"compile_options" : "-std=gnu++14",
+			"include_directories" : 
+			[
+				"/home/stephen/dev/build/qtbase/cmake/Tests/Metadata",
+				"/home/stephen/dev/src/cmake/Tests/Metadata"
+			],
+			"name" : "macro_one",
+			"object_sources_cxx" : [ "/home/stephen/dev/src/cmake/Tests/Metadata/macro_one.cpp" ],
+			"target_file" : "/home/stephen/dev/build/qtbase/cmake/Tests/Metadata/macro_one",
+			"type" : "EXECUTABLE"
+		},
+		"macro_three" : 
+		{
+			"backtrace" : 
+			[
+				
+				{
+					"line" : "148",
+					"path" : "/home/stephen/dev/src/cmake/Tests/Metadata/CMakeLists.txt"
+				},
+				
+				{
+					"line" : "154",
+					"path" : "/home/stephen/dev/src/cmake/Tests/Metadata/CMakeLists.txt"
+				}
+			],
+			"compile_definitions" : [ "DEFINE_macro_three" ],
+			"compile_options" : "-std=gnu++14",
+			"include_directories" : 
+			[
+				"/home/stephen/dev/build/qtbase/cmake/Tests/Metadata",
+				"/home/stephen/dev/src/cmake/Tests/Metadata"
+			],
+			"name" : "macro_three",
+			"object_sources_cxx" : [ "/home/stephen/dev/src/cmake/Tests/Metadata/macro_three.cpp" ],
+			"target_file" : "/home/stephen/dev/build/qtbase/cmake/Tests/Metadata/macro_three",
+			"type" : "EXECUTABLE"
+		},
+		"macro_two" : 
+		{
+			"backtrace" : 
+			[
+				
+				{
+					"line" : "148",
+					"path" : "/home/stephen/dev/src/cmake/Tests/Metadata/CMakeLists.txt"
+				},
+				
+				{
+					"line" : "153",
+					"path" : "/home/stephen/dev/src/cmake/Tests/Metadata/CMakeLists.txt"
+				}
+			],
+			"compile_definitions" : [ "DEFINE_macro_two" ],
+			"compile_options" : "-std=gnu++14",
+			"include_directories" : 
+			[
+				"/home/stephen/dev/build/qtbase/cmake/Tests/Metadata",
+				"/home/stephen/dev/src/cmake/Tests/Metadata"
+			],
+			"name" : "macro_two",
+			"object_sources_cxx" : [ "/home/stephen/dev/src/cmake/Tests/Metadata/macro_two.cpp" ],
+			"target_file" : "/home/stephen/dev/build/qtbase/cmake/Tests/Metadata/macro_two",
+			"type" : "EXECUTABLE"
+		},
+		"main" : 
+		{
+			"backtrace" : 
+			[
+				
+				{
+					"line" : "57",
+					"path" : "/home/stephen/dev/src/cmake/Tests/Metadata/CMakeLists.txt"
+				}
+			],
+			"compile_definitions" : 
+			[
+				"CONFIG_IS_",
+				"CONFIG_IS_NOT_DEBUG=1",
+				"CONFIG_IS_NOT_RELEASE=1",
+				"CXX_COMPILER_HAS_VARIADIC_TEMPLATES=1",
+				"CXX_COMPILER_IS_GNU",
+				"C_COMPILER_IS_GNU",
+				"MAIN_DEF",
+				"PLATFORM_IS_Linux",
+				"SHARED_PUBLIC",
+				"STATIC_PUBLIC",
+				"iface_DEF"
+			],
+			"compile_options_c" : "-DCOMPILE_LANGUAGE_C",
+			"compile_options_cxx" : "-DCOMPILE_LANGUAGE_CXX -std=gnu++14",
+			"excluded_sources" : 
+			[
+				"/home/stephen/dev/src/cmake/Tests/Metadata/foo_debug.cpp",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/foo_release.cpp",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/foo_windows.cpp",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/foo_linux_clang.cpp",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/foo_msvc_gt_1800_debug.cpp",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/foo_msvc_lt_1800_debug.cpp",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/foo_msvc_eq_1800_debug.cpp",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/foo_msvc_gte_1800_debug.cpp",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/foo_gcc_lt_44.cpp",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/foo_gcc_eq_44.cpp",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/foo_debug.h",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/foo_release.h",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/foo_windows.h",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/foo_linux_clang.h",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/foo_msvc_gt_1800_debug.h",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/foo_msvc_lt_1800_debug.h",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/foo_msvc_eq_1800_debug.h",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/foo_msvc_gte_1800_debug.h",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/foo_gcc_lt_44.h",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/foo_gcc_eq_44.h",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/always_excluded.cpp"
+			],
+			"extra_sources" : [ "/home/stephen/dev/src/cmake/Tests/Metadata/text_file.txt" ],
+			"generated_header_sources" : 
+			[
+				"/home/stephen/dev/build/qtbase/cmake/Tests/Metadata/generated_source.h"
+			],
+			"generated_object_sources_cxx" : 
+			[
+				"/home/stephen/dev/build/qtbase/cmake/Tests/Metadata/generated_source.cpp"
+			],
+			"header_sources" : 
+			[
+				"/home/stephen/dev/src/cmake/Tests/Metadata/bar_file.h",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/foo_not_debug.h",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/foo_not_release.h",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/foo_linux.h",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/foo_windows_or_linux.h",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/foo_linux_gcc.h",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/foo_gcc_gt_44.h",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/foo_gcc_gte_44.h"
+			],
+			"include_directories" : 
+			[
+				"/home/stephen/dev/build/qtbase/cmake/Tests/Metadata",
+				"/home/stephen/dev/src/cmake/Tests/Metadata",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/main_dir",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/static_public_dir",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/shared_public_dir"
+			],
+			"name" : "main",
+			"object_sources_c" : [ "/home/stephen/dev/src/cmake/Tests/Metadata/c_file.c" ],
+			"object_sources_cxx" : 
+			[
+				"/home/stephen/dev/src/cmake/Tests/Metadata/main.cpp",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/bar_file.cpp",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/foo_not_debug.cpp",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/foo_not_release.cpp",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/foo_linux.cpp",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/foo_windows_or_linux.cpp",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/foo_linux_gcc.cpp",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/foo_gcc_gt_44.cpp",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/foo_gcc_gte_44.cpp",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/compiled_as_cxx.c",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/static_iface.cpp",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/iface_dep.cpp"
+			],
+			"target_file" : "/home/stephen/dev/build/qtbase/cmake/Tests/Metadata/main",
+			"type" : "EXECUTABLE"
+		},
+		"obj_dep" : 
+		{
+			"backtrace" : 
+			[
+				
+				{
+					"line" : "36",
+					"path" : "/home/stephen/dev/src/cmake/Tests/Metadata/CMakeLists.txt"
+				}
+			],
+			"compile_options" : "-std=gnu++14",
+			"include_directories" : 
+			[
+				"/home/stephen/dev/build/qtbase/cmake/Tests/Metadata",
+				"/home/stephen/dev/src/cmake/Tests/Metadata"
+			],
+			"name" : "obj_dep",
+			"object_sources_cxx" : [ "/home/stephen/dev/src/cmake/Tests/Metadata/obj_dep.cpp" ],
+			"type" : "OBJECT_LIBRARY"
+		},
+		"shared_dep" : 
+		{
+			"backtrace" : 
+			[
+				
+				{
+					"line" : "26",
+					"path" : "/home/stephen/dev/src/cmake/Tests/Metadata/CMakeLists.txt"
+				}
+			],
+			"compile_definitions" : [ "SHARED_PRIVATE", "SHARED_PUBLIC" ],
+			"compile_options" : "-std=gnu++14",
+			"include_directories" : 
+			[
+				"/home/stephen/dev/build/qtbase/cmake/Tests/Metadata",
+				"/home/stephen/dev/src/cmake/Tests/Metadata",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/shared_public_dir",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/shared_private_dir"
+			],
+			"name" : "shared_dep",
+			"object_sources_cxx" : [ "/home/stephen/dev/src/cmake/Tests/Metadata/shared_dep.cpp" ],
+			"target_file" : "/home/stephen/dev/build/qtbase/cmake/Tests/Metadata/libshared_dep.so",
+			"target_soname_file" : "/home/stephen/dev/build/qtbase/cmake/Tests/Metadata/libshared_dep.so",
+			"type" : "SHARED_LIBRARY"
+		},
+		"static_dep" : 
+		{
+			"backtrace" : 
+			[
+				
+				{
+					"line" : "13",
+					"path" : "/home/stephen/dev/src/cmake/Tests/Metadata/CMakeLists.txt"
+				}
+			],
+			"compile_definitions" : [ "STATIC_PRIVATE", "STATIC_PUBLIC" ],
+			"compile_options" : "-std=gnu++14",
+			"include_directories" : 
+			[
+				"/home/stephen/dev/build/qtbase/cmake/Tests/Metadata",
+				"/home/stephen/dev/src/cmake/Tests/Metadata",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/static_public_dir",
+				"/home/stephen/dev/src/cmake/Tests/Metadata/static_private_dir"
+			],
+			"name" : "static_dep",
+			"object_sources_cxx" : [ "/home/stephen/dev/src/cmake/Tests/Metadata/static_dep.cpp" ],
+			"target_file" : "/home/stephen/dev/build/qtbase/cmake/Tests/Metadata/libstatic_dep.a",
+			"type" : "STATIC_LIBRARY"
+		}
+	}
+}

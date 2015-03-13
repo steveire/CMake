@@ -69,8 +69,8 @@ version and the tooling knows how to consume the metadata it produces.
 
 :manual:`cmake(1)` generates one metadata file for each configuration
 active for the build. The files are placed in the top-level build
-directory and are named ``cmake-metadata.ext`` or
-``cmake-metadata-<CONFIG>.ext``.  Consumers of the metadata files should
+directory and are named ``cmake-metadata.json`` or
+``cmake-metadata-<CONFIG>.json``.  Consumers of the metadata files should
 consume the config-specific version if a desired config is known and the
 file is present, and fall back to the generic version.
 
@@ -101,6 +101,8 @@ properties:
 ``platform_id``
   The ``PLATFORM_ID`` name defined by CMake.
 
+  .. Project name, version?
+
 Optional Properties
 -------------------
 
@@ -112,13 +114,15 @@ targets are defined:
   Full path to the compiler used for files of :prop_sf:`LANGUAGE` ``lang``.
 ``<lang>_compiler_id``
   The ``<LANG>_COMPILER_ID`` name defined by CMake.
+``<lang>_compiler_version``
+  The ``<LANG>_COMPILER_VERSION`` name defined by CMake.
 ``<lang>_compile_command``
   Template specifying the order of build properties specified on the command
   line.  Of the
   form ``<COMPILE_OPTIONS> <COMPILE_DEFINITIONS> <INCLUDE_DIRECTORIES> <SOURCE_FILE_COMPILE_OPTIONS>``.
   TODO: Make a list instead? Document replacement variables.
 ``targets``
-  The list of target objects in the buildsystem.  Each object in this
+  The mapping of target names to target objects in the buildsystem.  Each object in this
   property has properties described in `Target Properties`_.
 ``sources``
   The list of sources with specific extra build properties specified.  Each
@@ -147,8 +151,8 @@ The following properties may be expected to be present for targets of type
 ``OBJECT_LIBRARY``, ``EXECUTABLE`` and ``UTILITY``:
 
 ``backtrace``
-  A list of buildsystem file paths and line numbers which show the path to
-  the line of code which specifies the target.
+  A list of objects containing file paths and line numbers which show
+  the path to the line of code which specifies the target.
 
 The following properties may be expected to be present for targets of type
 ``STATIC_LIBRARY``, ``SHARED_LIBRARY``, ``MODULE_LIBRARY``, and
@@ -157,8 +161,8 @@ The following properties may be expected to be present for targets of type
 ``target_file``
   Full path to main file (.exe, .so.1.2, .a) where ``tgt`` is the name of a target.
 
-The following properties may be expected to be present for targets of type
-``SHARED_LIBRARY`` on Windows:
+The following properties may be expected to be present for targets which are
+linkable on Windows:
 
 ``target_linker_file``
   File used to link (.a, .lib, .so) where ``tgt`` is the name of a target.
@@ -284,4 +288,6 @@ least one of the properties will be present:
   compiling the source file.
 ``compile_definitions``
   Additional :prop_sf:`compile definitions <COMPILE_DEFINITIONS>` which are
-  used when compiling the source file.
+  used when compiling the source file.  This may contain duplication
+  with what is defined in the target, and duplicates should be removed by
+  the tool.

@@ -291,6 +291,8 @@ set(SRCS
   cmMakefileExecutableTargetGenerator.cxx
   cmMakefileLibraryTargetGenerator.cxx
   cmMakefileUtilityTargetGenerator.cxx
+  cmMetadataWriter.cxx
+  cmMetadataWriter.h
   cmOSXBundleGenerator.cxx
   cmOSXBundleGenerator.h
   cmNewLineStyle.h

@@ -7,7 +7,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_CXX_STANDARD 14)
 
 add_library(iface_dep INTERFACE)
-target_sources(iface_dep INTERFACE iface_dep.cpp)
+target_sources(iface_dep INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/iface_dep.cpp")
 target_compile_definitions(iface_dep INTERFACE iface_DEF)
 
 add_library(static_dep STATIC static_dep.cpp)
@@ -37,7 +37,11 @@ add_library(obj_dep OBJECT obj_dep.cpp)
 
 set(MSVC_DEBUG_WIN $<AND:$<PLATFORM_ID:Windows>,$<CONFIG:Debug>,$<CXX_COMPILER_ID:MSVC>>)
 
-set_source_files_properties(main.cpp PROPERTIES COMPILE_FLAGS "-DTHIS_IS_THE_MAIN_FILE")
+set_source_files_properties(main.cpp
+  PROPERTIES
+    COMPILE_FLAGS "-DTHIS_IS_THE_MAIN_FILE"
+    COMPILE_DEFINITIONS "THIS_IS_THE_MAIN_FILE_DEF"
+)
 
 set_source_files_properties(compiled_as_cxx.c PROPERTIES LANGUAGE CXX)
 
@@ -73,10 +77,10 @@ add_executable(main
   $<$<OR:$<PLATFORM_ID:Windows>,$<PLATFORM_ID:Linux>>:foo_windows_or_linux.cpp>
   $<$<PLATFORM_ID:Linux>:$<$<CXX_COMPILER_ID:GNU>:foo_linux_gcc.cpp>>
   $<$<PLATFORM_ID:Linux>:$<$<CXX_COMPILER_ID:Clang>:foo_linux_clang.cpp>>
-  $<${MSVC_DEBUG_WIN}:$<$<VERSION_GREATER:$<CXX_COMPILER_VERSION>,1800>:foo_msvc_gt_1800_debug.cpp>
-  $<${MSVC_DEBUG_WIN}:$<$<VERSION_LESS:$<CXX_COMPILER_VERSION>,1800>:foo_msvc_lt_1800_debug.cpp>
-  $<${MSVC_DEBUG_WIN}:$<$<VERSION_EQUAL:$<CXX_COMPILER_VERSION>,1800>:foo_msvc_eq_1800_debug.cpp>
-  $<${MSVC_DEBUG_WIN}:$<$<NOT:$<VERSION_LESS:$<CXX_COMPILER_VERSION>,1800>>:foo_msvc_gte_1800_debug.cpp>
+  $<${MSVC_DEBUG_WIN}:$<$<VERSION_GREATER:$<CXX_COMPILER_VERSION>,1800>:foo_msvc_gt_1800_debug.cpp>>
+  $<${MSVC_DEBUG_WIN}:$<$<VERSION_LESS:$<CXX_COMPILER_VERSION>,1800>:foo_msvc_lt_1800_debug.cpp>>
+  $<${MSVC_DEBUG_WIN}:$<$<VERSION_EQUAL:$<CXX_COMPILER_VERSION>,1800>:foo_msvc_eq_1800_debug.cpp>>
+  $<${MSVC_DEBUG_WIN}:$<$<NOT:$<VERSION_LESS:$<CXX_COMPILER_VERSION>,1800>>:foo_msvc_gte_1800_debug.cpp>>
   $<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_GREATER:$<CXX_COMPILER_VERSION>,4.4>>:foo_gcc_gt_44.cpp>
   $<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_LESS:$<CXX_COMPILER_VERSION>,4.4>>:foo_gcc_lt_44.cpp>
   $<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_EQUAL:$<CXX_COMPILER_VERSION>,4.4>>:foo_gcc_eq_44.cpp>
@@ -92,10 +96,10 @@ add_executable(main
   $<$<OR:$<PLATFORM_ID:Windows>,$<PLATFORM_ID:Linux>>:foo_windows_or_linux.h>
   $<$<PLATFORM_ID:Linux>:$<$<CXX_COMPILER_ID:GNU>:foo_linux_gcc.h>>
   $<$<PLATFORM_ID:Linux>:$<$<CXX_COMPILER_ID:Clang>:foo_linux_clang.h>>
-  $<${MSVC_DEBUG_WIN}:$<$<VERSION_GREATER:$<CXX_COMPILER_VERSION>,1800>:foo_msvc_gt_1800_debug.h>
-  $<${MSVC_DEBUG_WIN}:$<$<VERSION_LESS:$<CXX_COMPILER_VERSION>,1800>:foo_msvc_lt_1800_debug.h>
-  $<${MSVC_DEBUG_WIN}:$<$<VERSION_EQUAL:$<CXX_COMPILER_VERSION>,1800>:foo_msvc_eq_1800_debug.h>
-  $<${MSVC_DEBUG_WIN}:$<$<NOT:$<VERSION_LESS:$<CXX_COMPILER_VERSION>,1800>>:foo_msvc_gte_1800_debug.h>
+  $<${MSVC_DEBUG_WIN}:$<$<VERSION_GREATER:$<CXX_COMPILER_VERSION>,1800>:foo_msvc_gt_1800_debug.h>>
+  $<${MSVC_DEBUG_WIN}:$<$<VERSION_LESS:$<CXX_COMPILER_VERSION>,1800>:foo_msvc_lt_1800_debug.h>>
+  $<${MSVC_DEBUG_WIN}:$<$<VERSION_EQUAL:$<CXX_COMPILER_VERSION>,1800>:foo_msvc_eq_1800_debug.h>>
+  $<${MSVC_DEBUG_WIN}:$<$<NOT:$<VERSION_LESS:$<CXX_COMPILER_VERSION>,1800>>:foo_msvc_gte_1800_debug.h>>
   $<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_GREATER:$<CXX_COMPILER_VERSION>,4.4>>:foo_gcc_gt_44.h>
   $<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_LESS:$<CXX_COMPILER_VERSION>,4.4>>:foo_gcc_lt_44.h>
   $<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_EQUAL:$<CXX_COMPILER_VERSION>,4.4>>:foo_gcc_eq_44.h>
@@ -119,8 +123,8 @@ target_compile_definitions(
     MAIN_DEF
     PLATFORM_IS_$<PLATFORM_ID>
     CONFIG_IS_$<CONFIG>
-    CONFIG_IS_NOT_DEBUG=$<CONFIG:Debug>
-    CONFIG_IS_NOT_RELEASE=$<CONFIG:Release>
+    CONFIG_IS_NOT_DEBUG=$<NOT:$<CONFIG:Debug>>
+    CONFIG_IS_NOT_RELEASE=$<NOT:$<CONFIG:Release>>
     CXX_COMPILER_IS_$<CXX_COMPILER_ID>
     C_COMPILER_IS_$<C_COMPILER_ID>
     CXX_COMPILER_HAS_VARIADIC_TEMPLATES=$<COMPILE_FEATURES:cxx_variadic_templates>

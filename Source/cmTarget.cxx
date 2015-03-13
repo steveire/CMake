@@ -641,6 +641,10 @@ static std::vector<std::string> processExcludedSources(cmTarget const* tgt,
     for(std::vector<std::string>::iterator i = parts.begin();
         i != parts.end(); ++i)
       {
+      if (cmHasLiteralPrefix(*i, "$<TARGET_OBJECTS:"))
+        {
+        continue;
+        }
       std::vector<unsigned> allGenexes = cmGeneratorExpression::FindAll(*i);
       if(allGenexes.size() != 2
           || allGenexes.front() != 0 || allGenexes.back() != i->size())

@@ -32,6 +32,7 @@
 #include "cmGeneratorExpressionEvaluationFile.h"
 #include "cmExportBuildFileGenerator.h"
 #include "cmCPackPropertiesGenerator.h"
+#include "cmMetadataWriter.h"
 
 #include <cmsys/Directory.hxx>
 #include <cmsys/FStream.hxx>
@@ -1317,6 +1318,27 @@ void cmGlobalGenerator::Generate()
   this->CheckRuleHashes();
 
   this->WriteSummary();
+
+  cmMakefile* mf = this->LocalGenerators[0]->GetMakefile();
+  const char* version = mf->GetDefinition("CMAKE_GENERATE_METADATA");
+
+  if(version && *version)
+    {
+    if (cmSystemTools::VersionCompare(cmSystemTools::OP_LESS, version, "3.3"))
+      {
+      // Delete the files.
+      cmSystemTools::Error(
+        "Generator implementation error, "
+        "Unknown export metadata version.");
+      return;
+      }
+    cmMetadataWriter writer(this);
+    writer.Write(version);
+    }
+  else
+    {
+    // Delete the files.
+    }
 
   if (this->ExtraGenerator != 0)
     {
