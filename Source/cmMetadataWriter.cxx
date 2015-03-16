@@ -23,6 +23,16 @@
 # include "cm_jsoncpp_writer.h"
 #endif
 
+// TODO:
+// * Break the method below up into multiple and share where possible.
+// * Change the output file to list all sources independent of targets
+//   and in language-specific groups, so that consumers can access the
+//   language independently of the targets.  Use non-language-specific
+//   lists in the target source lists.
+// * Investigate whether/how the source_group() command and FOLDER target
+//   property should be exposed.
+
+
 cmMetadataWriter::cmMetadataWriter(cmGlobalGenerator* gg)
   : GG(gg)
 {
