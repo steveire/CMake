@@ -4059,6 +4059,8 @@ int cmMakefile::ConfigureFile(const char* infile, const char* outfile,
   std::string sinfile = infile;
   this->AddCMakeDependFile(sinfile);
   cmSystemTools::ConvertToUnixSlashes(soutfile);
+  cmSourceFile* outFile = this->GetOrCreateSource(soutfile);
+  outFile->SetProperty("GENERATED", "1");
 
   // Re-generate if non-temporary outputs are missing.
   //when we finalize the configuration we will remove all
