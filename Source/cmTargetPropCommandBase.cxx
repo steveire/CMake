@@ -117,7 +117,7 @@ bool cmTargetPropCommandBase
   if (this->Target->GetType() == cmTarget::INTERFACE_LIBRARY
       && scope != "INTERFACE")
     {
-    this->SetError("may only be set INTERFACE properties on INTERFACE "
+    this->SetError("may only be used with the INTERFACE keyword on INTERFACE "
       "targets");
     return false;
     }
