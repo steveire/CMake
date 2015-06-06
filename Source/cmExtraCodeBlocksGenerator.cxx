@@ -278,8 +278,8 @@ void cmExtraCodeBlocksGenerator
       std::vector<std::string> splitted;
       cmSystemTools::SplitPath(relative, splitted, false);
       // Split filename from path
-      std::string fileName = *(splitted.end()-1);
-      splitted.erase(splitted.end() - 1, splitted.end());
+      std::string fileName = *(splitted.end()-1); // back()
+      splitted.erase(splitted.end() - 1, splitted.end()); // pop_back()
 
       // We don't want paths with CMakeFiles in them
       // or do we?

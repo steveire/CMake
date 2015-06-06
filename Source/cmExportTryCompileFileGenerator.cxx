@@ -96,6 +96,7 @@ cmExportTryCompileFileGenerator::PopulateProperties(cmTarget const* target,
     {
     properties[i->first] = i->second.GetValue();
 
+    // cmHasLiteralPrefix
     if(i->first.find("IMPORTED_LINK_INTERFACE_LIBRARIES") == 0
         || i->first.find("IMPORTED_LINK_DEPENDENT_LIBRARIES") == 0
         || i->first.find("INTERFACE_LINK_LIBRARIES") == 0)

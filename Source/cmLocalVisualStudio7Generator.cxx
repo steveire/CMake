@@ -2212,7 +2212,7 @@ void cmLocalVisualStudio7Generator::WriteVCProjFooter(std::ostream& fout,
   cmPropertyMap const& props = target.GetProperties();
   for(cmPropertyMap::const_iterator i = props.begin(); i != props.end(); ++i)
     {
-    if(i->first.find("VS_GLOBAL_") == 0)
+    if(i->first.find("VS_GLOBAL_") == 0) // cmHasLiteralPrefix
       {
       std::string name = i->first.substr(10);
       if(name != "")

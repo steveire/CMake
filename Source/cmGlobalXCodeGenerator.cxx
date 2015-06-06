@@ -2453,7 +2453,7 @@ void cmGlobalXCodeGenerator::CreateBuildSettings(cmTarget& target,
   for(cmPropertyMap::const_iterator i = props.begin();
       i != props.end(); ++i)
     {
-    if(i->first.find("XCODE_ATTRIBUTE_") == 0)
+    if(i->first.find("XCODE_ATTRIBUTE_") == 0) // cmHasLiteralPrefix.
       {
       std::string attribute = i->first.substr(16);
       // Handle [variant=<config>] condition explicitly here.
