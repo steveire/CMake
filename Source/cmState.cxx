@@ -68,12 +68,15 @@ struct cmState::BuildsystemDirectoryStateType
 
   std::vector<std::string> IncludeDirectories;
   std::vector<cmListFileBacktrace> IncludeDirectoryBacktraces;
+  std::vector<std::vector<std::string>::size_type> IncludeDirectorySentinals;
 
   std::vector<std::string> CompileDefinitions;
   std::vector<cmListFileBacktrace> CompileDefinitionsBacktraces;
+  std::vector<std::vector<std::string>::size_type> CompileDefinitionsSentinals;
 
   std::vector<std::string> CompileOptions;
   std::vector<cmListFileBacktrace> CompileOptionsBacktraces;
+  std::vector<std::vector<std::string>::size_type> CompileOptionsSentinals;
 
   std::string ProjectName;
 
@@ -272,10 +275,13 @@ cmState::Snapshot cmState::Reset()
       this->BuildsystemDirectory.Truncate();
   it->IncludeDirectories.clear();
   it->IncludeDirectoryBacktraces.clear();
+  it->IncludeDirectorySentinals.clear();
   it->CompileDefinitions.clear();
   it->CompileDefinitionsBacktraces.clear();
+  it->CompileDefinitionsSentinals.clear();
   it->CompileOptions.clear();
   it->CompileOptionsBacktraces.clear();
+  it->CompileOptionsSentinals.clear();
   it->DirectoryEnd = pos;
   it->Properties.clear();
   it->Children.clear();
@@ -1253,35 +1259,24 @@ bool cmState::Snapshot::RaiseScope(std::string const& var, const char* varDef)
   return true;
 }
 
-static const std::string cmPropertySentinal = std::string();
-
-template<typename T, typename U, typename V>
+template<typename T, typename U, typename V, typename W>
 void InitializeContentFromParent(T& parentContent,
                           T& thisContent,
                           U& parentBacktraces,
                           U& thisBacktraces,
-                          V& contentEndPosition)
+                          V& parentSentinals,
+                          W& contentEndPosition)
 {
-  std::vector<std::string>::const_iterator parentBegin =
-      parentContent.begin();
-  std::vector<std::string>::const_iterator parentEnd =
-      parentContent.end();
+  typename T::const_iterator parentBegin = parentContent.begin();
+  typename T::const_iterator parentEnd = parentContent.end();
 
-  std::vector<std::string>::const_reverse_iterator parentRbegin =
-      cmMakeReverseIterator(parentEnd);
-  std::vector<std::string>::const_reverse_iterator parentRend =
-      parentContent.rend();
-  parentRbegin = std::find(parentRbegin, parentRend, cmPropertySentinal);
-  std::vector<std::string>::const_iterator parentIt = parentRbegin.base();
+  typename V::value_type parentSentinal =
+      parentSentinals.empty() ? 0 : parentSentinals.back();
 
-  thisContent = std::vector<std::string>(parentIt, parentEnd);
+  thisContent = T(parentBegin + parentSentinal, parentEnd);
 
-  std::vector<cmListFileBacktrace>::const_iterator btIt =
-      parentBacktraces.begin() + std::distance(parentBegin, parentIt);
-  std::vector<cmListFileBacktrace>::const_iterator btEnd =
-      parentBacktraces.end();
-
-  thisBacktraces = std::vector<cmListFileBacktrace>(btIt, btEnd);
+  thisBacktraces = U(parentBacktraces.begin() + parentSentinal,
+                     parentBacktraces.end());
 
   contentEndPosition = thisContent.size();
 }
@@ -1299,18 +1294,21 @@ void cmState::Snapshot::InitializeFromParent()
               this->Position->BuildSystemDirectory->IncludeDirectories,
               parent->BuildSystemDirectory->IncludeDirectoryBacktraces,
               this->Position->BuildSystemDirectory->IncludeDirectoryBacktraces,
+              parent->BuildSystemDirectory->IncludeDirectorySentinals,
               this->Position->IncludeDirectoryPosition);
 
   InitializeContentFromParent(parent->BuildSystemDirectory->CompileDefinitions,
             this->Position->BuildSystemDirectory->CompileDefinitions,
             parent->BuildSystemDirectory->CompileDefinitionsBacktraces,
             this->Position->BuildSystemDirectory->CompileDefinitionsBacktraces,
+            parent->BuildSystemDirectory->CompileDefinitionsSentinals,
             this->Position->CompileDefinitionsPosition);
 
   InitializeContentFromParent(parent->BuildSystemDirectory->CompileOptions,
                 this->Position->BuildSystemDirectory->CompileOptions,
                 parent->BuildSystemDirectory->CompileOptionsBacktraces,
                 this->Position->BuildSystemDirectory->CompileOptionsBacktraces,
+                parent->BuildSystemDirectory->CompileOptionsSentinals,
                 this->Position->CompileOptionsPosition);
 }
 
@@ -1342,36 +1340,25 @@ cmState::Directory::Directory(
 
 }
 
-template <typename T, typename U>
-cmStringRange GetPropertyContent(T const& content, U contentEndPosition)
+template <typename T, typename U, typename V>
+cmStringRange GetPropertyContent(T const& content, U const& sentinals,
+                                 V contentEndPosition)
 {
-  std::vector<std::string>::const_iterator end =
-      content.begin() + contentEndPosition;
+  typename U::value_type sentinal = sentinals.empty() ? 0 : sentinals.back();
 
-  std::vector<std::string>::const_reverse_iterator rbegin =
-      cmMakeReverseIterator(end);
-  rbegin = std::find(rbegin, content.rend(), cmPropertySentinal);
-
-  return cmMakeRange(rbegin.base(), end);
+  return cmMakeRange(content.begin() + sentinal,
+                     content.begin() + contentEndPosition);
 }
 
 template <typename T, typename U, typename V>
-cmBacktraceRange GetPropertyBacktraces(T const& content,
-                                    U const& backtraces,
+cmBacktraceRange GetPropertyBacktraces(T const& backtraces,
+                                    U const& sentinals,
                                     V contentEndPosition)
 {
-  std::vector<std::string>::const_iterator entryEnd =
-      content.begin() + contentEndPosition;
+  typename U::value_type sentinal = sentinals.empty() ? 0 : sentinals.back();
 
-  std::vector<std::string>::const_reverse_iterator rbegin =
-      cmMakeReverseIterator(entryEnd);
-  rbegin = std::find(rbegin, content.rend(), cmPropertySentinal);
-
-  std::vector<cmListFileBacktrace>::const_iterator it =
-      backtraces.begin() + std::distance(content.begin(), rbegin.base());
-
-  std::vector<cmListFileBacktrace>::const_iterator end = backtraces.end();
-  return cmMakeRange(it, end);
+  return cmMakeRange(backtraces.begin() + sentinal,
+                     backtraces.begin() + contentEndPosition);
 }
 
 template <typename T, typename U, typename V>
@@ -1386,28 +1373,28 @@ void AppendEntry(T& content, U& backtraces, V& endContentPosition,
   endContentPosition = content.size();
 }
 
-template <typename T, typename U, typename V>
-void SetContent(T& content, U& backtraces, V& endContentPosition,
+template <typename T, typename U, typename V, typename W>
+void SetContent(T& content, U& backtraces, V& sentinals,
+                W& endContentPosition,
                 const std::string& vec, const cmListFileBacktrace& lfbt)
 {
   assert(endContentPosition == content.size());
 
-  content.resize(content.size() + 2);
-  backtraces.resize(backtraces.size() + 2);
+  sentinals.push_back(content.size());
 
-  content.back() = vec;
-  backtraces.back() = lfbt;
+  content.push_back(vec);
+  backtraces.push_back(lfbt);
 
   endContentPosition = content.size();
 }
 
 template <typename T, typename U, typename V>
-void ClearContent(T& content, U& backtraces, V& endContentPosition)
+void ClearContent(T& content, U& sentinals,
+                  V& endContentPosition)
 {
   assert(endContentPosition == content.size());
 
-  content.resize(content.size() + 1);
-  backtraces.resize(backtraces.size() + 1);
+  sentinals.push_back(content.size());
 
   endContentPosition = content.size();
 }
@@ -1416,14 +1403,16 @@ cmStringRange
 cmState::Directory::GetIncludeDirectoriesEntries() const
 {
   return GetPropertyContent(this->DirectoryState->IncludeDirectories,
+                            this->DirectoryState->IncludeDirectorySentinals,
                        this->Snapshot_.Position->IncludeDirectoryPosition);
 }
 
 cmBacktraceRange
 cmState::Directory::GetIncludeDirectoriesEntryBacktraces() const
 {
-  return GetPropertyBacktraces(this->DirectoryState->IncludeDirectories,
+  return GetPropertyBacktraces(
                        this->DirectoryState->IncludeDirectoryBacktraces,
+                       this->DirectoryState->IncludeDirectorySentinals,
                        this->Snapshot_.Position->IncludeDirectoryPosition);
 }
 
@@ -1439,23 +1428,15 @@ void cmState::Directory::AppendIncludeDirectoriesEntry(
 void cmState::Directory::PrependIncludeDirectoriesEntry(
     const std::string& vec, const cmListFileBacktrace& lfbt)
 {
-  std::vector<std::string>::iterator entryEnd =
-      this->DirectoryState->IncludeDirectories.begin()
-      + this->Snapshot_.Position->IncludeDirectoryPosition;
+  std::vector<std::vector<std::string>::size_type>::value_type sentinal =
+      this->DirectoryState->IncludeDirectorySentinals.empty()
+          ? 0 : this->DirectoryState->IncludeDirectorySentinals.back();
 
-  std::vector<std::string>::reverse_iterator rend =
-      this->DirectoryState->IncludeDirectories.rend();
-  std::vector<std::string>::reverse_iterator rbegin =
-      cmMakeReverseIterator(entryEnd);
-  rbegin = std::find(rbegin, rend, cmPropertySentinal);
-
-  std::vector<std::string>::iterator entryIt = rbegin.base();
-  std::vector<std::string>::iterator entryBegin =
-      this->DirectoryState->IncludeDirectories.begin();
+  std::vector<std::string>::iterator entryIt =
+      this->DirectoryState->IncludeDirectories.begin() + sentinal;
 
   std::vector<cmListFileBacktrace>::iterator btIt =
-      this->DirectoryState->IncludeDirectoryBacktraces.begin()
-      + std::distance(entryBegin, entryIt);
+      this->DirectoryState->IncludeDirectoryBacktraces.begin() + sentinal;
 
   this->DirectoryState->IncludeDirectories.insert(entryIt, vec);
   this->DirectoryState->IncludeDirectoryBacktraces.insert(btIt, lfbt);
@@ -1469,6 +1450,7 @@ void cmState::Directory::SetIncludeDirectories(
 {
   SetContent(this->DirectoryState->IncludeDirectories,
              this->DirectoryState->IncludeDirectoryBacktraces,
+             this->DirectoryState->IncludeDirectorySentinals,
              this->Snapshot_.Position->IncludeDirectoryPosition,
              vec, lfbt);
 }
@@ -1476,21 +1458,23 @@ void cmState::Directory::SetIncludeDirectories(
 void cmState::Directory::ClearIncludeDirectories()
 {
   ClearContent(this->DirectoryState->IncludeDirectories,
-               this->DirectoryState->IncludeDirectoryBacktraces,
+               this->DirectoryState->IncludeDirectorySentinals,
                this->Snapshot_.Position->IncludeDirectoryPosition);
 }
 
 cmStringRange cmState::Directory::GetCompileDefinitionsEntries() const
 {
   return GetPropertyContent(this->DirectoryState->CompileDefinitions,
+                            this->DirectoryState->CompileDefinitionsSentinals,
                      this->Snapshot_.Position->CompileDefinitionsPosition);
 }
 
 cmBacktraceRange
 cmState::Directory::GetCompileDefinitionsEntryBacktraces() const
 {
-  return GetPropertyBacktraces(this->DirectoryState->CompileDefinitions,
+  return GetPropertyBacktraces(
                      this->DirectoryState->CompileDefinitionsBacktraces,
+                     this->DirectoryState->CompileDefinitionsSentinals,
                      this->Snapshot_.Position->CompileDefinitionsPosition);
 }
 
@@ -1508,6 +1492,7 @@ void cmState::Directory::SetCompileDefinitions(const std::string& vec,
 {
   SetContent(this->DirectoryState->CompileDefinitions,
              this->DirectoryState->CompileDefinitionsBacktraces,
+             this->DirectoryState->CompileDefinitionsSentinals,
              this->Snapshot_.Position->CompileDefinitionsPosition,
              vec, lfbt);
 }
@@ -1515,20 +1500,21 @@ void cmState::Directory::SetCompileDefinitions(const std::string& vec,
 void cmState::Directory::ClearCompileDefinitions()
 {
   ClearContent(this->DirectoryState->CompileDefinitions,
-               this->DirectoryState->CompileDefinitionsBacktraces,
+               this->DirectoryState->CompileDefinitionsSentinals,
                this->Snapshot_.Position->CompileDefinitionsPosition);
 }
 
 cmStringRange cmState::Directory::GetCompileOptionsEntries() const
 {
   return GetPropertyContent(this->DirectoryState->CompileOptions,
+                            this->DirectoryState->CompileOptionsSentinals,
                          this->Snapshot_.Position->CompileOptionsPosition);
 }
 
 cmBacktraceRange cmState::Directory::GetCompileOptionsEntryBacktraces() const
 {
-  return GetPropertyBacktraces(this->DirectoryState->CompileOptions,
-                         this->DirectoryState->CompileOptionsBacktraces,
+  return GetPropertyBacktraces(this->DirectoryState->CompileOptionsBacktraces,
+                         this->DirectoryState->CompileOptionsSentinals,
                          this->Snapshot_.Position->CompileOptionsPosition);
 }
 
@@ -1547,6 +1533,7 @@ void cmState::Directory::SetCompileOptions(const std::string& vec,
 {
   SetContent(this->DirectoryState->CompileOptions,
              this->DirectoryState->CompileOptionsBacktraces,
+             this->DirectoryState->CompileOptionsSentinals,
              this->Snapshot_.Position->CompileOptionsPosition,
              vec, lfbt);
 }
@@ -1554,7 +1541,7 @@ void cmState::Directory::SetCompileOptions(const std::string& vec,
 void cmState::Directory::ClearCompileOptions()
 {
   ClearContent(this->DirectoryState->CompileOptions,
-               this->DirectoryState->CompileOptionsBacktraces,
+               this->DirectoryState->CompileOptionsSentinals,
                this->Snapshot_.Position->CompileOptionsPosition);
 }
 
