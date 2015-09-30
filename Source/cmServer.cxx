@@ -15,6 +15,7 @@
 #include "cmVersionMacros.h"
 #include "cmGlobalGenerator.h"
 #include "cmLocalGenerator.h"
+#include "cmMakefile.h"
 
 typedef struct {
   uv_write_t req;
@@ -160,6 +161,10 @@ void cmMetadataServer::processRequest(const std::string& json)
       {
       this->ProcessVersion();
       }
+    if (value["type"] == "buildsystem")
+      {
+      this->ProcessBuildsystem();
+      }
     }
 }
 
@@ -262,4 +267,78 @@ void cmMetadataServer::ProcessVersion()
   obj["version"] = CMake_VERSION;
 
   this->WriteResponse(obj);
+}
+
+void cmMetadataServer::ProcessBuildsystem()
+{
+  Json::Value root = Json::objectValue;
+  Json::Value& obj = root["buildsystem"] = Json::objectValue;
+
+  auto mf = this->CMakeInstance->GetGlobalGenerator()->GetMakefiles()[0];
+  auto lg = this->CMakeInstance->GetGlobalGenerator()->GetLocalGenerators()[0];
+
+  Json::Value& configs = obj["configs"] = Json::arrayValue;
+
+  std::vector<std::string> configsVec;
+  mf->GetConfigurations(configsVec);
+  for (auto const& config : configsVec)
+    {
+    configs.append(config);
+    }
+
+  Json::Value& globalTargets = obj["globalTargets"] = Json::arrayValue;
+  Json::Value& targets = obj["targets"] = Json::arrayValue;
+  auto gens = this->CMakeInstance->GetGlobalGenerator()->GetLocalGenerators();
+
+  auto firstMf =
+      this->CMakeInstance->GetGlobalGenerator()->GetMakefiles()[0];
+  auto firstTgts = firstMf->GetTargets();
+  for (auto const& tgt : firstTgts)
+    {
+    if (tgt.second.GetType() == cmState::GLOBAL_TARGET)
+      {
+      globalTargets.append(tgt.second.GetName());
+      }
+    }
+
+  for (auto const& gen : gens)
+    {
+    for (auto const& tgt : gen->GetGeneratorTargets())
+      {
+      if (tgt->IsImported())
+        {
+        continue;
+        }
+      if (tgt->GetType() == cmState::GLOBAL_TARGET)
+        {
+        continue;
+        }
+      Json::Value target = Json::objectValue;
+      target["name"] = tgt->GetName();
+      target["type"] = cmState::GetTargetTypeName(tgt->GetType());
+
+      if (tgt->GetType() <= cmState::UTILITY)
+        {
+        auto lfbt = tgt->GetBacktrace();
+        Json::Value bt = Json::arrayValue;
+        for (auto const& lbtF : lfbt.FrameContexts())
+          {
+          Json::Value fff = Json::objectValue;
+          fff["path"] = lbtF.FilePath;
+          fff["line"] = (int)lbtF.Line;
+          bt.append(fff);
+          }
+        target["backtrace"] = bt;
+        if (tgt->GetType() < cmState::OBJECT_LIBRARY)
+          {
+//          std::string fp = (*ittgt)->GetFullPath(config, false, true);
+//          targetValue["target_file"] = fp;
+          }
+        }
+      // Should be list?
+      target["projectName"] = lg->GetProjectName();
+      targets.append(target);
+      }
+    }
+  this->WriteResponse(root);
 }

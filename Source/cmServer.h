@@ -39,6 +39,7 @@ private:
 
   void ProcessHandshake(const std::string& protocolVersion);
   void ProcessVersion();
+  void ProcessBuildsystem();
 
   void writeContent(cmState::Snapshot snp);
 
