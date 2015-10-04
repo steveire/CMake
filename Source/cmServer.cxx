@@ -178,6 +178,13 @@ void cmMetadataServer::processRequest(const std::string& json)
             value["config"].asString(),
             language);
       }
+    if (value["type"] == "file_info")
+      {
+      this->ProcessFileInfo(
+            value["target_name"].asString(),
+            value["config"].asString(),
+            value["file_path"].asString());
+      }
     }
 }
 
@@ -458,5 +465,45 @@ void cmMetadataServer::ProcessTargetInfo(std::string tgtName,
     {
     target_includes.append(dir);
     }
+  this->WriteResponse(obj);
+}
+
+void cmMetadataServer::ProcessFileInfo(std::string tgtName,
+                                       std::string config,
+                                       std::string file_path)
+{
+  auto tgt =
+      this->CMakeInstance->GetGlobalGenerator()->FindGeneratorTarget(tgtName);
+
+  if (!tgt)
+    {
+    // Error
+    return;
+    }
+
+  Json::Value obj = Json::objectValue;
+
+  std::vector<const cmSourceFile*> files;
+  tgt->GetObjectSources(files, config);
+
+  const cmSourceFile* file = 0;
+  for (auto const& sf : files)
+    {
+    if (sf->GetFullPath() == file_path)
+      {
+      file = sf;
+      break;
+      }
+    }
+
+  if (!file)
+    {
+    // Error
+    return;
+    }
+
+  // TODO: Get the includes/defines/flags for the file for this target.
+  // There does not seem to be suitable API for that yet.
+
   this->WriteResponse(obj);
 }
