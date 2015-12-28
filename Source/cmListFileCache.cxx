@@ -460,6 +460,52 @@ void cmListFileBacktrace::PrintCallStack(std::ostream& out) const
     }
 }
 
+std::vector<cmListFileContext> cmListFileBacktrace::FrameContexts() const
+{
+  std::vector<cmListFileContext> contexts;
+
+  if (!this->Snapshot.IsValid())
+    {
+    return contexts;
+    }
+
+  cmOutputConverter converter(this->Snapshot);
+  cmListFileContext lfcTitle =
+      cmListFileContext::FromCommandContext(
+        this->Context, this->Snapshot.GetExecutionListFile());
+  lfcTitle.FilePath = converter.Convert(lfcTitle.FilePath, cmOutputConverter::HOME);
+
+  contexts.push_back(lfcTitle);
+
+  cmState::Snapshot parent = this->Snapshot.GetCallStackParent();
+  if (!parent.IsValid() || parent.GetExecutionListFile().empty())
+    {
+    return contexts;
+    }
+
+  std::string commandName = this->Snapshot.GetEntryPointCommand();
+  long commandLine = this->Snapshot.GetEntryPointLine();
+
+  while(parent.IsValid())
+    {
+    cmListFileContext lfc;
+    lfc.Name = commandName;
+    lfc.Line = commandLine;
+
+    lfc.FilePath = converter.Convert(parent.GetExecutionListFile(),
+                                     cmOutputConverter::HOME);
+
+    contexts.push_back(lfc);
+
+    commandName = parent.GetEntryPointCommand();
+    commandLine = parent.GetEntryPointLine();
+    parent = parent.GetCallStackParent();
+    }
+
+  std::reverse(contexts.begin(), contexts.end());
+  return contexts;
+}
+
 //----------------------------------------------------------------------------
 std::ostream& operator<<(std::ostream& os, cmListFileContext const& lfc)
 {

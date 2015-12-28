@@ -95,6 +95,8 @@ class cmListFileBacktrace
 
     void PrintTitle(std::ostream& out) const;
     void PrintCallStack(std::ostream& out) const;
+
+    std::vector<cmListFileContext> FrameContexts() const;
   private:
     cmCommandContext Context;
     cmState::Snapshot Snapshot;
