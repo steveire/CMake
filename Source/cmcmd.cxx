@@ -1030,8 +1030,11 @@ int cmcmd::ExecuteCMakeCommand(std::vector<std::string>& args)
       cmMetadataServer server;
       server.ServeMetadata(buildDir);
       return 0;
-      }
+#else
+      cmSystemTools::Error("CMake was not built with daemon mode enabled");
+      return 1;
 #endif
+      }
 
 
 #if defined(CMAKE_BUILD_WITH_CMAKE)

@@ -766,6 +766,9 @@ if (LIBUV_LIBRARY
 
   target_link_libraries(cmake CMakeServerLib)
 else()
+  # NOTE: Remove this when the daemon mode is ready
+  # If you're building this branch, it is for daemon mode.
+  message(FATAL_ERROR "CMake daemon mode requirements not satisfied")
   target_link_libraries(cmake CMakeLib)
 endif()
 
