@@ -19,6 +19,10 @@
 #include "cmUtils.hxx"
 #include "cmVersion.h"
 
+#if defined(HAVE_SERVER_MODE) && HAVE_SERVER_MODE
+#include "cmServer.h"
+#endif
+
 #if defined(CMAKE_BUILD_WITH_CMAKE)
 #include "cmDependsFortran.h" // For -E cmake_copy_f90_mod callback.
 #endif
@@ -83,9 +87,10 @@ void CMakeCommandUsage(const char* program)
     << "  remove_directory dir      - remove a directory and its contents\n"
     << "  rename oldname newname    - rename a file or directory "
        "(on one volume)\n"
+    << "  server                    - start cmake in server mode\n"
+    << "  sleep <number>...         - sleep for given number of seconds\n"
     << "  tar [cxt][vf][zjJ] file.tar [file/dir1 file/dir2 ...]\n"
     << "                            - create or extract a tar or zip archive\n"
-    << "  sleep <number>...         - sleep for given number of seconds\n"
     << "  time command [args...]    - run command and return elapsed time\n"
     << "  touch file                - touch a file.\n"
     << "  touch_nocreate file       - touch a file but do not create it.\n"
@@ -895,6 +900,18 @@ int cmcmd::ExecuteCMakeCommand(std::vector<std::string>& args)
 #endif
       }
       return 0;
+    } else if (args[1] == "server") {
+      if (args.size() > 2) {
+        return 1;
+      }
+#if defined(HAVE_SERVER_MODE) && HAVE_SERVER_MODE
+      cmServer server;
+      server.Serve();
+      return 0;
+#else
+      cmSystemTools::Error("CMake was not built with server mode enabled");
+      return 1;
+#endif
     }
 
 #if defined(CMAKE_BUILD_WITH_CMAKE)
