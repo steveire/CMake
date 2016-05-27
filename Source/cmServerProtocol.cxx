@@ -26,6 +26,7 @@ namespace {
 // Vocabulary:
 
 char GLOBAL_SETTINGS_TYPE[] = "globalSettings";
+char SET_GLOBAL_SETTINGS_TYPE[] = "setGlobalSettings";
 
 char BUILD_DIRECTORY_KEY[] = "buildDirectory";
 char CAPABILITIES_KEY[] = "capabilities";
@@ -204,6 +205,8 @@ const cmServerResponse cmServerProtocol1_0::Process(
 
   if (request.Type == GLOBAL_SETTINGS_TYPE)
     return this->ProcessGlobalSettings(request);
+  if (request.Type == SET_GLOBAL_SETTINGS_TYPE)
+    return this->ProcessSetGlobalSettings(request);
 
   return request.ReportError("Unknown command!");
 }
@@ -240,4 +243,44 @@ cmServerResponse cmServerProtocol1_0::ProcessGlobalSettings(
     gen ? gen->GetExtraGeneratorName() : std::string();
 
   return request.Reply(obj);
+}
+
+static void setBool(const cmServerRequest& request, const std::string& key,
+                    std::function<void(bool)> setter)
+{
+  if (request.Data[key].isNull())
+    return;
+  setter(request.Data[key].asBool());
+}
+
+cmServerResponse cmServerProtocol1_0::ProcessSetGlobalSettings(
+  const cmServerRequest& request)
+{
+  const std::vector<std::string> boolValues = {
+    DEBUG_OUTPUT_KEY,       TRACE_KEY,       TRACE_EXPAND_KEY,
+    WARN_UNINITIALIZED_KEY, WARN_UNUSED_KEY, WARN_UNUSED_CLI_KEY,
+    CHECK_SYSTEM_VARS_KEY
+  };
+  for (auto i : boolValues) {
+    if (!request.Data[i].isNull() && !request.Data[i].isBool()) {
+      return request.ReportError("\"" + i +
+                                 "\" must be unset or a bool value.");
+    }
+  }
+
+  cmake* cm = this->CMakeInstance();
+
+  setBool(request, DEBUG_OUTPUT_KEY,
+          [cm](bool e) { cm->SetDebugOutputOn(e); });
+  setBool(request, TRACE_KEY, [cm](bool e) { cm->SetTrace(e); });
+  setBool(request, TRACE_EXPAND_KEY, [cm](bool e) { cm->SetTraceExpand(e); });
+  setBool(request, WARN_UNINITIALIZED_KEY,
+          [cm](bool e) { cm->SetWarnUninitialized(e); });
+  setBool(request, WARN_UNUSED_KEY, [cm](bool e) { cm->SetWarnUnused(e); });
+  setBool(request, WARN_UNUSED_CLI_KEY,
+          [cm](bool e) { cm->SetWarnUnusedCli(e); });
+  setBool(request, CHECK_SYSTEM_VARS_KEY,
+          [cm](bool e) { cm->SetCheckSystemVars(e); });
+
+  return request.Reply(Json::Value());
 }
