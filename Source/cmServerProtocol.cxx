@@ -13,6 +13,7 @@
 #include "cmServerProtocol.h"
 
 #include "cmExternalMakefileProjectGenerator.h"
+#include "cmGlobalGenerator.h"
 #include "cmServer.h"
 #include "cmake.h"
 
@@ -24,12 +25,22 @@
 namespace {
 // Vocabulary:
 
+char GLOBAL_SETTINGS_TYPE[] = "globalSettings";
+
 char BUILD_DIRECTORY_KEY[] = "buildDirectory";
+char CAPABILITIES_KEY[] = "capabilities";
+char CHECK_SYSTEM_VARS_KEY[] = "checkSystemVars";
 char COOKIE_KEY[] = "cookie";
+char DEBUG_OUTPUT_KEY[] = "debugOutput";
 char EXTRA_GENERATOR_KEY[] = "extraGenerator";
 char GENERATOR_KEY[] = "generator";
 char SOURCE_DIRECTORY_KEY[] = "sourceDirectory";
+char TRACE_EXPAND_KEY[] = "traceExpand";
+char TRACE_KEY[] = "trace";
 char TYPE_KEY[] = "type";
+char WARN_UNINITIALIZED_KEY[] = "warnUninitialized";
+char WARN_UNUSED_CLI_KEY[] = "warnUnusedCli";
+char WARN_UNUSED_KEY[] = "warnUnused";
 
 } // namespace
 
@@ -191,10 +202,42 @@ const cmServerResponse cmServerProtocol1_0::Process(
 {
   assert(this->m_State >= ACTIVE);
 
+  if (request.Type == GLOBAL_SETTINGS_TYPE)
+    return this->ProcessGlobalSettings(request);
+
   return request.ReportError("Unknown command!");
 }
 
 bool cmServerProtocol1_0::IsExperimental() const
 {
   return true;
+}
+
+cmServerResponse cmServerProtocol1_0::ProcessGlobalSettings(
+  const cmServerRequest& request)
+{
+  cmake* cm = this->CMakeInstance();
+  Json::Value obj = Json::objectValue;
+
+  // Capabilities information:
+  obj[CAPABILITIES_KEY] = cm->ReportCapabilitiesJson();
+
+  obj[DEBUG_OUTPUT_KEY] = cm->GetDebugOutput();
+  obj[TRACE_KEY] = cm->GetTrace();
+  obj[TRACE_EXPAND_KEY] = cm->GetTraceExpand();
+  obj[WARN_UNINITIALIZED_KEY] = cm->GetWarnUninitialized();
+  obj[WARN_UNUSED_KEY] = cm->GetWarnUnused();
+  obj[WARN_UNUSED_CLI_KEY] = cm->GetWarnUnusedCli();
+  obj[CHECK_SYSTEM_VARS_KEY] = cm->GetCheckSystemVars();
+
+  obj[SOURCE_DIRECTORY_KEY] = cm->GetHomeDirectory();
+  obj[BUILD_DIRECTORY_KEY] = cm->GetHomeOutputDirectory();
+
+  // Currently used generator:
+  cmGlobalGenerator* gen = cm->GetGlobalGenerator();
+  obj[GENERATOR_KEY] = gen ? gen->GetName() : std::string();
+  obj[EXTRA_GENERATOR_KEY] =
+    gen ? gen->GetExtraGeneratorName() : std::string();
+
+  return request.Reply(obj);
 }
