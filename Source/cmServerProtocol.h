@@ -116,6 +116,7 @@ private:
                   std::string* errorMessage) override;
 
   // Handle requests:
+  cmServerResponse ProcessCompute(const cmServerRequest& request);
   cmServerResponse ProcessConfigure(const cmServerRequest& request);
   cmServerResponse ProcessGlobalSettings(const cmServerRequest& request);
   cmServerResponse ProcessSetGlobalSettings(const cmServerRequest& request);
@@ -124,7 +125,8 @@ private:
   {
     INACTIVE,
     ACTIVE,
-    CONFIGURED
+    CONFIGURED,
+    COMPUTED
   };
   State m_State = INACTIVE;
 };
