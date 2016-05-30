@@ -116,13 +116,15 @@ private:
                   std::string* errorMessage) override;
 
   // Handle requests:
+  cmServerResponse ProcessConfigure(const cmServerRequest& request);
   cmServerResponse ProcessGlobalSettings(const cmServerRequest& request);
   cmServerResponse ProcessSetGlobalSettings(const cmServerRequest& request);
 
   enum State
   {
     INACTIVE,
-    ACTIVE
+    ACTIVE,
+    CONFIGURED
   };
   State m_State = INACTIVE;
 };
