@@ -117,9 +117,7 @@ Json::Value cmServerResponse::Data() const
   return this->m_Data;
 }
 
-cmServerProtocol::~cmServerProtocol()
-{
-}
+cmServerProtocol::~cmServerProtocol() = default;
 
 bool cmServerProtocol::Activate(const cmServerRequest& request,
                                 std::string* errorMessage)

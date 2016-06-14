@@ -86,6 +86,14 @@ All responses will contain a value "inReplyTo", which may be empty in
 case of parse errors, but will contain the type of the request message
 in all other cases.
 
+All requests can contain a "debug" object to enable different settings
+that help with debugging cmake server-mode. These settings include:
+
+* "dumpToFile", followed by a string value containing a path to dump
+  the response into.
+
+* "showStats", to enable simple statistics on run time and response size.
+
 
 Type "reply"
 ^^^^^^^^^^^^

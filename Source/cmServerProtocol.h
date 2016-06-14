@@ -52,6 +52,7 @@ private:
   PayLoad m_Payload = UNKNOWN;
   std::string m_ErrorMessage;
   Json::Value m_Data;
+  const void* m_DebugInfo;
 };
 
 class cmServerRequest
