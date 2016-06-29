@@ -138,16 +138,10 @@ void cmServer::PopOne()
 
 void cmServer::handleData(const std::string& data)
 {
-#ifdef _WIN32
-  const char LINE_SEP[] = "\r\n";
-#else
-  const char LINE_SEP[] = "\n";
-#endif
-
   this->DataBuffer += data;
 
   for (;;) {
-    auto needle = this->DataBuffer.find(LINE_SEP);
+    auto needle = this->DataBuffer.find('\n');
 
     if (needle == std::string::npos) {
       return;

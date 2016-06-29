@@ -59,15 +59,23 @@ def waitForRawMessage(cmakeCommand):
       return json.loads(payload)
 
 def writeRawData(cmakeCommand, content):
+  writeRawData.counter += 1
   payload = """
 [== CMake Server ==[
 %s
 ]== CMake Server ==]
 """ % content
+
+  rn = ( writeRawData.counter % 2 ) == 0
+
+  if rn:
+    payload = payload.replace('\n', '\r\n')
+
   if print_communication:
-    print("\nCLIENT>", content, "\n")
+    print("\nCLIENT>", content, "(Use \\r\\n:", rn, ")\n")
   cmakeCommand.stdin.write(payload.encode('utf-8'))
   cmakeCommand.stdin.flush()
+writeRawData.counter = 0
 
 def writePayload(cmakeCommand, obj):
   writeRawData(cmakeCommand, json.dumps(obj))
