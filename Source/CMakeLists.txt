@@ -792,6 +792,7 @@ if (NOT CMAKE_BOOTSTRAP
     AND CMake_HAVE_CXX_RANGE_FOR)
   add_library(CMakeServerLib
     cmServer.cxx cmServer.h
+    cmServerConnection.cxx cmServerConnection.h
     cmServerProtocol.cxx cmServerProtocol.h
   )
   target_link_libraries(CMakeServerLib PUBLIC CMakeLib ${LIBUV_LIBRARY})
