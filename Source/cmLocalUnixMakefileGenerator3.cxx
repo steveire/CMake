@@ -2087,18 +2087,19 @@ void cmLocalUnixMakefileGenerator3::CreateCDCommand(
     // back because the shell keeps the working directory between
     // commands.
     std::string cmd = cd_cmd;
-    cmd += this->ConvertToOutputForExisting(tgtDir);
+    cmd += this->ConvertToOutputFormat(tgtDir, cmOutputConverter::SHELL);
     commands.insert(commands.begin(), cmd);
 
     // Change back to the starting directory.
     cmd = cd_cmd;
-    cmd += this->ConvertToOutputForExisting(relDir);
+    cmd += this->ConvertToOutputFormat(relDir, cmOutputConverter::SHELL);
     commands.push_back(cmd);
   } else {
     // On UNIX we must construct a single shell command to change
     // directory and build because make resets the directory between
     // each command.
-    std::string outputForExisting = this->ConvertToOutputForExisting(tgtDir);
+    std::string outputForExisting =
+      this->ConvertToOutputFormat(tgtDir, cmOutputConverter::SHELL);
     std::string prefix = cd_cmd + outputForExisting + " && ";
     std::transform(commands.begin(), commands.end(), commands.begin(),
                    std::bind1st(std::plus<std::string>(), prefix));
