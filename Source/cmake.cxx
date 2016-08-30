@@ -31,7 +31,6 @@
 #include "cmVariableWatch.h"
 #include <cmsys/SystemInformation.hxx>
 
-#include "cm_jsoncpp_value.h"
 #include "cm_jsoncpp_writer.h"
 #endif
 
@@ -221,10 +220,9 @@ cmake::~cmake()
   delete this->FileComparison;
 }
 
-std::string cmake::ReportCapabilities() const
-{
-  std::string result;
 #if defined(CMAKE_BUILD_WITH_CMAKE)
+Json::Value cmake::ReportCapabilitiesJson() const
+{
   Json::Value obj = Json::objectValue;
   // Version information:
   Json::Value version = Json::objectValue;
@@ -275,8 +273,16 @@ std::string cmake::ReportCapabilities() const
 #else
   obj["serverMode"] = false;
 #endif
+  return obj;
+}
+#endif
+
+std::string cmake::ReportCapabilities() const
+{
+  std::string result;
+#if defined(CMAKE_BUILD_WITH_CMAKE)
   Json::FastWriter writer;
-  result = writer.write(obj);
+  result = writer.write(this->ReportCapabilitiesJson());
 #else
   result = "Not supported";
 #endif
